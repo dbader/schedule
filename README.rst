@@ -5,13 +5,16 @@ Python job scheduling for humans. Inspired by `Adam Wiggins' <https://github.com
 
 Installation
 ------------
+
 .. code-block:: bash
+
     $ pip install schedule
 
 Usage
 -----
 
-.. code-block:: pycon
+.. code-block:: python
+
     def job():
         print("I'm working...")
 
