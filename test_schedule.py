@@ -13,7 +13,7 @@ from schedule import every
 
 class SchedulerTests(unittest.TestCase):
     def setUp(self):
-        schedule.clear_all_jobs()
+        schedule.clear()
 
     def test_time_units(self):
         assert every().seconds.unit == 'seconds'
@@ -39,9 +39,7 @@ class SchedulerTests(unittest.TestCase):
         assert every().day.at('10:30').do(mock_job).next_run.minute == 30
 
     def test_next_run_time(self):
-        # Mock datetime.datetime to get predictable (=testable) results.
-        import datetime
-
+        # Monkey-patch datetime.datetime to get predictable (=testable) results
         class MockDate(datetime.datetime):
             @classmethod
             def today(cls):
@@ -68,7 +66,7 @@ class SchedulerTests(unittest.TestCase):
         every().hour.do(mock_job)
         every().day.at('11:00').do(mock_job)
 
-        schedule.run_all_jobs(delay=0)
+        schedule.run_all(delay=0)
         assert mock_job.call_count == 3
 
     def test_to_string(self):
@@ -77,14 +75,14 @@ class SchedulerTests(unittest.TestCase):
         assert len(str(every().minute.do(job))) > 1
         assert len(str(every().minute.do(lambda: 1))) > 1
 
-    def test_run_pending_jobs(self):
-        """Check that run_pending_jobs() runs pending jobs.
+    def test_run_pending(self):
+        """Check that run_pending() runs pending jobs.
         We do this by overriding datetime.datetime with mock objects
         that represent increasing system times.
 
-        Please note that it is *intended behavior that run_pending_jobs() does not
+        Please note that it is *intended behavior that run_pending() does not
         run missed jobs*. For example, if you've registered a job that
-        should run every minute and you only call run_pending_jobs() in one hour
+        should run every minute and you only call run_pending() in one hour
         increments then your job won't be run 60 times in between but
         only once.
         """
@@ -105,7 +103,7 @@ class SchedulerTests(unittest.TestCase):
         every().hour.do(mock_job)
         every().day.do(mock_job)
 
-        schedule.run_pending_jobs()
+        schedule.run_pending()
         assert mock_job.call_count == 0
 
         # Minutely
@@ -118,7 +116,7 @@ class SchedulerTests(unittest.TestCase):
             def now(cls):
                 return cls(2010, 1, 6, 12, 16)
         datetime.datetime = MockDate
-        schedule.run_pending_jobs()
+        schedule.run_pending()
         assert mock_job.call_count == 1
 
         # Minutely, hourly
@@ -133,7 +131,7 @@ class SchedulerTests(unittest.TestCase):
         datetime.datetime = MockDate
 
         mock_job.reset_mock()
-        schedule.run_pending_jobs()
+        schedule.run_pending()
         assert mock_job.call_count == 2
 
         # Minutely, hourly, daily
@@ -148,7 +146,7 @@ class SchedulerTests(unittest.TestCase):
         datetime.datetime = MockDate
 
         mock_job.reset_mock()
-        schedule.run_pending_jobs()
+        schedule.run_pending()
         assert mock_job.call_count == 3
 
         datetime.datetime = original_datetime
