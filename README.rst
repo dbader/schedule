@@ -29,9 +29,10 @@ Usage
         time.sleep(1)
 
 Meta
-----------
-Daniel Bader – mail@dbader.org
+----
 
-Distributed under the MIT license. See LICENSE.txt for more information.
+Daniel Bader – `@dbader_org <https://twitter.com/dbader_org>`_ – mail@dbader.org
+
+Distributed under the MIT license. See ``LICENSE.txt`` for more information.
 
 https://github.com/dbader/schedule
