@@ -22,7 +22,7 @@ class Scheduler(object):
     def __init__(self):
         self.jobs = set()
 
-    def tick(self):
+    def run_pending_jobs(self):
         """Run all jobs that are scheduled to run.
 
         Please note that it is *intended behavior that tick() does not
@@ -188,19 +188,21 @@ class PeriodicJob(object):
 
 default_scheduler = Scheduler()
 
+
 def every(interval=1):
     return default_scheduler.every(interval)
 
 
-def tick():
+def run_pending_jobs():
     """Run all jobs that are scheduled to run.
 
-    Please note that it is *intended behavior that tick() does not run
-    missed jobs*. For example, if you've registered a job that should
-    run every minute and you only call tick() in one hour increments
-    then your job won't be run 60 times in between but only once.
+    Please note that it is *intended behavior that run_pending_jobs()
+    does not run missed jobs*. For example, if you've registered a job
+    that should run every minute and you only call run_pending_jobs()
+    in one hour increments then your job won't be run 60 times in
+    between but only once.
     """
-    default_scheduler.tick()
+    default_scheduler.run_pending_jobs()
 
 
 def run_all_jobs(delay=60):
