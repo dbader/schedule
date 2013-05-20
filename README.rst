@@ -1,7 +1,7 @@
 schedule
 ========
 
-Python job scheduling for humans. Inspired by `Adam Wiggins' <https://github.com/adamwiggins>`_ `clockwork' <https://github.com/tomykaira/clockwork>`_.
+Python job scheduling for humans. Inspired by `Adam Wiggins' <https://github.com/adamwiggins>`_ `clockwork <https://github.com/tomykaira/clockwork>`_.
 
 Installation
 ------------
@@ -23,7 +23,7 @@ Usage
     schedule.every().day.at("10:30").do(job)
 
     while 1:
-        schedule.tick()
+        schedule.run_pending_jobs()
         time.sleep(1)
 
 Meta

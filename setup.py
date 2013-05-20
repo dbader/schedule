@@ -3,21 +3,21 @@ import sys
 from distutils.core import setup
 
 if sys.argv[-1] == 'publish':
-    os.system('python setup.py sdist upload')
+    os.system('python setup.py sdist upload -r PyPI')
     sys.exit()
 
 setup(
     name='schedule',
     packages=['schedule'],
-    version='0.1.4',
+    version='0.1.5',
     description='Job scheduling for humans.',
-    long_description=open('README.rst').read() + '\n\n' +
-                     open('HISTORY.rst').read(),
+    long_description=(open('README.rst').read() + '\n\n' +
+                      open('HISTORY.rst').read()),
     license=open('LICENSE.txt').read(),
     author='Daniel Bader',
     author_email='mail@dbader.org',
     url='https://github.com/dbader/schedule',
-    download_url='https://github.com/dbader/schedule/tarball/0.1.4',
+    download_url='https://github.com/dbader/schedule/tarball/0.1.5',
     keywords=['schedule', 'periodic', 'jobs', 'scheduling', 'clockwork'],
     classifiers=[
         'Intended Audience :: Developers',
