@@ -15,6 +15,8 @@ Usage
 
 .. code-block:: python
 
+    import schedule
+
     def job():
         print("I'm working...")
 
