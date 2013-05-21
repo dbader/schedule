@@ -3,6 +3,12 @@
 History
 -------
 
+0.1.8 (2013-05-21)
+++++++++++++++++++
+
+- Change default ``delay_seconds`` for ``schedule.run_all()`` to 0 (from 60)
+- Added more unit tests.
+
 0.1.7 (2013-05-20)
 ++++++++++++++++++
 
