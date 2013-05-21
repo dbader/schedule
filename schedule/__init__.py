@@ -193,11 +193,15 @@ class PeriodicJob(object):
             schedule_at_specific_time()
 
 
+# The following methods are shortcuts for not having to
+# create a Scheduler instance:
+
 default_scheduler = Scheduler()
 jobs = default_scheduler.jobs
 
 
 def every(interval=1):
+    """Schedule a new periodic job."""
     return default_scheduler.every(interval)
 
 
