@@ -9,7 +9,7 @@ if sys.argv[-1] == 'publish':
 setup(
     name='schedule',
     packages=['schedule'],
-    version='0.1.7',
+    version='0.1.8',
     description='Job scheduling for humans.',
     long_description=(open('README.rst').read() + '\n\n' +
                       open('HISTORY.rst').read()),
@@ -17,11 +17,13 @@ setup(
     author='Daniel Bader',
     author_email='mail@dbader.org',
     url='https://github.com/dbader/schedule',
-    download_url='https://github.com/dbader/schedule/tarball/0.1.7',
+    download_url='https://github.com/dbader/schedule/tarball/0.1.8',
     keywords=['schedule', 'periodic', 'jobs', 'scheduling', 'clockwork'],
     classifiers=[
         'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.3',
+        'Natural Language :: English',
     ],
 )
