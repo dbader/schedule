@@ -1,7 +1,13 @@
 schedule
 ========
 
+
+.. image:: https://api.travis-ci.org/dbader/schedule.png
+        :target: https://travis-ci.org/dbader/schedule
+
 Python job scheduling for humans. Inspired by `Adam Wiggins' <https://github.com/adamwiggins>`_ `clockwork <https://github.com/tomykaira/clockwork>`_.
+
+Works with Python 2.7 and 3.3.
 
 Installation
 ------------
