@@ -138,7 +138,7 @@ class SchedulerTests(unittest.TestCase):
         class MockDate(datetime.datetime):
             @classmethod
             def today(cls):
-                return cls(2010, 1, 6)
+                return cls(2010, 1, 7)
 
             @classmethod
             def now(cls):
@@ -148,5 +148,64 @@ class SchedulerTests(unittest.TestCase):
         mock_job.reset_mock()
         schedule.run_pending()
         assert mock_job.call_count == 3
+
+        datetime.datetime = original_datetime
+
+    def test_run_every_n_days_at_specific_time(self):
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(2010, 1, 6)
+
+            @classmethod
+            def now(cls):
+                return cls(2010, 1, 6, 13, 16)
+        original_datetime = datetime.datetime
+        datetime.datetime = MockDate
+
+        mock_job = mock.Mock()
+        every(2).days.at("11:30").do(mock_job)
+
+        schedule.run_pending()
+        assert mock_job.call_count == 0
+
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(2010, 1, 7)
+
+            @classmethod
+            def now(cls):
+                return cls(2010, 1, 7, 13, 16)
+        datetime.datetime = MockDate
+
+        schedule.run_pending()
+        assert mock_job.call_count == 0
+
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(2010, 1, 8)
+
+            @classmethod
+            def now(cls):
+                return cls(2010, 1, 8, 13, 16)
+        datetime.datetime = MockDate
+
+        schedule.run_pending()
+        assert mock_job.call_count == 1
+
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(2010, 1, 10)
+
+            @classmethod
+            def now(cls):
+                return cls(2010, 1, 10, 13, 16)
+        datetime.datetime = MockDate
+
+        schedule.run_pending()
+        assert mock_job.call_count == 2
 
         datetime.datetime = original_datetime
