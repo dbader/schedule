@@ -1,10 +1,11 @@
 """A scheduler for periodic jobs that uses the builder pattern to
-construct easily readable definitions for periodic tasts.
+construct easily readable definitions for periodic tasks.
 
 Examples:
     every(10).minutes.do(job) -- Run job() every 10 minutes
     every().hour.do(job) -- Run job() every hour
     every().day.at('10:30').do(job) -- Run job() every day at 10:30
+    every(3).days.at('11:00').do(job) -- Run job() every three days at 11:00
 
 Additional reading:
     http://adam.heroku.com/past/2010/6/30/replace_cron_with_clockwork/
@@ -35,7 +36,7 @@ class Scheduler(object):
         for job in runnable_jobs:
             job.run()
 
-    def run_all(self, delay_seconds=60):
+    def run_all(self, delay_seconds=0):
         """Run all jobs regardless if they are scheduled to run or not.
 
         A delay of `delay` seconds is added between each job. This helps
@@ -52,6 +53,7 @@ class Scheduler(object):
         self.jobs.clear()
 
     def every(self, interval=1):
+        """Schedule a new periodic job."""
         job = PeriodicJob(interval)
         self.jobs.add(job)
         return job
@@ -162,7 +164,7 @@ class PeriodicJob(object):
         return datetime.datetime.now() >= self.next_run
 
     def run(self):
-        """Run the job."""
+        """Run the job and immediately reschedule it."""
         logger.info('Running job %s', self)
         self.job_func()
         self.last_run = datetime.datetime.now()
