@@ -5,6 +5,9 @@ schedule
 .. image:: https://api.travis-ci.org/dbader/schedule.png
         :target: https://travis-ci.org/dbader/schedule
         
+.. image:: https://coveralls.io/repos/dbader/schedule/badge.png
+        :target: https://coveralls.io/r/dbader/schedule        
+        
 .. image:: https://pypip.in/v/schedule/badge.png
         :target: https://pypi.python.org/pypi/schedule
 
