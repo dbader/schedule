@@ -4,6 +4,9 @@ schedule
 
 .. image:: https://api.travis-ci.org/dbader/schedule.png
         :target: https://travis-ci.org/dbader/schedule
+        
+.. image:: https://pypip.in/v/schedule/badge.png
+        :target https://pypi.python.org/pypi/schedule
 
 Python job scheduling for humans. Inspired by `Adam Wiggins' <https://github.com/adamwiggins>`_ `clockwork <https://github.com/tomykaira/clockwork>`_.
 
