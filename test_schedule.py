@@ -74,6 +74,7 @@ class SchedulerTests(unittest.TestCase):
             pass
         assert len(str(every().minute.do(job))) > 1
         assert len(str(every().minute.do(lambda: 1))) > 1
+        assert len(str(every().day.at("10:30").do(lambda: 1))) > 1
 
     def test_run_pending(self):
         """Check that run_pending() runs pending jobs.

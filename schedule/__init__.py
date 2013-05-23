@@ -64,10 +64,10 @@ class PeriodicJob(object):
         self.interval = interval  # pause interval * unit between runs
         self.job_func = None  # the job job_func to run
         self.unit = None  # time units, e.g. 'minutes', 'hours', ...
-        self.time = None  # optional time at which this job runs
+        self.at_time = None  # optional time at which this job runs
         self.last_run = None  # datetime of the last run
         self.next_run = None  # datetime of the next run
-        self.period = None  # timedelta between runs
+        self.period = None  # timedelta between runs, only valid for
 
     def __repr__(self):
         def format_time(t):
@@ -76,11 +76,11 @@ class PeriodicJob(object):
         timestats = '(last run: %s, next run: %s)' % (
                     format_time(self.last_run), format_time(self.next_run))
 
-        if self.time is not None:
+        if self.at_time is not None:
             return 'Every %s %s at %s do %s %s' % (
                    self.interval,
                    self.unit[:-1] if self.interval == 1 else self.unit,
-                   self.time, self.job_func.__name__, timestats)
+                   self.at_time, self.job_func.__name__, timestats)
         else:
             return 'Every %s %s do %s %s' % (
                    self.interval,
@@ -147,11 +147,11 @@ class PeriodicJob(object):
         hour, minute = [int(t) for t in time_str.split(':')]
         assert 0 <= hour <= 23
         assert 0 <= minute <= 59
-        self.time = datetime.time(hour, minute)
+        self.at_time = datetime.time(hour, minute)
         return self
 
     def do(self, job_func):
-        """Specifies the `job_func` that should be called every time the
+        """Specifies the job_func that should be called every time the
         job runs.
         """
         self.job_func = job_func
@@ -171,26 +171,17 @@ class PeriodicJob(object):
         self._schedule_next_run()
 
     def _schedule_next_run(self):
-        """Compute the datetime when this job should run next."""
-        def schedule_at_specific_time():
-            next_run = (datetime.datetime.today() +
-                        datetime.timedelta(days=self.interval))
-            self.next_run = next_run.replace(hour=self.time.hour,
-                                             minute=self.time.minute,
-                                             second=self.time.second,
-                                             microsecond=0)
-
-        def schedule_periodic():
-            self.period = datetime.timedelta(**{self.unit: self.interval})
-            self.next_run = datetime.datetime.now() + self.period
-
-        if not self.unit in ('seconds', 'minutes', 'hours', 'days', 'weeks'):
-            raise ValueError('Invalid time unit: %s' % self.unit)
-
-        if self.time is None:
-            schedule_periodic()
-        else:
-            schedule_at_specific_time()
+        """Compute the instant when this job should run next."""
+        #pylint: disable=W0142
+        assert self.unit in ('seconds', 'minutes', 'hours', 'days', 'weeks')
+        self.period = datetime.timedelta(**{self.unit: self.interval})
+        self.next_run = datetime.datetime.now() + self.period
+        if self.at_time:
+            assert self.unit == 'days'
+            self.next_run = self.next_run.replace(hour=self.at_time.hour,
+                                                  minute=self.at_time.minute,
+                                                  second=self.at_time.second,
+                                                  microsecond=0)
 
 
 # The following methods are shortcuts for not having to
