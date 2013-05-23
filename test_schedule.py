@@ -5,10 +5,16 @@ import datetime
 
 # Silence "missing docstring", "method could be a function",
 # "class already defined", and "too many public methods" messages:
-# pylint: disable-msg=R0201,C0111,E0102,R0904
+# pylint: disable-msg=R0201,C0111,E0102,R0904,R0901
 
 import schedule
 from schedule import every
+
+
+def make_mock_job():
+    job = mock.Mock()
+    job.__name__ = 'job'
+    return job
 
 
 class SchedulerTests(unittest.TestCase):
@@ -29,12 +35,8 @@ class SchedulerTests(unittest.TestCase):
         assert every().day.unit == every().days.unit
         assert every().week.unit == every().weeks.unit
 
-    def test_job_assignment(self):
-        mock_job = mock.Mock()
-        assert every().minute.do(mock_job).job_func == mock_job
-
     def test_at_time(self):
-        mock_job = mock.Mock()
+        mock_job = make_mock_job()
         assert every().day.at('10:30').do(mock_job).next_run.hour == 10
         assert every().day.at('10:30').do(mock_job).next_run.minute == 30
 
@@ -51,7 +53,7 @@ class SchedulerTests(unittest.TestCase):
         original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
-        mock_job = mock.Mock()
+        mock_job = make_mock_job()
         assert every().minute.do(mock_job).next_run.minute == 16
         assert every(5).minutes.do(mock_job).next_run.minute == 20
         assert every().hour.do(mock_job).next_run.hour == 13
@@ -61,18 +63,26 @@ class SchedulerTests(unittest.TestCase):
         datetime.datetime = original_datetime
 
     def test_run_all(self):
-        mock_job = mock.Mock()
+        mock_job = make_mock_job()
         every().minute.do(mock_job)
         every().hour.do(mock_job)
         every().day.at('11:00').do(mock_job)
-
-        schedule.run_all(delay=0)
+        schedule.run_all()
         assert mock_job.call_count == 3
 
+    def test_job_func_args_are_passed_on(self):
+        mock_job = make_mock_job()
+        every().second.do(mock_job, 1, 2, 'three', foo=23, bar={})
+        schedule.run_all()
+        mock_job.assert_called_once_with(1, 2, 'three', foo=23, bar={})
+
     def test_to_string(self):
-        def job():
+        def job_fun():
             pass
-        assert len(str(every().minute.do(job))) > 1
+        s = str(every().minute.do(job_fun, 'foo', bar=23))
+        assert 'job_fun' in s
+        assert 'foo' in s
+        assert 'bar=23' in s
         assert len(str(every().minute.do(lambda: 1))) > 1
         assert len(str(every().day.at("10:30").do(lambda: 1))) > 1
 
@@ -99,7 +109,7 @@ class SchedulerTests(unittest.TestCase):
         original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
-        mock_job = mock.Mock()
+        mock_job = make_mock_job()
         every().minute.do(mock_job)
         every().hour.do(mock_job)
         every().day.do(mock_job)
@@ -164,7 +174,7 @@ class SchedulerTests(unittest.TestCase):
         original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
-        mock_job = mock.Mock()
+        mock_job = make_mock_job()
         every(2).days.at("11:30").do(mock_job)
 
         schedule.run_pending()
