@@ -11,9 +11,9 @@ import schedule
 from schedule import every
 
 
-def make_mock_job():
+def make_mock_job(name=None):
     job = mock.Mock()
-    job.__name__ = 'job'
+    job.__name__ = name or 'job'
     return job
 
 
@@ -218,5 +218,28 @@ class SchedulerTests(unittest.TestCase):
 
         schedule.run_pending()
         assert mock_job.call_count == 2
+
+        datetime.datetime = original_datetime
+
+    def test_next_run_property(self):
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(2010, 1, 6)
+
+            @classmethod
+            def now(cls):
+                return cls(2010, 1, 6, 13, 16)
+        original_datetime = datetime.datetime
+        datetime.datetime = MockDate
+
+        hourly_job = make_mock_job('hourly')
+        daily_job = make_mock_job('daily')
+        every().day.do(daily_job)
+        every().hour.do(hourly_job)
+        assert len(schedule.jobs) == 2
+        # Make sure the hourly job is first
+        assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
+        assert schedule.idle_seconds() == 60 * 60
 
         datetime.datetime = original_datetime

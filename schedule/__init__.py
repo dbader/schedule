@@ -1,16 +1,37 @@
-"""A scheduler for periodic jobs that uses the builder pattern to
-construct easily readable definitions for periodic tasks.
+"""
+Python job scheduling for humans.
 
-Examples:
-    every(10).minutes.do(job) -- Run job() every 10 minutes
-    every().hour.do(job) -- Run job() every hour
-    every().day.at('10:30').do(job) -- Run job() every day at 10:30
-    every(3).days.at('11:00').do(job) -- Run job() every three days at 11:00
+An in-process scheduler for periodic jobs that uses the builder pattern
+for configuration. Schedule lets you run Python functions (or any other
+callable) periodically at pre-determined intervals using a simple,
+human-friendly syntax.
 
-Additional reading:
-    http://adam.heroku.com/past/2010/6/30/replace_cron_with_clockwork/
-    https://devcenter.heroku.com/articles/scheduled-jobs-custom-clock-processes
-    https://devcenter.heroku.com/articles/clock-processes-python
+Inspired by Addam Wiggins' article "Rethinking Cron" [1] and the
+"clockwork" Ruby module [2][3].
+
+Features:
+    - A simple to use API for scheduling jobs.
+    - Very lightweight and no external dependencies.
+    - Excellent test coverage.
+    - Works with Python 2.7 and 3.3
+
+Usage:
+    >>> import schedule
+
+    >>> def job(message='stuff'):
+    >>>     print("I'm working on:", message)
+
+    >>> schedule.every(10).minutes.do(job)
+    >>> schedule.every().hour.do(job, message='things')
+    >>> schedule.every().day.at("10:30").do(job)
+
+    >>> while 1:
+    >>>     schedule.run_pending()
+    >>>     time.sleep(1)
+
+[1] http://adam.heroku.com/past/2010/4/13/rethinking_cron/
+[2] https://github.com/tomykaira/clockwork
+[3] http://adam.heroku.com/past/2010/6/30/replace_cron_with_clockwork/
 """
 import datetime
 import functools
@@ -22,7 +43,7 @@ logger = logging.getLogger('schedule')
 
 class Scheduler(object):
     def __init__(self):
-        self.jobs = set()
+        self.jobs = []
 
     def run_pending(self):
         """Run all jobs that are scheduled to run.
@@ -33,8 +54,8 @@ class Scheduler(object):
         increments then your job won't be run 60 times in between but
         only once.
         """
-        runnable_jobs = [job for job in self.jobs if job.should_run]
-        for job in runnable_jobs:
+        runnable_jobs = (job for job in self.jobs if job.should_run)
+        for job in sorted(runnable_jobs):
             job.run()
 
     def run_all(self, delay_seconds=0):
@@ -51,16 +72,27 @@ class Scheduler(object):
 
     def clear(self):
         """Deletes all scheduled jobs."""
-        self.jobs.clear()
+        del self.jobs[:]
 
     def every(self, interval=1):
         """Schedule a new periodic job."""
-        job = PeriodicJob(interval)
-        self.jobs.add(job)
+        job = Job(interval)
+        self.jobs.append(job)
         return job
 
+    @property
+    def next_run(self):
+        """Datetime when the next job should run."""
+        return min(self.jobs).next_run
 
-class PeriodicJob(object):
+    @property
+    def idle_seconds(self):
+        """Number of seconds until `next_run`."""
+        return (self.next_run - datetime.datetime.now()).total_seconds()
+
+
+class Job(object):
+    """A periodic job as used by `Scheduler`."""
     def __init__(self, interval):
         self.interval = interval  # pause interval * unit between runs
         self.job_func = None  # the job job_func to run
@@ -69,6 +101,11 @@ class PeriodicJob(object):
         self.last_run = None  # datetime of the last run
         self.next_run = None  # datetime of the next run
         self.period = None  # timedelta between runs, only valid for
+
+    def __lt__(self, other):
+        """PeriodicJobs are sortable based on the scheduled time
+        they run next."""
+        return self.next_run < other.next_run
 
     def __repr__(self):
         def format_time(t):
@@ -183,7 +220,8 @@ class PeriodicJob(object):
 
     def _schedule_next_run(self):
         """Compute the instant when this job should run next."""
-        #pylint: disable=W0142
+        # Allow *, ** magic temporarily:
+        # pylint: disable=W0142
         assert self.unit in ('seconds', 'minutes', 'hours', 'days', 'weeks')
         self.period = datetime.timedelta(**{self.unit: self.interval})
         self.next_run = datetime.datetime.now() + self.period
@@ -199,7 +237,7 @@ class PeriodicJob(object):
 # create a Scheduler instance:
 
 default_scheduler = Scheduler()
-jobs = default_scheduler.jobs
+jobs = default_scheduler.jobs  # todo: should this be a copy, e.g. jobs()?
 
 
 def every(interval=1):
@@ -231,3 +269,13 @@ def run_all(delay_seconds=0):
 def clear():
     """Deletes all scheduled jobs."""
     default_scheduler.clear()
+
+
+def next_run():
+    """Datetime when the next job should run."""
+    return default_scheduler.next_run
+
+
+def idle_seconds():
+    """Number of seconds until `next_run`."""
+    return default_scheduler.idle_seconds
