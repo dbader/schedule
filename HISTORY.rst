@@ -3,11 +3,20 @@
 History
 -------
 
+0.1.9 (2013-05-27)
+++++++++++++++++++
+
+- Added ``schedule.next_run()``
+- Added ``schedule.idle_seconds()``
+- Args passed into ``do()`` are forwarded to the job function at call time
+- Increased test coverage to 100%
+
+
 0.1.8 (2013-05-21)
 ++++++++++++++++++
 
-- Change default ``delay_seconds`` for ``schedule.run_all()`` to 0 (from 60)
-- Added more unit tests.
+- Changed default ``delay_seconds`` for ``schedule.run_all()`` to 0 (from 60)
+- Increased test coverage
 
 0.1.7 (2013-05-20)
 ++++++++++++++++++
