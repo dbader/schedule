@@ -27,15 +27,12 @@ Features
 - Excellent test coverage.
 - Works with Python 2.7 and 3.3
 
-Installation
-------------
+Usage
+-----
 
 .. code-block:: bash
 
     $ pip install schedule
-
-Usage
------
 
 .. code-block:: python
 
