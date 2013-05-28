@@ -279,3 +279,10 @@ def next_run():
 def idle_seconds():
     """Number of seconds until `next_run`."""
     return default_scheduler.idle_seconds
+
+
+def loop(interval=1):
+    """ Loop and call run_pending() every `interval` seconds """
+    while True:
+        run_pending()
+        time.sleep(interval)
