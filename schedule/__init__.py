@@ -17,6 +17,7 @@ Features:
 
 Usage:
     >>> import schedule
+    >>> import time
 
     >>> def job(message='stuff'):
     >>>     print("I'm working on:", message)
@@ -25,7 +26,7 @@ Usage:
     >>> schedule.every().hour.do(job, message='things')
     >>> schedule.every().day.at("10:30").do(job)
 
-    >>> while 1:
+    >>> while True:
     >>>     schedule.run_pending()
     >>>     time.sleep(1)
 
