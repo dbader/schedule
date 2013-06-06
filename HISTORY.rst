@@ -3,6 +3,11 @@
 History
 -------
 
+0.2.0 (unreleased)
+++++++++++++++++++
+
+- Fixed issue with 'at_time' jobs not running on the same day the job is created
+
 0.1.9 (2013-05-27)
 ++++++++++++++++++
 

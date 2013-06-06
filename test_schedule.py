@@ -58,6 +58,8 @@ class SchedulerTests(unittest.TestCase):
         assert every(5).minutes.do(mock_job).next_run.minute == 20
         assert every().hour.do(mock_job).next_run.hour == 13
         assert every().day.do(mock_job).next_run.day == 7
+        assert every().day.at('09:00').do(mock_job).next_run.day == 7
+        assert every().day.at('12:30').do(mock_job).next_run.day == 6
         assert every().week.do(mock_job).next_run.day == 13
 
         datetime.datetime = original_datetime
