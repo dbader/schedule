@@ -9,7 +9,7 @@ if sys.argv[-1] == 'publish':
 setup(
     name='schedule',
     packages=['schedule'],
-    version='0.1.9',
+    version='0.1.10',
     description='Job scheduling for humans.',
     long_description=(open('README.rst').read() + '\n\n' +
                       open('HISTORY.rst').read()),
