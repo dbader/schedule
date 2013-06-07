@@ -232,10 +232,10 @@ class Job(object):
                                                   minute=self.at_time.minute,
                                                   second=self.at_time.second,
                                                   microsecond=0)
-            # if we are running for the first time,
-            # make sure we run at the specified time *today* as well
-            if not self.last_run \
-                    and self.at_time > datetime.datetime.now().time():
+            # If we are running for the first time, make sure we run
+            # at the specified time *today* as well
+            if (not self.last_run and
+                    self.at_time > datetime.datetime.now().time()):
                 self.next_run = self.next_run - datetime.timedelta(days=1)
 
 
