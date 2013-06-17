@@ -266,7 +266,7 @@ class SchedulerTests(unittest.TestCase):
 
             @classmethod
             def now(cls):
-                return cls(2010, 1, 6, 12, 15, 00)
+                return cls(2010, 1, 6, 12, 15, 0)
         original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
@@ -293,7 +293,7 @@ class SchedulerTests(unittest.TestCase):
 
             @classmethod
             def now(cls):
-                return cls(2010, 1, 6, 12, 15, 01)
+                return cls(2010, 1, 6, 12, 15, 1)
         mock_job.reset_mock()
         datetime.datetime = MockDate
         # Allow a small time for separate thread to register time stamps.
@@ -309,7 +309,7 @@ class SchedulerTests(unittest.TestCase):
 
             @classmethod
             def now(cls):
-                return cls(2010, 1, 6, 12, 15, 02)
+                return cls(2010, 1, 6, 12, 15, 2)
         datetime.datetime = MockDate
         # Allow a small time for separate thread to register time stamps.
         time.sleep(0.001)
@@ -338,7 +338,7 @@ class SchedulerTests(unittest.TestCase):
 
             @classmethod
             def now(cls):
-                return cls(2010, 1, 6, 12, 16, 02)
+                return cls(2010, 1, 6, 12, 16, 2)
         mock_job.reset_mock()
         datetime.datetime = MockDate
         # Allow a small time for separate thread to register time stamps.
@@ -354,7 +354,7 @@ class SchedulerTests(unittest.TestCase):
 
             @classmethod
             def now(cls):
-                return cls(2010, 1, 6, 12, 17, 02)
+                return cls(2010, 1, 6, 12, 17, 2)
         datetime.datetime = MockDate
         # Allow a small time for separate thread to register time stamps.
         time.sleep(0.001)
@@ -383,7 +383,7 @@ class SchedulerTests(unittest.TestCase):
 
             @classmethod
             def now(cls):
-                return cls(2010, 1, 6, 13, 17, 02)
+                return cls(2010, 1, 6, 13, 17, 2)
         mock_job.reset_mock()
         datetime.datetime = MockDate
         # Allow a small time for separate thread to register time stamps.
@@ -399,7 +399,7 @@ class SchedulerTests(unittest.TestCase):
 
             @classmethod
             def now(cls):
-                return cls(2010, 1, 6, 14, 17, 02)
+                return cls(2010, 1, 6, 14, 17, 2)
         datetime.datetime = MockDate
         # Allow a small time for separate thread to register time stamps.
         time.sleep(0.001)
@@ -428,7 +428,7 @@ class SchedulerTests(unittest.TestCase):
 
             @classmethod
             def now(cls):
-                return cls(2010, 1, 7, 14, 17, 02)
+                return cls(2010, 1, 7, 14, 17, 2)
         mock_job.reset_mock()
         datetime.datetime = MockDate
         # Allow a small time for separate thread to register time stamps.
@@ -444,7 +444,7 @@ class SchedulerTests(unittest.TestCase):
 
             @classmethod
             def now(cls):
-                return cls(2010, 1, 8, 14, 17, 02)
+                return cls(2010, 1, 8, 14, 17, 2)
         datetime.datetime = MockDate
         # Allow a small time for separate thread to register time stamps.
         time.sleep(0.001)
