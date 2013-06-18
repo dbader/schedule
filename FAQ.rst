@@ -1,5 +1,10 @@
+FAQ
+===
+
+Frequently asked questions on the usage of ``schedule``.
+
 How to execute jobs in parallel?
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 *I am trying to execute 50 items every 10 seconds, but from the my logs it says it executes every item in 10 second schedule serially, is there a work around?*
 
@@ -71,6 +76,6 @@ If you want tighter control on the number of threads use a shared jobqueue and o
 This model also makes sense for a distributed application where the workers are separate processes that receive jobs from a distributed work queue. I like using beanstalkd with the beanstalkc Python library.
 
 How to continuously run the scheduler without blocking the main thread?
------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Run the scheduler in a separate thread. Mrwhick wrote up a nice solution in to this problem `here <https://github.com/mrhwick/schedule/blob/master/schedule/__init__.py>`_ (look for ``run_continuously()``)
