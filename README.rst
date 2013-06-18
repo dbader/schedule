@@ -50,6 +50,11 @@ Usage
         schedule.run_pending()
         time.sleep(1)
 
+FAQ
+---
+
+In lieu of a full documentation (coming soon) check out this set of `frequently asked questions <https://github.com/dbader/schedule/blob/master/FAQ.rst>`_ for solutions to some common questions.
+
 Meta
 ----
 
