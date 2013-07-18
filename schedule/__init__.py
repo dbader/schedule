@@ -79,7 +79,7 @@ class Scheduler(object):
             @classmethod
             def run(cls):
                 while not cease_continuous_run.is_set():
-                    run_pending()
+                    self.run_pending()
                     time.sleep(interval)
 
         continuous_thread = ScheduleThread()
