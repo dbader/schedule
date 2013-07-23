@@ -2,6 +2,7 @@
 import unittest
 import mock
 import datetime
+import time
 
 # Silence "missing docstring", "method could be a function",
 # "class already defined", and "too many public methods" messages:
@@ -54,6 +55,7 @@ class SchedulerTests(unittest.TestCase):
         datetime.datetime = MockDate
 
         mock_job = make_mock_job()
+        assert schedule.next_run() is None
         assert every().minute.do(mock_job).next_run.minute == 16
         assert every(5).minutes.do(mock_job).next_run.minute == 20
         assert every().hour.do(mock_job).next_run.hour == 13
@@ -244,4 +246,213 @@ class SchedulerTests(unittest.TestCase):
         assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
         assert schedule.idle_seconds() == 60 * 60
 
+        datetime.datetime = original_datetime
+
+    def test_run_continuously(self):
+        """Check that run_continuously() runs pending jobs.
+        We do this by overriding datetime.datetime with mock objects
+        that represent increasing system times.
+
+        Please note that it is *intended behavior that run_continuously()
+        does not run missed jobs*. For example, if you've registered a job
+        that should run every minute and you set a continuous run interval
+        of one hour then your job won't be run 60 times at each interval but
+        only once.
+        """
+        # Monkey-patch datetime.datetime to get predictable (=testable) results
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(2010, 1, 6)
+
+            @classmethod
+            def now(cls):
+                return cls(2010, 1, 6, 12, 15, 0)
+        original_datetime = datetime.datetime
+        datetime.datetime = MockDate
+
+        mock_job = make_mock_job()
+
+        # Secondly Tests
+        # Initialize everything.
+        schedule.clear()
+        mock_job.reset_mock()
+        every().second.do(mock_job)
+
+        # Start a new continuous run thread.
+        stop_thread_flag = schedule.run_continuously(0)
+        # Allow a small time for separate thread to register time stamps.
+        time.sleep(0.001)
+
+        assert mock_job.call_count == 0
+
+        # Secondly first second.
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(2010, 1, 6)
+
+            @classmethod
+            def now(cls):
+                return cls(2010, 1, 6, 12, 15, 1)
+        mock_job.reset_mock()
+        datetime.datetime = MockDate
+        # Allow a small time for separate thread to register time stamps.
+        time.sleep(0.001)
+
+        assert mock_job.call_count == 1
+
+        # Secondly second second.
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(2010, 1, 6)
+
+            @classmethod
+            def now(cls):
+                return cls(2010, 1, 6, 12, 15, 2)
+        datetime.datetime = MockDate
+        # Allow a small time for separate thread to register time stamps.
+        time.sleep(0.001)
+
+        assert mock_job.call_count == 2
+
+        # Minutely Tests
+        # (Re)Initialize everything.
+        schedule.clear()
+        mock_job.reset_mock()
+        stop_thread_flag.set()
+        every().minute.do(mock_job)
+
+        # Start a new continuous run thread.
+        stop_thread_flag = schedule.run_continuously(0)
+        # Allow a small time for separate thread to register time stamps.
+        time.sleep(0.001)
+
+        assert mock_job.call_count == 0
+
+        # Minutely first minute.
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(2010, 1, 6)
+
+            @classmethod
+            def now(cls):
+                return cls(2010, 1, 6, 12, 16, 2)
+        mock_job.reset_mock()
+        datetime.datetime = MockDate
+        # Allow a small time for separate thread to register time stamps.
+        time.sleep(0.001)
+
+        assert mock_job.call_count == 1
+
+        # Minutely second minute.
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(2010, 1, 6)
+
+            @classmethod
+            def now(cls):
+                return cls(2010, 1, 6, 12, 17, 2)
+        datetime.datetime = MockDate
+        # Allow a small time for separate thread to register time stamps.
+        time.sleep(0.001)
+
+        assert mock_job.call_count == 2
+
+        # Hourly Tests
+        # (Re)Initialize everything.
+        schedule.clear()
+        mock_job.reset_mock()
+        stop_thread_flag.set()
+        every().hour.do(mock_job)
+
+        # Start a new continuous run thread.
+        stop_thread_flag = schedule.run_continuously(0)
+        # Allow a small time for separate thread to register time stamps.
+        time.sleep(0.001)
+
+        assert mock_job.call_count == 0
+
+        # Hourly first hour.
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(2010, 1, 6)
+
+            @classmethod
+            def now(cls):
+                return cls(2010, 1, 6, 13, 17, 2)
+        mock_job.reset_mock()
+        datetime.datetime = MockDate
+        # Allow a small time for separate thread to register time stamps.
+        time.sleep(0.001)
+
+        assert mock_job.call_count == 1
+
+        # Hourly second hour.
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(2010, 1, 6)
+
+            @classmethod
+            def now(cls):
+                return cls(2010, 1, 6, 14, 17, 2)
+        datetime.datetime = MockDate
+        # Allow a small time for separate thread to register time stamps.
+        time.sleep(0.001)
+
+        assert mock_job.call_count == 2
+
+        # Daily Tests
+        # (Re)Initialize everything.
+        schedule.clear()
+        mock_job.reset_mock()
+        stop_thread_flag.set()
+        every().day.do(mock_job)
+
+        # Start a new continuous run thread.
+        stop_thread_flag = schedule.run_continuously(0)
+        # Allow a small time for separate thread to register time stamps.
+        time.sleep(0.001)
+
+        assert mock_job.call_count == 0
+
+        # Daily first day.
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(2010, 1, 6)
+
+            @classmethod
+            def now(cls):
+                return cls(2010, 1, 7, 14, 17, 2)
+        mock_job.reset_mock()
+        datetime.datetime = MockDate
+        # Allow a small time for separate thread to register time stamps.
+        time.sleep(0.001)
+
+        assert mock_job.call_count == 1
+
+        # Daily second day.
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(2010, 1, 6)
+
+            @classmethod
+            def now(cls):
+                return cls(2010, 1, 8, 14, 17, 2)
+        datetime.datetime = MockDate
+        # Allow a small time for separate thread to register time stamps.
+        time.sleep(0.001)
+
+        assert mock_job.call_count == 2
+
+        schedule.clear()
+        mock_job.reset_mock()
+        stop_thread_flag.set()
         datetime.datetime = original_datetime
