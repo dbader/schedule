@@ -111,7 +111,7 @@ class Scheduler(object):
     @property
     def next_run(self):
         """Datetime when the next job should run."""
-        if self.jobs.__len__() > 0:
+        if self.jobs:
             date_time = min(self.jobs).next_run
         else:
             return None
