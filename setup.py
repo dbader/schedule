@@ -6,10 +6,14 @@ if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload -r PyPI')
     sys.exit()
 
+SCHEDULE_VERSION = '0.1.11'
+SCHEDULE_DOWNLOAD_URL = ('https://github.com/dbader/schedule/tarball/' +
+                         SCHEDULE_VERSION)
+
 setup(
     name='schedule',
     packages=['schedule'],
-    version='0.1.11',
+    version=SCHEDULE_VERSION,
     description='Job scheduling for humans.',
     long_description=(open('README.rst').read() + '\n\n' +
                       open('HISTORY.rst').read()),
@@ -17,7 +21,7 @@ setup(
     author='Daniel Bader',
     author_email='mail@dbader.org',
     url='https://github.com/dbader/schedule',
-    download_url='https://github.com/dbader/schedule/tarball/0.1.11',
+    download_url=SCHEDULE_DOWNLOAD_URL,
     keywords=[
         'schedule', 'periodic', 'jobs', 'scheduling', 'clockwork',
         'cron'
