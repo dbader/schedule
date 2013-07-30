@@ -54,6 +54,7 @@ class SchedulerTests(unittest.TestCase):
         datetime.datetime = MockDate
 
         mock_job = make_mock_job()
+        assert schedule.next_run() is None
         assert every().minute.do(mock_job).next_run.minute == 16
         assert every(5).minutes.do(mock_job).next_run.minute == 20
         assert every().hour.do(mock_job).next_run.hour == 13
