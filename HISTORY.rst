@@ -3,6 +3,10 @@
 History
 -------
 
+0.1.11 (2013-07-30)
++++++++++++++++++++
+- Fixed an issue with ``next_run()`` throwing a ``ValueError`` exception when the job queue is empty. Thanks to @dpagano for pointing this out and thanks to @mrhwick for quickly providing a fix.
+
 0.1.10 (2013-06-07)
 +++++++++++++++++++
 
