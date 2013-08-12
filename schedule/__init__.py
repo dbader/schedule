@@ -75,9 +75,9 @@ class Scheduler(object):
         """Deletes all scheduled jobs."""
         del self.jobs[:]
 
-    def delete(self,job):
+    def delete(self, job):
         """Delete a scheduled job."""
-        try :
+        try:
             self.jobs.remove(job)
         except ValueError:
             pass
@@ -88,8 +88,8 @@ class Scheduler(object):
         self.jobs.append(job)
         return job
 
-    def _run_job(self,job):
-        if job.run() == False :
+    def _run_job(self, job):
+        if job.run() is False:
             self.delete(job)
 
     @property
