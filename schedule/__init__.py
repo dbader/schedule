@@ -57,7 +57,7 @@ class Scheduler(object):
         """
         runnable_jobs = (job for job in self.jobs if job.should_run)
         for job in sorted(runnable_jobs):
-            job.run()
+            self._run_job(job)
 
     def run_all(self, delay_seconds=0):
         """Run all jobs regardless if they are scheduled to run or not.
@@ -68,18 +68,29 @@ class Scheduler(object):
         logger.info('Running *all* %i jobs with %is delay inbetween',
                     len(self.jobs), delay_seconds)
         for job in self.jobs:
-            job.run()
+            self._run_job(job)
             time.sleep(delay_seconds)
 
     def clear(self):
         """Deletes all scheduled jobs."""
         del self.jobs[:]
 
+    def delete(self,job):
+        """Delete a scheduled job."""
+        try :
+            self.jobs.remove(job)
+        except ValueError:
+            pass
+
     def every(self, interval=1):
         """Schedule a new periodic job."""
         job = Job(interval)
         self.jobs.append(job)
         return job
+
+    def _run_job(self,job):
+        if job.run() == False :
+            self.delete(job)
 
     @property
     def next_run(self):
@@ -217,9 +228,10 @@ class Job(object):
     def run(self):
         """Run the job and immediately reschedule it."""
         logger.info('Running job %s', self)
-        self.job_func()
+        ret = self.job_func()
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
+        return ret
 
     def _schedule_next_run(self):
         """Compute the instant when this job should run next."""
