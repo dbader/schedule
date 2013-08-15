@@ -259,6 +259,6 @@ class SchedulerTests(unittest.TestCase):
         schedule.run_all()
         assert len(schedule.jobs) == 1
         assert schedule.jobs[0] == mj
-        
+
         schedule.default_scheduler.delete('Not a job')
         assert len(schedule.jobs) == 1
