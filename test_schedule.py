@@ -246,3 +246,19 @@ class SchedulerTests(unittest.TestCase):
         assert schedule.idle_seconds() == 60 * 60
 
         datetime.datetime = original_datetime
+
+    def test_delete(self):
+        def stop_job():
+            return False
+        mock_job = make_mock_job()
+
+        every().second.do(stop_job)
+        mj = every().second.do(mock_job)
+        assert len(schedule.jobs) == 2
+
+        schedule.run_all()
+        assert len(schedule.jobs) == 1
+        assert schedule.jobs[0] == mj
+        
+        schedule.default_scheduler.delete('Not a job')
+        assert len(schedule.jobs) == 1
