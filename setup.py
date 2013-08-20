@@ -10,6 +10,10 @@ SCHEDULE_VERSION = '0.1.11'
 SCHEDULE_DOWNLOAD_URL = ('https://github.com/dbader/schedule/tarball/' +
                          SCHEDULE_VERSION)
 
+requires = [
+    'python-dateutil',
+    ]
+
 setup(
     name='schedule',
     packages=['schedule'],
@@ -21,6 +25,8 @@ setup(
     author='Daniel Bader',
     author_email='mail@dbader.org',
     url='https://github.com/dbader/schedule',
+    install_requires=requires,
+    tests_require=requires,
     download_url=SCHEDULE_DOWNLOAD_URL,
     keywords=[
         'schedule', 'periodic', 'jobs', 'scheduling', 'clockwork',
