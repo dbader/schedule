@@ -79,3 +79,8 @@ How to continuously run the scheduler without blocking the main thread?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Run the scheduler in a separate thread. Mrwhick wrote up a nice solution in to this problem `here <https://github.com/mrhwick/schedule/blob/master/schedule/__init__.py>`_ (look for ``run_continuously()``)
+
+Does schedule support timezones?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Vanilla schedule doesn't support timezones at the moment. If you need this functionality please check out @imiric's work `here <https://github.com/dbader/schedule/pull/16>`_. He added timezone support to schedule using python-dateutil.
