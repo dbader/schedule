@@ -38,6 +38,10 @@ import datetime
 import functools
 import logging
 import time
+from dateutil import parser
+from dateutil.tz import tzlocal
+
+from .tz import tz_offsets
 
 logger = logging.getLogger('schedule')
 
@@ -91,7 +95,8 @@ class Scheduler(object):
     @property
     def idle_seconds(self):
         """Number of seconds until `next_run`."""
-        return (self.next_run - datetime.datetime.now()).total_seconds()
+        return (self.next_run - datetime.datetime.now(tzlocal())
+                ).total_seconds()
 
 
 class Job(object):
@@ -112,7 +117,7 @@ class Job(object):
 
     def __repr__(self):
         def format_time(t):
-            return t.strftime("%Y-%m-%d %H:%M:%S") if t else '[never]'
+            return t.strftime("%Y-%m-%d %H:%M:%S %Z") if t else '[never]'
 
         timestats = '(last run: %s, next run: %s)' % (
                     format_time(self.last_run), format_time(self.next_run))
@@ -127,7 +132,8 @@ class Job(object):
             return 'Every %s %s at %s do %s %s' % (
                    self.interval,
                    self.unit[:-1] if self.interval == 1 else self.unit,
-                   self.at_time, call_repr, timestats)
+                   self.at_time.strftime('%H:%M:%S %Z').strip(),
+                   call_repr, timestats)
         else:
             return 'Every %s %s do %s %s' % (
                    self.interval,
@@ -191,10 +197,9 @@ class Job(object):
         N day(s).
         """
         assert self.unit == 'days'
-        hour, minute = [int(t) for t in time_str.split(':')]
-        assert 0 <= hour <= 23
-        assert 0 <= minute <= 59
-        self.at_time = datetime.time(hour, minute)
+        self.at_time = parser.parse(time_str, tzinfos=tz_offsets)
+        if not self.at_time.tzinfo:
+            self.at_time = self.at_time.replace(tzinfo=tzlocal())
         return self
 
     def do(self, job_func, *args, **kwargs):
@@ -212,13 +217,13 @@ class Job(object):
     @property
     def should_run(self):
         """True if the job should be run now."""
-        return datetime.datetime.now() >= self.next_run
+        return datetime.datetime.now(tzlocal()) >= self.next_run
 
     def run(self):
         """Run the job and immediately reschedule it."""
         logger.info('Running job %s', self)
         self.job_func()
-        self.last_run = datetime.datetime.now()
+        self.last_run = datetime.datetime.now(tzlocal())
         self._schedule_next_run()
 
     def _schedule_next_run(self):
@@ -227,17 +232,18 @@ class Job(object):
         # pylint: disable=W0142
         assert self.unit in ('seconds', 'minutes', 'hours', 'days', 'weeks')
         self.period = datetime.timedelta(**{self.unit: self.interval})
-        self.next_run = datetime.datetime.now() + self.period
+        self.next_run = datetime.datetime.now(tzlocal()) + self.period
         if self.at_time:
             assert self.unit == 'days'
             self.next_run = self.next_run.replace(hour=self.at_time.hour,
                                                   minute=self.at_time.minute,
                                                   second=self.at_time.second,
-                                                  microsecond=0)
+                                                  microsecond=0,
+                                                  tzinfo=self.at_time.tzinfo)
             # If we are running for the first time, make sure we run
             # at the specified time *today* as well
             if (not self.last_run and
-                    self.at_time > datetime.datetime.now().time()):
+                    self.at_time > datetime.datetime.now(tzlocal())):
                 self.next_run = self.next_run - datetime.timedelta(days=1)
 
 

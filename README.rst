@@ -23,7 +23,8 @@ Inspired by `Adam Wiggins' <https://github.com/adamwiggins>`_ article `"Rethinki
 Features
 --------
 - A simple to use API for scheduling jobs.
-- Very lightweight and no external dependencies.
+- Very lightweight with `python-dateutil
+  <https://pypi.python.org/pypi/python-dateutil>`_. as the only dependency.
 - Excellent test coverage.
 - Works with Python 2.7 and 3.3
 
@@ -45,6 +46,9 @@ Usage
     schedule.every(10).minutes.do(job)
     schedule.every().hour.do(job)
     schedule.every().day.at("10:30").do(job)
+    # Timezone support!
+    # If not specified, the local timezone is assumed.
+    schedule.every().day.at("10:30 PDT").do(job)
 
     while True:
         schedule.run_pending()
