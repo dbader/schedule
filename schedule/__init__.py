@@ -42,6 +42,10 @@ import time
 logger = logging.getLogger('schedule')
 
 
+class CancelJob(object):
+    pass
+
+
 class Scheduler(object):
     def __init__(self):
         self.jobs = []
@@ -75,7 +79,7 @@ class Scheduler(object):
         """Deletes all scheduled jobs."""
         del self.jobs[:]
 
-    def delete(self, job):
+    def cancel_job(self, job):
         """Delete a scheduled job."""
         try:
             self.jobs.remove(job)
@@ -89,8 +93,9 @@ class Scheduler(object):
         return job
 
     def _run_job(self, job):
-        if job.run() is False:
-            self.delete(job)
+        ret = job.run()
+        if isinstance(ret, CancelJob) or ret is CancelJob:
+            self.cancel_job(job)
 
     @property
     def next_run(self):
@@ -289,6 +294,14 @@ def run_all(delay_seconds=0):
 def clear():
     """Deletes all scheduled jobs."""
     default_scheduler.clear()
+
+
+def cancel_job(self, job):
+    """Delete a scheduled job."""
+    try:
+        default_scheduler.jobs.remove(job)
+    except ValueError:
+        pass
 
 
 def next_run():

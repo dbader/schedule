@@ -249,7 +249,7 @@ class SchedulerTests(unittest.TestCase):
 
     def test_delete(self):
         def stop_job():
-            return False
+            return schedule.CancelJob
         mock_job = make_mock_job()
 
         every().second.do(stop_job)
@@ -260,5 +260,5 @@ class SchedulerTests(unittest.TestCase):
         assert len(schedule.jobs) == 1
         assert schedule.jobs[0] == mj
 
-        schedule.default_scheduler.delete('Not a job')
+        schedule.default_scheduler.cancel_job('Not a job')
         assert len(schedule.jobs) == 1
