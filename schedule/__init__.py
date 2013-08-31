@@ -296,7 +296,7 @@ def clear():
     default_scheduler.clear()
 
 
-def cancel_job(self, job):
+def cancel_job(job):
     """Delete a scheduled job."""
     try:
         default_scheduler.jobs.remove(job)
