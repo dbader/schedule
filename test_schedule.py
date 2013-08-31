@@ -247,7 +247,7 @@ class SchedulerTests(unittest.TestCase):
 
         datetime.datetime = original_datetime
 
-    def test_delete(self):
+    def test_cancel_job(self):
         def stop_job():
             return schedule.CancelJob
         mock_job = make_mock_job()
@@ -260,5 +260,5 @@ class SchedulerTests(unittest.TestCase):
         assert len(schedule.jobs) == 1
         assert schedule.jobs[0] == mj
 
-        schedule.default_scheduler.cancel_job('Not a job')
+        schedule.cancel_job('Not a job')
         assert len(schedule.jobs) == 1
