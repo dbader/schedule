@@ -262,3 +262,6 @@ class SchedulerTests(unittest.TestCase):
 
         schedule.cancel_job('Not a job')
         assert len(schedule.jobs) == 1
+
+        schedule.cancel_job(mj)
+        assert len(schedule.jobs) == 0
