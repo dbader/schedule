@@ -298,10 +298,7 @@ def clear():
 
 def cancel_job(job):
     """Delete a scheduled job."""
-    try:
-        default_scheduler.jobs.remove(job)
-    except ValueError:
-        pass
+    default_scheduler.cancel_job(job)
 
 
 def next_run():
