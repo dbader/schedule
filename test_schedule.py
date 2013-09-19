@@ -73,18 +73,8 @@ class SchedulerTests(unittest.TestCase):
         assert every().day.at('10:30').do(mock_job).next_run.hour == 10
         assert every().day.at('10:30').do(mock_job).next_run.minute == 30
 
+    @mock_time(2010, 1, 6, 12, 15)
     def test_next_run_time(self):
-        # Monkey-patch datetime.datetime to get predictable (=testable) results
-        class MockDate(datetime.datetime):
-            @classmethod
-            def today(cls):
-                return cls(2010, 1, 6)
-
-            @classmethod
-            def now(cls):
-                return cls(2010, 1, 6, 12, 15)
-        original_datetime = datetime.datetime
-        datetime.datetime = MockDate
 
         mock_job = make_mock_job()
         assert schedule.next_run() is None
@@ -95,8 +85,6 @@ class SchedulerTests(unittest.TestCase):
         assert every().day.at('09:00').do(mock_job).next_run.day == 7
         assert every().day.at('12:30').do(mock_job).next_run.day == 6
         assert every().week.do(mock_job).next_run.day == 13
-
-        datetime.datetime = original_datetime
 
     def test_run_all(self):
         mock_job = make_mock_job()
