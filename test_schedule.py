@@ -17,6 +17,39 @@ def make_mock_job(name=None):
     return job
 
 
+class mock_time(object):
+    """
+    decorator to monkey-patch datetime for predicable results
+    """
+
+    def __init__(self, year, month, day, hour, minute):
+        self.year = year
+        self.month = month
+        self.day = day
+        self.hour = hour
+        self.minute = minute
+
+    def __call__(self, fun):
+        def wrapper(*args, **kwargs):
+            class MockDate(datetime.datetime):
+                @classmethod
+                def today(cls):
+                    return cls(self.year, self.month, self.day)
+
+                @classmethod
+                def now(cls):
+                    return cls(self.year, self.month, self.day, self.hour,
+                               self.minute)
+
+            original_datetime = datetime.datetime
+            datetime.datetime = MockDate
+            value = fun(*args, **kwargs)
+            datetime.datetime = original_datetime
+            return value
+
+        return wrapper
+
+
 class SchedulerTests(unittest.TestCase):
     def setUp(self):
         schedule.clear()
