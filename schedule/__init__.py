@@ -206,9 +206,14 @@ class Job(object):
         Calling this is only valid for jobs scheduled to run every
         N day(s).
         """
-        assert self.unit == 'days'
-        hour, minute = [int(t) for t in time_str.split(':')]
-        assert 0 <= hour <= 23
+        assert self.unit in ['days', 'hours', ]
+        hour, minute = [t for t in time_str.split(':')]
+        minute = int(minute)
+        if self.unit == 'days':
+            hour = int(hour)
+            assert 0 <= hour <= 23
+        elif self.unit == 'hours':
+            hour = 0
         assert 0 <= minute <= 59
         self.at_time = datetime.time(hour, minute)
         return self
@@ -245,17 +250,25 @@ class Job(object):
         assert self.unit in ('seconds', 'minutes', 'hours', 'days', 'weeks')
         self.period = datetime.timedelta(**{self.unit: self.interval})
         self.next_run = datetime.datetime.now() + self.period
-        if self.at_time:
-            assert self.unit == 'days'
-            self.next_run = self.next_run.replace(hour=self.at_time.hour,
-                                                  minute=self.at_time.minute,
-                                                  second=self.at_time.second,
-                                                  microsecond=0)
+        if self.at_time is not None:
+            assert self.unit in ['days', 'hours', ]
+            kwargs = {'minute': self.at_time.minute,
+                      'second': self.at_time.second,
+                      'microsecond': 0
+                      }
+            if self.unit == 'days':
+                kwargs['hour'] = self.at_time.hour
+            self.next_run = self.next_run.replace(**kwargs)
             # If we are running for the first time, make sure we run
-            # at the specified time *today* as well
-            if (not self.last_run and
-                    self.at_time > datetime.datetime.now().time()):
-                self.next_run = self.next_run - datetime.timedelta(days=1)
+            # at the specified time *today* (or *this hour*) as well
+            if not self.last_run:
+                now = datetime.datetime.now()
+                if self.unit == 'days' and \
+                        self.at_time > now.time():
+                    self.next_run = self.next_run - datetime.timedelta(days=1)
+                elif self.unit == 'hours' and \
+                        self.at_time.minute > now.minute:
+                    self.next_run = self.next_run - datetime.timedelta(hours=1)
 
 
 # The following methods are shortcuts for not having to
