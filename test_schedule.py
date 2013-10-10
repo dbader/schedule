@@ -17,6 +17,34 @@ def make_mock_job(name=None):
     return job
 
 
+class mock_datetime(object):
+    """
+    monkey-patch datetime for predictable results
+    """
+    def __init__(self, year, month, day, hour, minute):
+        self.year = year
+        self.month = month
+        self.day = day
+        self.hour = hour
+        self.minute = minute
+
+    def __enter__(self):
+        class MockDate(datetime.datetime):
+            @classmethod
+            def today(cls):
+                return cls(self.year, self.month, self.day)
+
+            @classmethod
+            def now(cls):
+                return cls(self.year, self.month, self.day,
+                           self.hour, self.minute)
+        self.original_datetime = datetime.datetime
+        datetime.datetime = MockDate
+
+    def __exit__(self, *args, **kwargs):
+        datetime.datetime = self.original_datetime
+
+
 class SchedulerTests(unittest.TestCase):
     def setUp(self):
         schedule.clear()
@@ -40,30 +68,27 @@ class SchedulerTests(unittest.TestCase):
         assert every().day.at('10:30').do(mock_job).next_run.hour == 10
         assert every().day.at('10:30').do(mock_job).next_run.minute == 30
 
+    def test_at_time_hour(self):
+        with mock_datetime(2010, 1, 6, 12, 20):
+            mock_job = make_mock_job()
+            assert every().hour.at(':30').do(mock_job).next_run.hour == 12
+            assert every().hour.at(':30').do(mock_job).next_run.minute == 30
+            assert every().hour.at(':10').do(mock_job).next_run.hour == 13
+            assert every().hour.at(':10').do(mock_job).next_run.minute == 10
+            assert every().hour.at(':00').do(mock_job).next_run.hour == 13
+            assert every().hour.at(':00').do(mock_job).next_run.minute == 0
+
     def test_next_run_time(self):
-        # Monkey-patch datetime.datetime to get predictable (=testable) results
-        class MockDate(datetime.datetime):
-            @classmethod
-            def today(cls):
-                return cls(2010, 1, 6)
-
-            @classmethod
-            def now(cls):
-                return cls(2010, 1, 6, 12, 15)
-        original_datetime = datetime.datetime
-        datetime.datetime = MockDate
-
-        mock_job = make_mock_job()
-        assert schedule.next_run() is None
-        assert every().minute.do(mock_job).next_run.minute == 16
-        assert every(5).minutes.do(mock_job).next_run.minute == 20
-        assert every().hour.do(mock_job).next_run.hour == 13
-        assert every().day.do(mock_job).next_run.day == 7
-        assert every().day.at('09:00').do(mock_job).next_run.day == 7
-        assert every().day.at('12:30').do(mock_job).next_run.day == 6
-        assert every().week.do(mock_job).next_run.day == 13
-
-        datetime.datetime = original_datetime
+        with mock_datetime(2010, 1, 6, 12, 15):
+            mock_job = make_mock_job()
+            assert schedule.next_run() is None
+            assert every().minute.do(mock_job).next_run.minute == 16
+            assert every(5).minutes.do(mock_job).next_run.minute == 20
+            assert every().hour.do(mock_job).next_run.hour == 13
+            assert every().day.do(mock_job).next_run.day == 7
+            assert every().day.at('09:00').do(mock_job).next_run.day == 7
+            assert every().day.at('12:30').do(mock_job).next_run.day == 6
+            assert every().week.do(mock_job).next_run.day == 13
 
     def test_run_all(self):
         mock_job = make_mock_job()
@@ -100,152 +125,59 @@ class SchedulerTests(unittest.TestCase):
         increments then your job won't be run 60 times in between but
         only once.
         """
-        # Monkey-patch datetime.datetime to get predictable (=testable) results
-        class MockDate(datetime.datetime):
-            @classmethod
-            def today(cls):
-                return cls(2010, 1, 6)
-
-            @classmethod
-            def now(cls):
-                return cls(2010, 1, 6, 12, 15)
-        original_datetime = datetime.datetime
-        datetime.datetime = MockDate
-
         mock_job = make_mock_job()
-        every().minute.do(mock_job)
-        every().hour.do(mock_job)
-        every().day.do(mock_job)
 
-        schedule.run_pending()
-        assert mock_job.call_count == 0
+        with mock_datetime(2010, 1, 6, 12, 15):
+            every().minute.do(mock_job)
+            every().hour.do(mock_job)
+            every().day.do(mock_job)
+            schedule.run_pending()
+            assert mock_job.call_count == 0
 
-        # Minutely
-        class MockDate(datetime.datetime):
-            @classmethod
-            def today(cls):
-                return cls(2010, 1, 6)
+        with mock_datetime(2010, 1, 6, 12, 16):
+            schedule.run_pending()
+            assert mock_job.call_count == 1
 
-            @classmethod
-            def now(cls):
-                return cls(2010, 1, 6, 12, 16)
-        datetime.datetime = MockDate
-        schedule.run_pending()
-        assert mock_job.call_count == 1
+        with mock_datetime(2010, 1, 6, 13, 16):
+            mock_job.reset_mock()
+            schedule.run_pending()
+            assert mock_job.call_count == 2
 
-        # Minutely, hourly
-        class MockDate(datetime.datetime):
-            @classmethod
-            def today(cls):
-                return cls(2010, 1, 6)
-
-            @classmethod
-            def now(cls):
-                return cls(2010, 1, 6, 13, 16)
-        datetime.datetime = MockDate
-
-        mock_job.reset_mock()
-        schedule.run_pending()
-        assert mock_job.call_count == 2
-
-        # Minutely, hourly, daily
-        class MockDate(datetime.datetime):
-            @classmethod
-            def today(cls):
-                return cls(2010, 1, 7)
-
-            @classmethod
-            def now(cls):
-                return cls(2010, 1, 7, 13, 16)
-        datetime.datetime = MockDate
-
-        mock_job.reset_mock()
-        schedule.run_pending()
-        assert mock_job.call_count == 3
-
-        datetime.datetime = original_datetime
+        with mock_datetime(2010, 1, 7, 13, 16):
+            mock_job.reset_mock()
+            schedule.run_pending()
+            assert mock_job.call_count == 3
 
     def test_run_every_n_days_at_specific_time(self):
-        class MockDate(datetime.datetime):
-            @classmethod
-            def today(cls):
-                return cls(2010, 1, 6)
-
-            @classmethod
-            def now(cls):
-                return cls(2010, 1, 6, 13, 16)
-        original_datetime = datetime.datetime
-        datetime.datetime = MockDate
-
         mock_job = make_mock_job()
-        every(2).days.at("11:30").do(mock_job)
+        with mock_datetime(2010, 1, 6, 13, 16):
+            every(2).days.at("11:30").do(mock_job)
+            schedule.run_pending()
+            assert mock_job.call_count == 0
 
-        schedule.run_pending()
-        assert mock_job.call_count == 0
+        with mock_datetime(2010, 1, 7, 13, 16):
+            schedule.run_pending()
+            assert mock_job.call_count == 0
 
-        class MockDate(datetime.datetime):
-            @classmethod
-            def today(cls):
-                return cls(2010, 1, 7)
+        with mock_datetime(2010, 1, 8, 13, 16):
+            schedule.run_pending()
+            assert mock_job.call_count == 1
 
-            @classmethod
-            def now(cls):
-                return cls(2010, 1, 7, 13, 16)
-        datetime.datetime = MockDate
-
-        schedule.run_pending()
-        assert mock_job.call_count == 0
-
-        class MockDate(datetime.datetime):
-            @classmethod
-            def today(cls):
-                return cls(2010, 1, 8)
-
-            @classmethod
-            def now(cls):
-                return cls(2010, 1, 8, 13, 16)
-        datetime.datetime = MockDate
-
-        schedule.run_pending()
-        assert mock_job.call_count == 1
-
-        class MockDate(datetime.datetime):
-            @classmethod
-            def today(cls):
-                return cls(2010, 1, 10)
-
-            @classmethod
-            def now(cls):
-                return cls(2010, 1, 10, 13, 16)
-        datetime.datetime = MockDate
-
-        schedule.run_pending()
-        assert mock_job.call_count == 2
-
-        datetime.datetime = original_datetime
+        with mock_datetime(2010, 1, 10, 13, 16):
+            schedule.run_pending()
+            assert mock_job.call_count == 2
 
     def test_next_run_property(self):
-        class MockDate(datetime.datetime):
-            @classmethod
-            def today(cls):
-                return cls(2010, 1, 6)
-
-            @classmethod
-            def now(cls):
-                return cls(2010, 1, 6, 13, 16)
         original_datetime = datetime.datetime
-        datetime.datetime = MockDate
-
-        hourly_job = make_mock_job('hourly')
-        daily_job = make_mock_job('daily')
-        every().day.do(daily_job)
-        every().hour.do(hourly_job)
-        assert len(schedule.jobs) == 2
-        # Make sure the hourly job is first
-        assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
-        assert schedule.idle_seconds() == 60 * 60
-
-        datetime.datetime = original_datetime
+        with mock_datetime(2010, 1, 6, 13, 16):
+            hourly_job = make_mock_job('hourly')
+            daily_job = make_mock_job('daily')
+            every().day.do(daily_job)
+            every().hour.do(hourly_job)
+            assert len(schedule.jobs) == 2
+            # Make sure the hourly job is first
+            assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
+            assert schedule.idle_seconds() == 60 * 60
 
     def test_cancel_job(self):
         def stop_job():
