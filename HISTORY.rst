@@ -3,6 +3,13 @@
 History
 -------
 
+0.2.0 (2013-11-09)
+++++++++++++++++++
+- This release introduces two new features in a backwards compatible way:
+- Allow jobs to cancel repeated execution: Jobs can be cancelled by calling ``schedule.cancel_job()`` or by returning ``schedule.CancelJob`` from the job function. (Thanks to @cfrco and @matrixise.)
+- Updated ``at_time()`` to allow running jobs at a particular time every hour. Example: ``every().hour.at(':15').do(job)`` will run ``job`` every hour (Thanks @mattss.)
+- Refactored unit tests to mock ``datetime`` in a cleaner way. (Thanks @matts.)
+
 0.1.11 (2013-07-30)
 +++++++++++++++++++
 - Fixed an issue with ``next_run()`` throwing a ``ValueError`` exception when the job queue is empty. Thanks to @dpagano for pointing this out and thanks to @mrhwick for quickly providing a fix.
