@@ -206,7 +206,7 @@ class Job(object):
         Calling this is only valid for jobs scheduled to run every
         N day(s).
         """
-        assert self.unit in ['days', 'hours', ]
+        assert self.unit in ('days', 'hours')
         hour, minute = [t for t in time_str.split(':')]
         minute = int(minute)
         if self.unit == 'days':
@@ -251,11 +251,12 @@ class Job(object):
         self.period = datetime.timedelta(**{self.unit: self.interval})
         self.next_run = datetime.datetime.now() + self.period
         if self.at_time is not None:
-            assert self.unit in ['days', 'hours', ]
-            kwargs = {'minute': self.at_time.minute,
-                      'second': self.at_time.second,
-                      'microsecond': 0
-                      }
+            assert self.unit in ('days', 'hours')
+            kwargs = {
+                'minute': self.at_time.minute,
+                'second': self.at_time.second,
+                'microsecond': 0
+            }
             if self.unit == 'days':
                 kwargs['hour'] = self.at_time.hour
             self.next_run = self.next_run.replace(**kwargs)
@@ -263,11 +264,9 @@ class Job(object):
             # at the specified time *today* (or *this hour*) as well
             if not self.last_run:
                 now = datetime.datetime.now()
-                if self.unit == 'days' and \
-                        self.at_time > now.time():
+                if self.unit == 'days' and self.at_time > now.time():
                     self.next_run = self.next_run - datetime.timedelta(days=1)
-                elif self.unit == 'hours' and \
-                        self.at_time.minute > now.minute:
+                elif self.unit == 'hours' and self.at_time.minute > now.minute:
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
 
 
