@@ -120,6 +120,7 @@ class Job(object):
         self.last_run = None  # datetime of the last run
         self.next_run = None  # datetime of the next run
         self.period = None  # timedelta between runs, only valid for
+        self.start_day = None  # Specific day of the week to start on
 
     def __lt__(self, other):
         """PeriodicJobs are sortable based on the scheduled time
@@ -196,6 +197,48 @@ class Job(object):
         return self.weeks
 
     @property
+    def monday(self):
+        assert self.interval == 1
+        self.start_day = 'monday'
+        return self.weeks
+
+    @property
+    def tuesday(self):
+        assert self.interval == 1
+        self.start_day = 'tuesday'
+        return self.weeks
+
+    @property
+    def wednesday(self):
+        assert self.interval == 1
+        self.start_day = 'wednesday'
+        return self.weeks
+
+    @property
+    def thursday(self):
+        assert self.interval == 1
+        self.start_day = 'thursday'
+        return self.weeks
+
+    @property
+    def friday(self):
+        assert self.interval == 1
+        self.start_day = 'friday'
+        return self.weeks
+
+    @property
+    def saturday(self):
+        assert self.interval == 1
+        self.start_day = 'saturday'
+        return self.weeks
+
+    @property
+    def sunday(self):
+        assert self.interval == 1
+        self.start_day = 'sunday'
+        return self.weeks
+
+    @property
     def weeks(self):
         self.unit = 'weeks'
         return self
@@ -206,10 +249,10 @@ class Job(object):
         Calling this is only valid for jobs scheduled to run every
         N day(s).
         """
-        assert self.unit in ('days', 'hours')
+        assert self.unit in ('days', 'hours') or self.start_day
         hour, minute = [t for t in time_str.split(':')]
         minute = int(minute)
-        if self.unit == 'days':
+        if self.unit == 'days' or self.start_day:
             hour = int(hour)
             assert 0 <= hour <= 23
         elif self.unit == 'hours':
@@ -250,14 +293,29 @@ class Job(object):
         assert self.unit in ('seconds', 'minutes', 'hours', 'days', 'weeks')
         self.period = datetime.timedelta(**{self.unit: self.interval})
         self.next_run = datetime.datetime.now() + self.period
+        if self.start_day is not None:
+            assert self.unit == 'weeks'
+            weekdays = ('monday',
+                        'tuesday',
+                        'wednesday',
+                        'thursday',
+                        'friday',
+                        'saturday',
+                        'sunday')
+            assert self.start_day in weekdays
+            weekday = weekdays.index(self.start_day)
+            days_ahead = weekday - self.next_run.weekday()
+            if days_ahead <= 0:  # Target day already happened this week
+                days_ahead += 7
+            self.next_run += datetime.timedelta(days_ahead) - self.period
         if self.at_time is not None:
-            assert self.unit in ('days', 'hours')
+            assert self.unit in ('days', 'hours') or self.start_day is not None
             kwargs = {
                 'minute': self.at_time.minute,
                 'second': self.at_time.second,
                 'microsecond': 0
             }
-            if self.unit == 'days':
+            if self.unit == 'days' or self.start_day is not None:
                 kwargs['hour'] = self.at_time.hour
             self.next_run = self.next_run.replace(**kwargs)
             # If we are running for the first time, make sure we run
@@ -268,7 +326,10 @@ class Job(object):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
                 elif self.unit == 'hours' and self.at_time.minute > now.minute:
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
-
+        if self.start_day is not None and self.at_time is not None:
+            # Let's see if we will still make that time we specified today
+            if (self.next_run - datetime.datetime.now()).days >= 7:
+                self.next_run -= self.period
 
 # The following methods are shortcuts for not having to
 # create a Scheduler instance:
