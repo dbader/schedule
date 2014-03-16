@@ -89,6 +89,13 @@ class SchedulerTests(unittest.TestCase):
             assert every().day.at('09:00').do(mock_job).next_run.day == 7
             assert every().day.at('12:30').do(mock_job).next_run.day == 6
             assert every().week.do(mock_job).next_run.day == 13
+            assert every().monday.do(mock_job).next_run.day == 11
+            assert every().tuesday.do(mock_job).next_run.day == 12
+            assert every().wednesday.do(mock_job).next_run.day == 13
+            assert every().thursday.do(mock_job).next_run.day == 7
+            assert every().friday.do(mock_job).next_run.day == 8
+            assert every().saturday.do(mock_job).next_run.day == 9
+            assert every().sunday.do(mock_job).next_run.day == 10
 
     def test_run_all(self):
         mock_job = make_mock_job()
@@ -131,6 +138,7 @@ class SchedulerTests(unittest.TestCase):
             every().minute.do(mock_job)
             every().hour.do(mock_job)
             every().day.do(mock_job)
+            every().sunday.do(mock_job)
             schedule.run_pending()
             assert mock_job.call_count == 0
 
@@ -147,6 +155,37 @@ class SchedulerTests(unittest.TestCase):
             mock_job.reset_mock()
             schedule.run_pending()
             assert mock_job.call_count == 3
+
+        with mock_datetime(2010, 1, 10, 13, 16):
+            mock_job.reset_mock()
+            schedule.run_pending()
+            assert mock_job.call_count == 4
+
+    def test_run_every_weekday_at_specific_time_today(self):
+        mock_job = make_mock_job()
+        with mock_datetime(2010, 1, 6, 13, 16):
+            every().wednesday.at("14:12").do(mock_job)
+            schedule.run_pending()
+            assert mock_job.call_count == 0
+
+        with mock_datetime(2010, 1, 6, 14, 16):
+            schedule.run_pending()
+            assert mock_job.call_count == 1
+
+    def test_run_every_weekday_at_specific_time_past_today(self):
+        mock_job = make_mock_job()
+        with mock_datetime(2010, 1, 6, 13, 16):
+            every().wednesday.at("13:15").do(mock_job)
+            schedule.run_pending()
+            assert mock_job.call_count == 0
+
+        with mock_datetime(2010, 1, 13, 13, 14):
+            schedule.run_pending()
+            assert mock_job.call_count == 0
+
+        with mock_datetime(2010, 1, 13, 13, 16):
+            schedule.run_pending()
+            assert mock_job.call_count == 1
 
     def test_run_every_n_days_at_specific_time(self):
         mock_job = make_mock_job()
