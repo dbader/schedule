@@ -10,6 +10,9 @@ schedule
 
 .. image:: https://pypip.in/v/schedule/badge.png
         :target: https://pypi.python.org/pypi/schedule
+        
+.. image:: https://pypip.in/d/schedule/badge.png
+        :target: https://pypi.python.org/pypi/schedule
 
 Python job scheduling for humans.
 
