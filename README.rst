@@ -10,7 +10,7 @@ schedule
 
 .. image:: https://pypip.in/v/schedule/badge.png
         :target: https://pypi.python.org/pypi/schedule
-        
+
 .. image:: https://pypip.in/d/schedule/badge.png
         :target: https://pypi.python.org/pypi/schedule
 
@@ -28,7 +28,7 @@ Features
 - A simple to use API for scheduling jobs.
 - Very lightweight and no external dependencies.
 - Excellent test coverage.
-- Works with Python 2.7 and 3.3
+- Tested on Python 2.7 and 3.4
 
 Usage
 -----
@@ -48,6 +48,8 @@ Usage
     schedule.every(10).minutes.do(job)
     schedule.every().hour.do(job)
     schedule.every().day.at("10:30").do(job)
+    schedule.every().monday.do(job)
+    schedule.every().wednesday.at("13:15").do(job)
 
     while True:
         schedule.run_pending()
