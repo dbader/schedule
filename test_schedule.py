@@ -19,7 +19,7 @@ def make_mock_job(name=None):
 
 class mock_datetime(object):
     """
-    monkey-patch datetime for predictable results
+    Monkey-patch datetime for predictable results
     """
     def __init__(self, year, month, day, hour, minute):
         self.year = year
