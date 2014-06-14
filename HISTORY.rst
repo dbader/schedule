@@ -3,12 +3,20 @@
 History
 -------
 
+0.3.0 (2014-06-14)
+++++++++++++++++++
+
+- Added support for scheduling jobs on specific weekdays. Example: ``schedule.every().tuesday.do(job)`` or ``schedule.every().wednesday.at("13:15").do(job)`` (Thanks @abultman.)
+- Run tests against Python 2.7 and 3.4. Python 3.3 should continue to work but we're not actively testing it on CI anymore.
+
 0.2.1 (2013-11-20)
 ++++++++++++++++++
+
 - Fixed history (no code changes).
 
 0.2.0 (2013-11-09)
 ++++++++++++++++++
+
 - This release introduces two new features in a backwards compatible way:
 - Allow jobs to cancel repeated execution: Jobs can be cancelled by calling ``schedule.cancel_job()`` or by returning ``schedule.CancelJob`` from the job function. (Thanks to @cfrco and @matrixise.)
 - Updated ``at_time()`` to allow running jobs at a particular time every hour. Example: ``every().hour.at(':15').do(job)`` will run ``job`` 15 minutes after every full hour. (Thanks @mattss.)
@@ -16,6 +24,7 @@ History
 
 0.1.11 (2013-07-30)
 +++++++++++++++++++
+
 - Fixed an issue with ``next_run()`` throwing a ``ValueError`` exception when the job queue is empty. Thanks to @dpagano for pointing this out and thanks to @mrhwick for quickly providing a fix.
 
 0.1.10 (2013-06-07)

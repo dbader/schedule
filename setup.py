@@ -6,17 +6,20 @@ if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload -r pypi')
     sys.exit()
 
-SCHEDULE_VERSION = '0.2.1'
-SCHEDULE_DOWNLOAD_URL = ('https://github.com/dbader/schedule/tarball/' +
-                         SCHEDULE_VERSION)
+SCHEDULE_VERSION = '0.3.0'
+SCHEDULE_DOWNLOAD_URL = (
+    'https://github.com/dbader/schedule/tarball/' + SCHEDULE_VERSION
+)
 
 setup(
     name='schedule',
     packages=['schedule'],
     version=SCHEDULE_VERSION,
     description='Job scheduling for humans.',
-    long_description=(open('README.rst').read() + '\n\n' +
-                      open('HISTORY.rst').read()),
+    long_description=(
+        open('README.rst').read() + '\n\n' +
+        open('HISTORY.rst').read()
+    ),
     license=open('LICENSE.txt').read(),
     author='Daniel Bader',
     author_email='mail@dbader.org',
@@ -30,7 +33,7 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
         'Natural Language :: English',
     ],
 )
