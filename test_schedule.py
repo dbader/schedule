@@ -70,14 +70,14 @@ class SchedulerTests(unittest.TestCase):
 
             # Choose a sample size large enough that it's unlikely the
             # same value will be chosen each time.
-            intervals = set([
-                every(1).to(10).minutes.do(mock_job).next_run.minute
+            minutes = set([
+                every(5).to(30).minutes.do(mock_job).next_run.minute
                 for i in xrange(100)
             ])
 
-            assert len(intervals) > 1
-            assert min(intervals) >= 1
-            assert max(intervals) <= 10
+            assert len(minutes) > 1
+            assert min(minutes) >= 5
+            assert max(minutes) <= 30
 
     def test_at_time(self):
         mock_job = make_mock_job()
