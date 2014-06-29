@@ -72,7 +72,7 @@ class SchedulerTests(unittest.TestCase):
             # same value will be chosen each time.
             minutes = set([
                 every(5).to(30).minutes.do(mock_job).next_run.minute
-                for i in xrange(100)
+                for i in range(100)
             ])
 
             assert len(minutes) > 1
