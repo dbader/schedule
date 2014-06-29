@@ -305,6 +305,7 @@ class Job(object):
         assert self.unit in ('seconds', 'minutes', 'hours', 'days', 'weeks')
 
         if self.latest is not None:
+            assert self.latest >= self.interval
             interval = random.randint(self.interval, self.latest)
         else:
             interval = self.interval
