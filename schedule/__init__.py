@@ -23,6 +23,7 @@ Usage:
     >>>     print("I'm working on:", message)
 
     >>> schedule.every(10).minutes.do(job)
+    >>> schedule.every(5).to(10).days.do(job)
     >>> schedule.every().hour.do(job, message='things')
     >>> schedule.every().day.at("10:30").do(job)
 
@@ -37,6 +38,7 @@ Usage:
 import datetime
 import functools
 import logging
+import random
 import time
 
 logger = logging.getLogger('schedule')
@@ -114,6 +116,7 @@ class Job(object):
     """A periodic job as used by `Scheduler`."""
     def __init__(self, interval):
         self.interval = interval  # pause interval * unit between runs
+        self.latest = None  # upper limit to the interval
         self.job_func = None  # the job job_func to run
         self.unit = None  # time units, e.g. 'minutes', 'hours', ...
         self.at_time = None  # optional time at which this job runs
@@ -264,6 +267,15 @@ class Job(object):
         self.at_time = datetime.time(hour, minute)
         return self
 
+    def to(self, latest):
+        """Schedule the job to run at an irregular interval.
+
+        The job's interval will vary from the value given to `every` to
+        `latest`.
+        """
+        self.latest = latest
+        return self
+
     def do(self, job_func, *args, **kwargs):
         """Specifies the job_func that should be called every time the
         job runs.
@@ -300,7 +312,13 @@ class Job(object):
         # Allow *, ** magic temporarily:
         # pylint: disable=W0142
         assert self.unit in ('seconds', 'minutes', 'hours', 'days', 'weeks')
-        self.period = datetime.timedelta(**{self.unit: self.interval})
+
+        if self.latest is not None:
+            interval = random.randint(self.interval, self.latest)
+        else:
+            interval = self.interval
+
+        self.period = datetime.timedelta(**{self.unit: interval})
         self.next_run = datetime.datetime.now() + self.period
         if self.start_day is not None:
             assert self.unit == 'weeks'
