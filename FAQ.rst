@@ -84,3 +84,34 @@ Does schedule support timezones?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Vanilla schedule doesn't support timezones at the moment. If you need this functionality please check out @imiric's work `here <https://github.com/dbader/schedule/pull/16>`_. He added timezone support to schedule using python-dateutil.
+
+What if my task throws an exception?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Schedule doesn't catch exceptions that happen during job execution. Therefore any exceptions thrown during job execution will bubble up and interrupt schedule's run_xyz function.
+
+If you want to guard against exceptions you can wrap your job function
+in a decorator like this:
+
+.. code-block:: python
+
+    import functools
+
+    def catch_exceptions(job_func):
+        @functools.wraps(job_func)
+        def wrapper(*args, **kwargs):
+            try:
+                job_func(*args, **kwargs)
+            except:
+                import traceback
+                print(traceback.format_exc())
+        return wrapper
+
+    @catch_exceptions
+    def bad_task():
+        return 1 / 0
+
+    scheduler.every(5).minutes.do(bad_task)
+
+Another option would be to subclass Schedule like @mplewis did in `this example <https://gist.github.com/mplewis/8483f1c24f2d6259aef6>`_.
+
