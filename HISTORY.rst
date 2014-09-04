@@ -3,6 +3,12 @@
 History
 -------
 
+0.3.1 (2014-09-03)
+++++++++++++++++++
+
+- Fixed an issue with unicode handling in setup.py that was causing trouble on Python 3 and Debian (github.com/dbader/schedule/issues/27). Thanks to @waghanza for reporing it.
+- Added an FAQ item to describe how to deal with job functions that throw exceptions. Thanks @mplewis.
+
 0.3.0 (2014-06-14)
 ++++++++++++++++++
 
