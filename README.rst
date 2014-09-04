@@ -63,7 +63,7 @@ In lieu of a full documentation (coming soon) check out this set of `frequently 
 Meta
 ----
 
-Daniel Bader – `@dbader_org <https://twitter.com/dbader_org>`_ – mail@dbader.org
+Daniel Bader - `@dbader_org <https://twitter.com/dbader_org>`_ - mail@dbader.org
 
 Distributed under the MIT license. See ``LICENSE.txt`` for more information.
 
