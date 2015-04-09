@@ -24,6 +24,7 @@ Usage:
 
     >>> schedule.every(10).minutes.do(job)
     >>> schedule.every().hour.do(job, message='things')
+    >>> schedule.every().hour.do(job, message='things').at_most(2)
     >>> schedule.every().day.at("10:30").do(job)
 
     >>> while True:
@@ -94,7 +95,9 @@ class Scheduler(object):
 
     def _run_job(self, job):
         ret = job.run()
-        if isinstance(ret, CancelJob) or ret is CancelJob:
+        if(isinstance(ret, CancelJob) or
+           ret is CancelJob or
+                job.is_cancelled()):
             self.cancel_job(job)
 
     @property
@@ -121,6 +124,7 @@ class Job(object):
         self.next_run = None  # datetime of the next run
         self.period = None  # timedelta between runs, only valid for
         self.start_day = None  # Specific day of the week to start on
+        self.remain_calls = None  # number of times it will be called
 
     def __lt__(self, other):
         """PeriodicJobs are sortable based on the scheduled time
@@ -273,14 +277,27 @@ class Job(object):
         self._schedule_next_run()
         return self
 
+    def at_most(self, times):
+        """Specifies the remain_calls that give the maximal number
+        of times this schedule will be called
+        """
+        self.remain_calls = (times if times > 0 else None)
+        return self
+
     @property
     def should_run(self):
         """True if the job should be run now."""
         return datetime.datetime.now() >= self.next_run
 
+    def is_cancelled(self):
+        """True iff remain_calls have reach zero"""
+        return self.remain_calls is not None and self.remain_calls <= 0
+
     def run(self):
         """Run the job and immediately reschedule it."""
         logger.info('Running job %s', self)
+        if self.remain_calls is not None:
+            self.remain_calls -= 1
         ret = self.job_func()
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
@@ -330,6 +347,7 @@ class Job(object):
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:
                 self.next_run -= self.period
+
 
 # The following methods are shortcuts for not having to
 # create a Scheduler instance:
