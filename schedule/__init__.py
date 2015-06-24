@@ -322,7 +322,7 @@ class Job(object):
             # at the specified time *today* (or *this hour*) as well
             if not self.last_run:
                 now = datetime.datetime.now()
-                if self.unit == 'days' and self.at_time > now.time():
+                if self.unit == 'days' and self.at_time > now.time() and self.interval == 1:
                     self.next_run = self.next_run - datetime.timedelta(days=1)
                 elif self.unit == 'hours' and self.at_time.minute > now.minute:
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
