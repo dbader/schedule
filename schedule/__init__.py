@@ -134,11 +134,14 @@ class Job(object):
         timestats = '(last run: %s, next run: %s)' % (
                     format_time(self.last_run), format_time(self.next_run))
 
-        job_func_name = self.job_func.__name__
-        args = [repr(x) for x in self.job_func.args]
-        kwargs = ['%s=%s' % (k, repr(v))
-                  for k, v in self.job_func.keywords.items()]
-        call_repr = job_func_name + '(' + ', '.join(args + kwargs) + ')'
+        try:
+            job_func_name = self.job_func.__name__
+            args = [repr(x) for x in self.job_func.args]
+            kwargs = ['%s=%s' % (k, repr(v))
+                      for k, v in self.job_func.keywords.items()]
+            call_repr = job_func_name + '(' + ', '.join(args + kwargs) + ')'
+        except AttributeError:
+            call_repr = repr(self.job_func)
 
         if self.at_time is not None:
             return 'Every %s %s at %s do %s %s' % (
