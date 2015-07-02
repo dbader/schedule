@@ -189,24 +189,28 @@ class SchedulerTests(unittest.TestCase):
 
     def test_run_every_n_days_at_specific_time(self):
         mock_job = make_mock_job()
-        with mock_datetime(2010, 1, 6, 11, 16):
+        with mock_datetime(2010, 1, 6, 11, 29):
             every(2).days.at("11:30").do(mock_job)
             schedule.run_pending()
             assert mock_job.call_count == 0
 
-        with mock_datetime(2010, 1, 6, 13, 16):
+        with mock_datetime(2010, 1, 6, 11, 31):
             schedule.run_pending()
             assert mock_job.call_count == 0
 
-        with mock_datetime(2010, 1, 7, 13, 16):
+        with mock_datetime(2010, 1, 7, 11, 31):
             schedule.run_pending()
             assert mock_job.call_count == 0
 
-        with mock_datetime(2010, 1, 8, 13, 16):
+        with mock_datetime(2010, 1, 8, 11, 29):
+            schedule.run_pending()
+            assert mock_job.call_count == 0
+
+        with mock_datetime(2010, 1, 8, 11, 31):
             schedule.run_pending()
             assert mock_job.call_count == 1
 
-        with mock_datetime(2010, 1, 10, 13, 16):
+        with mock_datetime(2010, 1, 10, 11, 31):
             schedule.run_pending()
             assert mock_job.call_count == 2
 
