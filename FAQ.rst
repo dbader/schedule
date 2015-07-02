@@ -115,3 +115,13 @@ in a decorator like this:
 
 Another option would be to subclass Schedule like @mplewis did in `this example <https://gist.github.com/mplewis/8483f1c24f2d6259aef6>`_.
 
+How can I run a job only once?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    def job_that_executes_once():
+        # Do some work ...
+        return schedule.CancelJob
+
+    schedule.today.at('10:30').do(job_that_executes_once)
