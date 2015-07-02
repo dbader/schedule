@@ -121,6 +121,14 @@ class SchedulerTests(unittest.TestCase):
         assert len(str(every().minute.do(lambda: 1))) > 1
         assert len(str(every().day.at("10:30").do(lambda: 1))) > 1
 
+    def test_functools_jobs_repr(self):
+        import functools
+        def job_fun(arg):
+            pass
+        job_fun = functools.partial(job_fun, 'foo')
+        r = repr(every().minute.do(job_fun))
+        assert r == repr(job_fun)
+
     def test_run_pending(self):
         """Check that run_pending() runs pending jobs.
         We do this by overriding datetime.datetime with mock objects
