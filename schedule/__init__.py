@@ -134,7 +134,10 @@ class Job(object):
         timestats = '(last run: %s, next run: %s)' % (
                     format_time(self.last_run), format_time(self.next_run))
 
-        job_func_name = self.job_func.__name__
+        if hasattr(self.job_func, '__name__'):
+            job_func_name = self.job_func.__name__
+        else:
+            job_func_name = repr(self.job_func)
         args = [repr(x) for x in self.job_func.args]
         kwargs = ['%s=%s' % (k, repr(v))
                   for k, v in self.job_func.keywords.items()]
@@ -269,7 +272,13 @@ class Job(object):
         the job runs.
         """
         self.job_func = functools.partial(job_func, *args, **kwargs)
-        functools.update_wrapper(self.job_func, job_func)
+        try:
+            functools.update_wrapper(self.job_func, job_func)
+        except AttributeError:
+            # job_funcs already wrapped by functools.partial won't have
+            # __name__, __module__ or __doc__ and the update_wrapper()
+            # call will fail.
+            pass
         self._schedule_next_run()
         return self
 
