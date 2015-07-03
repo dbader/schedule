@@ -129,7 +129,7 @@ class Job(object):
 
     def __repr__(self):
         def format_time(t):
-            return t.strftime("%Y-%m-%d %H:%M:%S") if t else '[never]'
+            return t.strftime('%Y-%m-%d %H:%M:%S') if t else '[never]'
 
         timestats = '(last run: %s, next run: %s)' % (
                     format_time(self.last_run), format_time(self.next_run))
@@ -304,13 +304,15 @@ class Job(object):
         self.next_run = datetime.datetime.now() + self.period
         if self.start_day is not None:
             assert self.unit == 'weeks'
-            weekdays = ('monday',
-                        'tuesday',
-                        'wednesday',
-                        'thursday',
-                        'friday',
-                        'saturday',
-                        'sunday')
+            weekdays = (
+                'monday',
+                'tuesday',
+                'wednesday',
+                'thursday',
+                'friday',
+                'saturday',
+                'sunday'
+            )
             assert self.start_day in weekdays
             weekday = weekdays.index(self.start_day)
             days_ahead = weekday - self.next_run.weekday()

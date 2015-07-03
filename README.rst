@@ -2,16 +2,16 @@ schedule
 ========
 
 
-.. image:: https://api.travis-ci.org/dbader/schedule.png
+.. image:: https://api.travis-ci.org/dbader/schedule.svg
         :target: https://travis-ci.org/dbader/schedule
 
-.. image:: https://coveralls.io/repos/dbader/schedule/badge.png
+.. image:: https://coveralls.io/repos/dbader/schedule/badge.svg
         :target: https://coveralls.io/r/dbader/schedule
 
-.. image:: https://pypip.in/v/schedule/badge.png
+.. image:: https://img.shields.io/pypi/v/schedule.svg
         :target: https://pypi.python.org/pypi/schedule
 
-.. image:: https://pypip.in/d/schedule/badge.png
+.. image:: https://img.shields.io/pypi/dm/schedule.svg
         :target: https://pypi.python.org/pypi/schedule
 
 Python job scheduling for humans.
