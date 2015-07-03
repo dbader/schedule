@@ -122,7 +122,7 @@ class SchedulerTests(unittest.TestCase):
 
     def test_to_string_lambda_job_func(self):
         assert len(str(every().minute.do(lambda: 1))) > 1
-        assert len(str(every().day.at("10:30").do(lambda: 1))) > 1
+        assert len(str(every().day.at('10:30').do(lambda: 1))) > 1
 
     def test_to_string_functools_partial_job_func(self):
         def job_fun(arg):
@@ -176,7 +176,7 @@ class SchedulerTests(unittest.TestCase):
     def test_run_every_weekday_at_specific_time_today(self):
         mock_job = make_mock_job()
         with mock_datetime(2010, 1, 6, 13, 16):
-            every().wednesday.at("14:12").do(mock_job)
+            every().wednesday.at('14:12').do(mock_job)
             schedule.run_pending()
             assert mock_job.call_count == 0
 
@@ -187,7 +187,7 @@ class SchedulerTests(unittest.TestCase):
     def test_run_every_weekday_at_specific_time_past_today(self):
         mock_job = make_mock_job()
         with mock_datetime(2010, 1, 6, 13, 16):
-            every().wednesday.at("13:15").do(mock_job)
+            every().wednesday.at('13:15').do(mock_job)
             schedule.run_pending()
             assert mock_job.call_count == 0
 
@@ -202,7 +202,7 @@ class SchedulerTests(unittest.TestCase):
     def test_run_every_n_days_at_specific_time(self):
         mock_job = make_mock_job()
         with mock_datetime(2010, 1, 6, 11, 29):
-            every(2).days.at("11:30").do(mock_job)
+            every(2).days.at('11:30').do(mock_job)
             schedule.run_pending()
             assert mock_job.call_count == 0
 
