@@ -3,6 +3,13 @@
 History
 -------
 
+0.3.2 (2015-07-02)
+++++++++++++++++++
+
+- Fixed issues where scheduling a job with a functools.partial as the job function fails. Thanks @dylwhich.
+- Fixed an issue where scheduling a job to run every >= 2 days would cause the initial execution to happen one day early. Thanks @WoLfulus for identifying this and providing a fix.
+- Added a FAQ item to describe how to schedule a job that runs only once.
+
 0.3.1 (2014-09-03)
 ++++++++++++++++++
 
