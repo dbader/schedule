@@ -1,7 +1,8 @@
 """Unit tests for schedule.py"""
-import unittest
-import mock
 import datetime
+import functools
+import mock
+import unittest
 
 # Silence "missing docstring", "method could be a function",
 # "class already defined", and "too many public methods" messages:
@@ -118,16 +119,19 @@ class SchedulerTests(unittest.TestCase):
         assert 'job_fun' in s
         assert 'foo' in s
         assert 'bar=23' in s
+
+    def test_to_string_lambda_job_func(self):
         assert len(str(every().minute.do(lambda: 1))) > 1
         assert len(str(every().day.at("10:30").do(lambda: 1))) > 1
 
-    def test_functools_jobs_repr(self):
-        import functools
+    def test_to_string_functools_partial_job_func(self):
         def job_fun(arg):
             pass
         job_fun = functools.partial(job_fun, 'foo')
-        r = repr(every().minute.do(job_fun))
-        assert r == repr(job_fun)
+        job_repr = repr(every().minute.do(job_fun, bar=True, somekey=23))
+        assert 'functools.partial' in job_repr
+        assert 'bar=True' in job_repr
+        assert 'somekey=23' in job_repr
 
     def test_run_pending(self):
         """Check that run_pending() runs pending jobs.
