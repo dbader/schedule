@@ -124,4 +124,4 @@ How can I run a job only once?
         # Do some work ...
         return schedule.CancelJob
 
-    schedule.today.at('10:30').do(job_that_executes_once)
+    schedule.every().day.at('22:30').do(job_that_executes_once)
