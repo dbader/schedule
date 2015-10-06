@@ -22,12 +22,15 @@ class mock_datetime(object):
     """
     Monkey-patch datetime for predictable results
     """
-    def __init__(self, year, month, day, hour, minute):
+    def __init__(self, year, month, day, hour, minute,
+                 seconds=0, microseconds=0):
         self.year = year
         self.month = month
         self.day = day
         self.hour = hour
         self.minute = minute
+        self.seconds = seconds
+        self.microseconds = microseconds
 
     def __enter__(self):
         class MockDate(datetime.datetime):
@@ -38,7 +41,8 @@ class mock_datetime(object):
             @classmethod
             def now(cls):
                 return cls(self.year, self.month, self.day,
-                           self.hour, self.minute)
+                           self.hour, self.minute, self.seconds,
+                           self.microseconds)
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
@@ -155,6 +159,11 @@ class SchedulerTests(unittest.TestCase):
             assert mock_job.call_count == 0
 
         with mock_datetime(2010, 1, 6, 12, 16):
+            schedule.run_pending()
+            assert mock_job.call_count == 1
+
+        with mock_datetime(2010, 1, 6, 12, 16, 59, 999999):
+            mock_job.reset_mock()
             schedule.run_pending()
             assert mock_job.call_count == 1
 

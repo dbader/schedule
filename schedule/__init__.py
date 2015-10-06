@@ -285,7 +285,8 @@ class Job(object):
     @property
     def should_run(self):
         """True if the job should be run now."""
-        return datetime.datetime.now() >= self.next_run
+        return ((datetime.datetime.now() >= self.next_run) or
+                (self.next_run - datetime.datetime.now()).total_seconds() < 1)
 
     def run(self):
         """Run the job and immediately reschedule it."""
