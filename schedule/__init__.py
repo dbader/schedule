@@ -253,7 +253,7 @@ class Job(object):
         N day(s).
         """
         assert self.unit in ('days', 'hours') or self.start_day
-        hour, minute = [t for t in time_str.split(':')]
+        hour, minute = time_str.split(':')
         minute = int(minute)
         if self.unit == 'days' or self.start_day:
             hour = int(hour)
