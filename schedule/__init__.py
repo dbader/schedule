@@ -156,7 +156,7 @@ class Job(object):
 
     @property
     def second(self):
-        assert self.interval == 1
+        assert self.interval == 1, 'Use seconds instead of second'
         return self.seconds
 
     @property
@@ -166,7 +166,7 @@ class Job(object):
 
     @property
     def minute(self):
-        assert self.interval == 1
+        assert self.interval == 1, 'Use minutes instead of minute'
         return self.minutes
 
     @property
@@ -176,7 +176,7 @@ class Job(object):
 
     @property
     def hour(self):
-        assert self.interval == 1
+        assert self.interval == 1, 'Use hours instead of hours'
         return self.hours
 
     @property
@@ -186,7 +186,7 @@ class Job(object):
 
     @property
     def day(self):
-        assert self.interval == 1
+        assert self.interval == 1, 'Use days instead of day'
         return self.days
 
     @property
@@ -196,55 +196,55 @@ class Job(object):
 
     @property
     def week(self):
-        assert self.interval == 1
-        return self.weeks
-
-    @property
-    def monday(self):
-        assert self.interval == 1
-        self.start_day = 'monday'
-        return self.weeks
-
-    @property
-    def tuesday(self):
-        assert self.interval == 1
-        self.start_day = 'tuesday'
-        return self.weeks
-
-    @property
-    def wednesday(self):
-        assert self.interval == 1
-        self.start_day = 'wednesday'
-        return self.weeks
-
-    @property
-    def thursday(self):
-        assert self.interval == 1
-        self.start_day = 'thursday'
-        return self.weeks
-
-    @property
-    def friday(self):
-        assert self.interval == 1
-        self.start_day = 'friday'
-        return self.weeks
-
-    @property
-    def saturday(self):
-        assert self.interval == 1
-        self.start_day = 'saturday'
-        return self.weeks
-
-    @property
-    def sunday(self):
-        assert self.interval == 1
-        self.start_day = 'sunday'
+        assert self.interval == 1, 'Use weeks instead of week'
         return self.weeks
 
     @property
     def weeks(self):
         self.unit = 'weeks'
         return self
+
+    @property
+    def monday(self):
+        assert self.interval == 1, 'Use mondays instead of monday'
+        self.start_day = 'monday'
+        return self.weeks
+
+    @property
+    def tuesday(self):
+        assert self.interval == 1, 'Use tuesdays instead of tuesday'
+        self.start_day = 'tuesday'
+        return self.weeks
+
+    @property
+    def wednesday(self):
+        assert self.interval == 1, 'Use wedesdays instead of wednesday'
+        self.start_day = 'wednesday'
+        return self.weeks
+
+    @property
+    def thursday(self):
+        assert self.interval == 1, 'Use thursday instead of thursday'
+        self.start_day = 'thursday'
+        return self.weeks
+
+    @property
+    def friday(self):
+        assert self.interval == 1, 'Use fridays instead of friday'
+        self.start_day = 'friday'
+        return self.weeks
+
+    @property
+    def saturday(self):
+        assert self.interval == 1, 'Use saturdays instead of saturday'
+        self.start_day = 'saturday'
+        return self.weeks
+
+    @property
+    def sunday(self):
+        assert self.interval == 1, 'Use sundays instead of sunday'
+        self.start_day = 'sunday'
+        return self.weeks
 
     def at(self, time_str):
         """Schedule the job every day at a specific time.
