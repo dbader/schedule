@@ -176,7 +176,7 @@ class Job(object):
 
     @property
     def hour(self):
-        assert self.interval == 1, 'Use hours instead of hours'
+        assert self.interval == 1, 'Use hours instead of hour'
         return self.hours
 
     @property
