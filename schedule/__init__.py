@@ -353,9 +353,9 @@ default_scheduler = Scheduler()
 jobs = default_scheduler.jobs  # todo: should this be a copy, e.g. jobs()?
 
 
-def every(interval=1):
+def every(interval=1, quiet=False):
     """Schedule a new periodic job."""
-    return default_scheduler.every(interval)
+    return default_scheduler.every(interval, quiet)
 
 
 def run_pending():
