@@ -10,6 +10,7 @@ import unittest
 
 import schedule
 from schedule import every
+from dateutil.tz import tzlocal, gettz
 
 
 def make_mock_job(name=None):
@@ -22,23 +23,28 @@ class mock_datetime(object):
     """
     Monkey-patch datetime for predictable results
     """
-    def __init__(self, year, month, day, hour, minute):
+    def __init__(self, year, month, day, hour, minute, tzinfo = tzlocal()):
         self.year = year
         self.month = month
         self.day = day
         self.hour = hour
         self.minute = minute
+        self.tzinfo = tzinfo
 
     def __enter__(self):
         class MockDate(datetime.datetime):
             @classmethod
-            def today(cls):
-                return cls(self.year, self.month, self.day)
+            def today(cls, tzinfo = None):
+                if tzinfo is None:
+                    tzinfo = self.tzinfo
+                return cls(self.year, self.month, self.day).replace(tzinfo = self.tzinfo)
 
             @classmethod
-            def now(cls):
+            def now(cls, tzinfo = None):
+                if tzinfo is None:
+                    tzinfo = self.tzinfo
                 return cls(self.year, self.month, self.day,
-                           self.hour, self.minute)
+                           self.hour, self.minute, tzinfo = tzinfo)
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
@@ -97,6 +103,12 @@ class SchedulerTests(unittest.TestCase):
             assert every().friday.do(mock_job).next_run.day == 8
             assert every().saturday.do(mock_job).next_run.day == 9
             assert every().sunday.do(mock_job).next_run.day == 10
+
+    def test_timezone(self):
+        mock_job = make_mock_job()
+        with mock_datetime(2010, 7, 11, 12, 15, tzinfo=gettz('GMT')):
+            job_nr = every().day.at('09:00 PDT').do(mock_job).next_run
+            assert (job_nr - datetime.datetime.now()).total_seconds() == 13500
 
     def test_run_all(self):
         mock_job = make_mock_job()
@@ -235,7 +247,7 @@ class SchedulerTests(unittest.TestCase):
             every().hour.do(hourly_job)
             assert len(schedule.jobs) == 2
             # Make sure the hourly job is first
-            assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
+            assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16, tzinfo=tzlocal())
             assert schedule.idle_seconds() == 60 * 60
 
     def test_cancel_job(self):
