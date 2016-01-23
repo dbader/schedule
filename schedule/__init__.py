@@ -25,6 +25,7 @@ Usage:
     >>> schedule.every(10).minutes.do(job)
     >>> schedule.every().hour.do(job, message='things')
     >>> schedule.every().day.at("10:30").do(job)
+    >>> schedule.every(quiet=True).second.do(job)
 
     >>> while True:
     >>>     schedule.run_pending()
@@ -86,9 +87,9 @@ class Scheduler(object):
         except ValueError:
             pass
 
-    def every(self, interval=1):
+    def every(self, interval=1, quiet=False):
         """Schedule a new periodic job."""
-        job = Job(interval)
+        job = Job(interval, quiet)
         self.jobs.append(job)
         return job
 
@@ -112,8 +113,9 @@ class Scheduler(object):
 
 class Job(object):
     """A periodic job as used by `Scheduler`."""
-    def __init__(self, interval):
+    def __init__(self, interval, quiet=False):
         self.interval = interval  # pause interval * unit between runs
+        self.quiet = False  # Suppress logging job runs, if true
         self.job_func = None  # the job job_func to run
         self.unit = None  # time units, e.g. 'minutes', 'hours', ...
         self.at_time = None  # optional time at which this job runs
@@ -289,7 +291,8 @@ class Job(object):
 
     def run(self):
         """Run the job and immediately reschedule it."""
-        logger.info('Running job %s', self)
+        if not self.quiet:
+            logger.info('Running job %s', self)
         ret = self.job_func()
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
@@ -350,9 +353,9 @@ default_scheduler = Scheduler()
 jobs = default_scheduler.jobs  # todo: should this be a copy, e.g. jobs()?
 
 
-def every(interval=1):
+def every(interval=1, quiet=False):
     """Schedule a new periodic job."""
-    return default_scheduler.every(interval)
+    return default_scheduler.every(interval, quiet)
 
 
 def run_pending():
