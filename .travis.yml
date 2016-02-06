@@ -9,7 +9,9 @@ install:
     - pip install pytest-pep8 --use-mirrors
     - pip install coveralls --use-mirrors
 
-script: py.test test_schedule.py --pep8 schedule -v --cov schedule --cov-report term-missing
+script:
+    - py.test test_schedule.py --pep8 schedule -v --cov schedule --cov-report term-missing
+    - python setup.py check
 
 after_success:
     - coveralls
