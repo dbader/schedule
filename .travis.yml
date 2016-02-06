@@ -8,7 +8,7 @@ install:
     - pip install -r requirements-dev.txt --use-mirrors
 
 script:
-    - py.test test_schedule.py --pep8 schedule -v --cov schedule --cov-report term-missing
+    - py.test test_schedule.py --flake8 schedule -v --cov schedule --cov-report term-missing
     - python setup.py check --strict --metadata --restructuredtext
 
 after_success:
