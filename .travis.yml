@@ -5,13 +5,11 @@ python:
     - "3.5"
 
 install:
-    - pip install pytest-cov --use-mirrors
-    - pip install pytest-pep8 --use-mirrors
-    - pip install coveralls --use-mirrors
+    - pip install -r requirements-dev.txt --use-mirrors
 
 script:
     - py.test test_schedule.py --pep8 schedule -v --cov schedule --cov-report term-missing
-    - python setup.py check
+    - python setup.py check --strict --metadata --restructuredtext
 
 after_success:
     - coveralls
