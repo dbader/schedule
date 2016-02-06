@@ -28,7 +28,7 @@ Features
 - A simple to use API for scheduling jobs.
 - Very lightweight and no external dependencies.
 - Excellent test coverage.
-- Tested on Python 2.7 and 3.4
+- Tested on Python 2.7 and 3.5
 
 Usage
 -----
