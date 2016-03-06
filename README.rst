@@ -2,10 +2,10 @@ schedule
 ========
 
 
-.. image:: https://api.travis-ci.org/dbader/schedule.svg
+.. image:: https://api.travis-ci.org/dbader/schedule.svg?branch=master
         :target: https://travis-ci.org/dbader/schedule
 
-.. image:: https://coveralls.io/repos/dbader/schedule/badge.svg
+.. image:: https://coveralls.io/repos/dbader/schedule/badge.svg?branch=master
         :target: https://coveralls.io/r/dbader/schedule
 
 .. image:: https://img.shields.io/pypi/v/schedule.svg
