@@ -420,6 +420,25 @@ class ThreadedScheduler(schedule.Scheduler):
         Submit super()._run_job() to the ThreadPoolExecutor so it will be
         executed in another thread.
         """
-        self.pool.submit(super()._run_job, job)
+        # Queue running of the job
+        fut = self.pool.submit(super()._run_job, job)
+
+        # Add the error handler to check if there were exceptions in the job
+        fut.add_done_callback(self._error_handler)
+
+    def _error_handler(self, fut):
+        """
+        The callback run once a job is completed.
+
+        The main purpose of this is to catch any errors raised and log them.
+        Feel free to override this method if you want to add some custom
+        error handling.
+        """
+        try:
+            # When accessing the result, any exceptions encountered are
+            # automatically raised.
+            fut.result()
+        except Exception as e:
+            logger.exception('The job encountered an exception')
 
 
