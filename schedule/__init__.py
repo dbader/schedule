@@ -39,6 +39,12 @@ import functools
 import logging
 import time
 
+try:
+    from concurrent.futures import ThreadPoolExecutor
+    CAN_USE_THREADED = True
+except ImportError:
+    CAN_USE_THREADED = False
+
 logger = logging.getLogger('schedule')
 
 
@@ -394,3 +400,26 @@ def next_run():
 def idle_seconds():
     """Number of seconds until `next_run`."""
     return default_scheduler.idle_seconds
+
+
+class ThreadedScheduler(schedule.Scheduler):
+    """
+    A scheduler which will run each job in a separate thread instead of
+    blocking the scheduler until the job is finished.
+    """
+    def __init__(self, max_workers=5):
+        if not CAN_USE_THREADED:
+            raise RuntimeError("concurrent.futures is not available, so "
+                               "you can't use the ThreadedScheduler")
+
+        super().__init__()
+        self.pool = ThreadPoolExecutor(max_workers=max_workers)
+
+    def _run_job(self, job):
+        """
+        Submit super()._run_job() to the ThreadPoolExecutor so it will be
+        executed in another thread.
+        """
+        self.pool.submit(super()._run_job, job)
+
+
