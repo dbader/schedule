@@ -258,3 +258,15 @@ class SchedulerTests(unittest.TestCase):
 
         schedule.cancel_job(mj)
         assert len(schedule.jobs) == 0
+
+    def test_cancel_jobs(self):
+        def stop_job():
+            return schedule.CancelJob
+
+        every().second.do(stop_job)
+        every().second.do(stop_job)
+        every().second.do(stop_job)
+        assert len(schedule.jobs) == 3
+
+        schedule.run_all()
+        assert len(schedule.jobs) == 0
