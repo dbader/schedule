@@ -47,7 +47,8 @@ class CancelJob(object):
 
 
 class Scheduler(object):
-    def __init__(self):
+    def __init__(self, job_cls=None):
+        self.job_cls = job_cls or Job
         self.jobs = []
 
     def run_pending(self):
@@ -88,7 +89,7 @@ class Scheduler(object):
 
     def every(self, interval=1):
         """Schedule a new periodic job."""
-        job = Job(interval)
+        job = self.job_cls(interval)
         self.jobs.append(job)
         return job
 
