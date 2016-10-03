@@ -22,12 +22,15 @@ class mock_datetime(object):
     """
     Monkey-patch datetime for predictable results
     """
-    def __init__(self, year, month, day, hour, minute):
+    def __init__(self, year, month, day, hour, minute, second=0,
+                 microsecond=0):
         self.year = year
         self.month = month
         self.day = day
         self.hour = hour
         self.minute = minute
+        self.second = second
+        self.microsecond = microsecond
 
     def __enter__(self):
         class MockDate(datetime.datetime):
@@ -38,7 +41,7 @@ class mock_datetime(object):
             @classmethod
             def now(cls):
                 return cls(self.year, self.month, self.day,
-                           self.hour, self.minute)
+                           self.hour, self.minute, self.second)
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
@@ -228,15 +231,53 @@ class SchedulerTests(unittest.TestCase):
 
     def test_next_run_property(self):
         original_datetime = datetime.datetime
-        with mock_datetime(2010, 1, 6, 13, 16):
+        with mock_datetime(2010, 1, 6, 13, 16, 12):
             hourly_job = make_mock_job('hourly')
             daily_job = make_mock_job('daily')
             every().day.do(daily_job)
             every().hour.do(hourly_job)
             assert len(schedule.jobs) == 2
             # Make sure the hourly job is first
-            assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
-            assert schedule.idle_seconds() == 60 * 60
+            # assert cron-like behaviour: that it runs on the hour
+            assert schedule.next_run() == original_datetime(2010, 1, 6,
+                                                            14, 0, 0)
+            assert schedule.idle_seconds() < (60-16) * 60
+
+    def test_cron_like_behaviour_seconds(self):
+        original_datetime = datetime.datetime
+        with mock_datetime(2010, 1, 6, 13, 16, 12, 102):
+            job = make_mock_job()
+            every().second.do(job)
+            assert schedule.next_run() == original_datetime(2010, 1, 6,
+                                                            13, 16, 13,
+                                                            0)
+
+    def test_cron_like_behaviour_minutes(self):
+        original_datetime = datetime.datetime
+        with mock_datetime(2010, 1, 6, 13, 16, 12):
+            job = make_mock_job()
+            every().minute.do(job)
+            assert schedule.next_run() == original_datetime(2010, 1, 6,
+                                                            13, 17, 0, 0)
+            assert schedule.idle_seconds() < 60
+
+    def test_cron_like_behaviour_minutes_rollover(self):
+        original_datetime = datetime.datetime
+        with mock_datetime(2010, 1, 6, 13, 59, 12):
+            job = make_mock_job()
+            every().minute.do(job)
+            assert schedule.next_run() == original_datetime(2010, 1, 6,
+                                                            14, 0, 0, 0)
+            assert schedule.idle_seconds() < 60
+
+    def test_cron_like_behaviour_hours(self):
+        original_datetime = datetime.datetime
+        with mock_datetime(2010, 1, 6, 13, 32, 5):
+            job = make_mock_job()
+            every().hour.do(job)
+            assert schedule.next_run() == original_datetime(2010, 1, 6,
+                                                            14, 0, 0, 0)
+            assert schedule.idle_seconds() < (60*28)
 
     def test_cancel_job(self):
         def stop_job():

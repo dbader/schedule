@@ -290,8 +290,8 @@ class Job(object):
     def run(self):
         """Run the job and immediately reschedule it."""
         logger.info('Running job %s', self)
-        ret = self.job_func()
         self.last_run = datetime.datetime.now()
+        ret = self.job_func()
         self._schedule_next_run()
         return ret
 
@@ -301,7 +301,56 @@ class Job(object):
         # pylint: disable=W0142
         assert self.unit in ('seconds', 'minutes', 'hours', 'days', 'weeks')
         self.period = datetime.timedelta(**{self.unit: self.interval})
-        self.next_run = datetime.datetime.now() + self.period
+
+        # if job has not been run before, schedule for `self.period` in
+        #   the future
+        #
+        # if job has been run before, scheduler for `self.period` from
+        #   the time the last job ran
+        #
+        # |-|===========|---------------------|
+        # ^^^           ^                     ^
+        # |||           |                     |
+        # |||           |                     |- self.last_run +
+        # |||           |                        self.period
+        # |||           |
+        # |||           |- end time of job
+        # |||
+        # |||- start time of job
+        # ||
+        # ||- drift (see below)
+        # |
+        # |- self.last_run
+
+        if self.last_run is not None:
+            self.next_run = self.last_run + self.period
+        else:
+            self.next_run = datetime.datetime.now() + self.period
+
+        # The time diff between when `run()` is called, and when
+        # `self.last_run` is assigned accumulates as time drift. If left
+        # unchecked, `run()` is triggered later and later from the ideal
+        # trigger point at the 'top' of the unit of trigger time (i.e.
+        # minute)
+        #
+        # Account for time drift by zeroing out the next run's units
+        # that are accumulating drift - these are units smaller than the
+        # unit of trigger time.
+        #
+        # This is only valid for non-"at" schedulings, and for time
+        # resolutions less than 1 day.
+
+        if self.at_time is None:
+            kwargs = {}
+
+            for unit in ['microsecond', 'second', 'minute', 'hour']:
+                if self.unit[:-1] == unit:
+                    break
+
+                kwargs[unit] = 0
+
+            self.next_run = self.next_run.replace(**kwargs)
+
         if self.start_day is not None:
             assert self.unit == 'weeks'
             weekdays = (
@@ -319,6 +368,7 @@ class Job(object):
             if days_ahead <= 0:  # Target day already happened this week
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
+
         if self.at_time is not None:
             assert self.unit in ('days', 'hours') or self.start_day is not None
             kwargs = {
@@ -338,6 +388,7 @@ class Job(object):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
                 elif self.unit == 'hours' and self.at_time.minute > now.minute:
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
+
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:
