@@ -5,9 +5,9 @@ python:
     - "3.3"
 
 install:
-    - pip install pytest-cov --use-mirrors
-    - pip install pytest-pep8 --use-mirrors
-    - pip install coveralls --use-mirrors
+    - pip install pytest-cov
+    - pip install pytest-pep8
+    - pip install coveralls
 
 script: py.test test_schedule.py --pep8 schedule -v --cov schedule --cov-report term-missing
 
