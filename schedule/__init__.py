@@ -316,7 +316,7 @@ class Job(object):
             assert self.start_day in weekdays
             weekday = weekdays.index(self.start_day)
             days_ahead = weekday - self.next_run.weekday()
-            if days_ahead <= 0:  # Target day already happened this week
+            if days_ahead < 0:  # Target day already happened this week
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
         if self.at_time is not None:
@@ -338,10 +338,6 @@ class Job(object):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
                 elif self.unit == 'hours' and self.at_time.minute > now.minute:
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
-        if self.start_day is not None and self.at_time is not None:
-            # Let's see if we will still make that time we specified today
-            if (self.next_run - datetime.datetime.now()).days >= 7:
-                self.next_run -= self.period
 
 # The following methods are shortcuts for not having to
 # create a Scheduler instance:
