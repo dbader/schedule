@@ -81,7 +81,11 @@ class Scheduler(object):
         if tag is None:
             del self.jobs[:]
         else:
+            old_ref = self.jobs
             self.jobs = list([job for job in self.jobs if tag not in job.tags])
+            global jobs
+            if jobs is old_ref:
+                jobs = self.jobs
 
     def cancel_job(self, job):
         """Delete a scheduled job."""
@@ -251,12 +255,8 @@ class Job(object):
         self.start_day = 'sunday'
         return self.weeks
 
-    def tag(self, tag):
-        self.tags.append(tag)
-        return self
-
-    def tags(self, tags):
-        self.tags += list(tags)
+    def tag(self, *tags):
+        self.tags += tags
         return self
 
     def at(self, time_str):
