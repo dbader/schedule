@@ -75,9 +75,13 @@ class Scheduler(object):
             self._run_job(job)
             time.sleep(delay_seconds)
 
-    def clear(self):
-        """Deletes all scheduled jobs."""
-        del self.jobs[:]
+    def clear(self, tag=None):
+        """Deletes scheduled jobs marked with the given tag, or all jobs
+        if tag is omitted"""
+        if tag is not None:
+            self.jobs = list([job for job in self.jobs if tag not in job.tags])
+        else:
+            del self.jobs[:]
 
     def cancel_job(self, job):
         """Delete a scheduled job."""
@@ -121,6 +125,7 @@ class Job(object):
         self.next_run = None  # datetime of the next run
         self.period = None  # timedelta between runs, only valid for
         self.start_day = None  # Specific day of the week to start on
+        self.tags = []
 
     def __lt__(self, other):
         """PeriodicJobs are sortable based on the scheduled time
@@ -245,6 +250,14 @@ class Job(object):
         assert self.interval == 1, 'Use sundays instead of sunday'
         self.start_day = 'sunday'
         return self.weeks
+
+    def tag(self, tag):
+        self.tags.append(tag)
+        return self
+
+    def tags(self, tags):
+        self.tags += (list(tags))
+        return self
 
     def at(self, time_str):
         """Schedule the job every day at a specific time.
@@ -376,9 +389,10 @@ def run_all(delay_seconds=0):
     default_scheduler.run_all(delay_seconds=delay_seconds)
 
 
-def clear():
-    """Deletes all scheduled jobs."""
-    default_scheduler.clear()
+def clear(tag=None):
+    """Deletes scheduled jobs marked with the given tag, or all jobs
+    if tag is omitted"""
+    default_scheduler.clear(tag)
 
 
 def cancel_job(job):
