@@ -256,7 +256,7 @@ class Job(object):
         return self
 
     def tags(self, tags):
-        self.tags += (list(tags))
+        self.tags += list(tags)
         return self
 
     def at(self, time_str):
