@@ -78,14 +78,10 @@ class Scheduler(object):
     def clear(self, tag=None):
         """Deletes scheduled jobs marked with the given tag, or all jobs
         if tag is omitted"""
-        if tag is None:
-            del self.jobs[:]
+        if tag is not None:
+            self.jobs = list([job for job in self.jobs if tag not in job.tags])
         else:
-            old_ref = self.jobs
-            self.jobs = [job for job in self.jobs if tag not in job.tags]
-            global jobs
-            if jobs is old_ref:
-                jobs = self.jobs
+            del self.jobs[:]
 
     def cancel_job(self, job):
         """Delete a scheduled job."""
@@ -129,7 +125,7 @@ class Job(object):
         self.next_run = None  # datetime of the next run
         self.period = None  # timedelta between runs, only valid for
         self.start_day = None  # Specific day of the week to start on
-        self.tags = set()  # unique set of tags for the job
+        self.tags = []
 
     def __lt__(self, other):
         """PeriodicJobs are sortable based on the scheduled time
@@ -255,11 +251,12 @@ class Job(object):
         self.start_day = 'sunday'
         return self.weeks
 
-    def tag(self, *tags):
-        """Tags a job with one or more unique indentifiers.
+    def tag(self, tag):
+        self.tags.append(tag)
+        return self
 
-        Duplicate values are discarded."""
-        self.tags.update(tags)
+    def tags(self, tags):
+        self.tags += (list(tags))
         return self
 
     def at(self, time_str):
