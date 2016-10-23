@@ -78,10 +78,10 @@ class Scheduler(object):
     def clear(self, tag=None):
         """Deletes scheduled jobs marked with the given tag, or all jobs
         if tag is omitted"""
-        if tag is not None:
-            self.jobs = list([job for job in self.jobs if tag not in job.tags])
-        else:
+        if tag is None:
             del self.jobs[:]
+        else:
+            self.jobs = list([job for job in self.jobs if tag not in job.tags])
 
     def cancel_job(self, job):
         """Delete a scheduled job."""
