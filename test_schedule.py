@@ -262,7 +262,7 @@ class SchedulerTests(unittest.TestCase):
     def test_clear_by_tag(self):
         every().second.do(make_mock_job(name='job1')).tag('tag1')
         every().second.do(make_mock_job(name='job2')).tag('tag1', 'tag2')
-        every().second.do(make_mock_job(name='job3')).tag('tag3', 'tag2')
+        every().second.do(make_mock_job(name='job3')).tag('tag3', 'tag3', 'tag3', 'tag2')
         assert len(schedule.jobs) == 3
         schedule.run_all()
         assert len(schedule.jobs) == 3
