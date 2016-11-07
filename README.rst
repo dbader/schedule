@@ -11,9 +11,6 @@ schedule
 .. image:: https://img.shields.io/pypi/v/schedule.svg
         :target: https://pypi.python.org/pypi/schedule
 
-.. image:: https://img.shields.io/pypi/dm/schedule.svg
-        :target: https://pypi.python.org/pypi/schedule
-
 Python job scheduling for humans.
 
 An in-process scheduler for periodic jobs that uses the builder pattern

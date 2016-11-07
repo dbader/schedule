@@ -41,3 +41,4 @@ __pycache__
 venv
 
 .cache
+docs/_build
