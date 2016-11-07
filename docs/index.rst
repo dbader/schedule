@@ -81,7 +81,7 @@ If you encounter any problems, please `file an issue <http://github.com/dbader/s
 About Schedule
 --------------
 
-Schedule was created by `Daniel Bader <https://dbader.org/>`__ - `@dbader_org <https://twitter.com/dbader_org>`_ - mail@dbader.org
+Schedule was created by `Daniel Bader <https://dbader.org/>`__ - `@dbader_org <https://twitter.com/dbader_org>`_
 
 Distributed under the MIT license. See ``LICENSE.txt`` for more information.
 
