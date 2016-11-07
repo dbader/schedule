@@ -352,3 +352,6 @@ texinfo_documents = [
 # texinfo_no_detailmenu = False
 
 autodoc_member_order = 'bysource'
+
+# We're pulling in some external images like CI badges.
+suppress_warnings = ['image.nonlocal_uri']
