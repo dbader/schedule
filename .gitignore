@@ -17,6 +17,7 @@ develop-eggs
 .installed.cfg
 lib
 lib64
+MANIFEST
 
 # Installer logs
 pip-log.txt
@@ -37,3 +38,7 @@ nosetests.xml
 env
 env3
 __pycache__
+venv
+
+.cache
+docs/_build

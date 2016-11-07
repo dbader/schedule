@@ -52,19 +52,37 @@ Usage
         schedule.run_pending()
         time.sleep(1)
 
-Documentation
--------------
 
-Schedule's documentation lives at `schedule.readthedocs.io <https://schedule.readthedocs.io/>`_.
+API Documentation
+-----------------
 
-Please also check the FAQ there with common questions.
+If you are looking for information on a specific function, class, or method,
+this part of the documentation is for you.
+
+.. toctree::
+
+   api
+
+Common Questions
+----------------
+
+Please check here before creating a new issue ticket.
+
+.. toctree::
+   faq
 
 
-Meta
-----
+Issues
+------
 
-Daniel Bader - `@dbader_org <https://twitter.com/dbader_org>`_ - mail@dbader.org
+If you encounter any problems, please `file an issue <http://github.com/dbader/schedule/issues>`_ along with a detailed description. Please also check the :ref:`frequently-asked-questions` and use the search feature in the issue tracker beforehand to avoid creating duplicates. Thank you 😃
+
+
+About Schedule
+--------------
+
+Schedule was created by `Daniel Bader <https://dbader.org/>`__ - `@dbader_org <https://twitter.com/dbader_org>`_
 
 Distributed under the MIT license. See ``LICENSE.txt`` for more information.
 
-https://github.com/dbader/schedule
+.. include:: ../AUTHORS.rst
