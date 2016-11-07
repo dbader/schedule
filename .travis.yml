@@ -1,15 +1,8 @@
+sudo: false
 language: python
-
 python:
     - "2.7"
     - "3.5"
-
-install:
-    - pip install -r requirements-dev.txt --use-mirrors
-
-script:
-    - py.test test_schedule.py --flake8 schedule -v --cov schedule --cov-report term-missing
-    - python setup.py check --strict --metadata --restructuredtext
-
-after_success:
-    - coveralls
+install: pip install tox-travis
+script: tox
+after_success: coveralls
