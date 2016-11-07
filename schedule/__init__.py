@@ -82,7 +82,7 @@ class Scheduler(object):
             del self.jobs[:]
         else:
             old_ref = self.jobs
-            self.jobs = list([job for job in self.jobs if tag not in job.tags])
+            self.jobs = [job for job in self.jobs if tag not in job.tags]
             global jobs
             if jobs is old_ref:
                 jobs = self.jobs
@@ -129,7 +129,7 @@ class Job(object):
         self.next_run = None  # datetime of the next run
         self.period = None  # timedelta between runs, only valid for
         self.start_day = None  # Specific day of the week to start on
-        self.tags = []
+        self.tags = set()  # unique set of tags for the job
 
     def __lt__(self, other):
         """PeriodicJobs are sortable based on the scheduled time
@@ -256,7 +256,10 @@ class Job(object):
         return self.weeks
 
     def tag(self, *tags):
-        self.tags += tags
+        """Tags a job with one or more unique indentifiers.
+
+        Duplicate values are discarded."""
+        self.tags.update(tags)
         return self
 
     def at(self, time_str):
