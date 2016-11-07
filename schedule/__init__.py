@@ -362,7 +362,10 @@ class Job(object):
 # The following methods are shortcuts for not having to
 # create a Scheduler instance:
 
+#: Default :class:`Scheduler <Scheduler>` object
 default_scheduler = Scheduler()
+
+#: Default :class:`Jobs <Job>` list
 jobs = default_scheduler.jobs  # todo: should this be a copy, e.g. jobs()?
 
 
