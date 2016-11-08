@@ -258,3 +258,21 @@ class SchedulerTests(unittest.TestCase):
 
         schedule.cancel_job(mj)
         assert len(schedule.jobs) == 0
+
+
+class SchedulerClassTests(unittest.TestCase):
+    def test_default_job_cls(self):
+        mock_job = make_mock_job()
+        s = schedule.Scheduler()
+        assert s.job_cls is schedule.Job
+        s.every().minute.do(mock_job)
+        assert isinstance(s.jobs[0], schedule.Job)
+
+    def test_custom_job_cls(self):
+        class CustomJob(schedule.Job):
+            pass
+        mock_job = make_mock_job()
+        s = schedule.Scheduler(job_cls=CustomJob)
+        assert s.job_cls is CustomJob
+        s.every().minute.do(mock_job)
+        assert isinstance(s.jobs[0], CustomJob)
