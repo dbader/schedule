@@ -8,3 +8,5 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - mplewis <https://github.com/mplewis>
 - WoLfulus <https://github.com/WoLfulus>
 - dylwhich <https://github.com/dylwhich>
+- fkromer <https://github.com/fkromer>
+- alaingilbert <https://github.com/alaingilbert>
