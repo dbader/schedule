@@ -38,6 +38,7 @@ import datetime
 import functools
 import logging
 import time
+import os
 
 logger = logging.getLogger('schedule')
 
@@ -121,6 +122,7 @@ class Job(object):
         self.next_run = None  # datetime of the next run
         self.period = None  # timedelta between runs, only valid for
         self.start_day = None  # Specific day of the week to start on
+        self.persistent = None # location of persistence data or None
 
     def __lt__(self, other):
         """PeriodicJobs are sortable based on the scheduled time
@@ -282,6 +284,18 @@ class Job(object):
         self._schedule_next_run()
         return self
 
+    def persistent(self, identifier, persistent_directory="./*"):
+        self.persistent = os.path.join(persistent_directory, identifier)
+        if os.path.exists(self.persistent):
+            with open(self.persistent, "r") as persistent_file:
+                self.last_run = datetime.datetime.fromtimestamp(persistent_file.readline())
+            self._schedule_next_run()
+
+    def _write_last_run(self):
+        if self.persistent != None:
+            with open(self.persistent, "w") as persistent_file:
+                persistent_file.write(self.last_run.strftime("%s"))
+
     @property
     def should_run(self):
         """True if the job should be run now."""
@@ -292,6 +306,7 @@ class Job(object):
         logger.info('Running job %s', self)
         ret = self.job_func()
         self.last_run = datetime.datetime.now()
+        self._write_last_run()
         self._schedule_next_run()
         return ret
 
