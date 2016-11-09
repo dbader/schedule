@@ -3,6 +3,11 @@
 History
 -------
 
+0.4.0 (next release)
+++++++++++++++++++++
+- Add proper HTML (Sphinx) docs available at https://schedule.readthedocs.io/
+- CI builds now run against Python 2.7 and 3.5 (3.3 and 3.4 should work fine but are untested)
+
 0.3.2 (2015-07-02)
 ++++++++++++++++++
 
