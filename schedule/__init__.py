@@ -34,6 +34,7 @@ Usage:
 [2] https://github.com/tomykaira/clockwork
 [3] http://adam.heroku.com/past/2010/6/30/replace_cron_with_clockwork/
 """
+import collections
 import datetime
 import functools
 import logging
@@ -255,6 +256,8 @@ class Job(object):
         """Tags a job with one or more unique indentifiers.
 
         Duplicate values are discarded."""
+        if any([not isinstance(tag, collections.Hashable) for tag in tags]):
+            raise TypeError('Every tag should be hashable')
         self.tags.update(tags)
         return self
 

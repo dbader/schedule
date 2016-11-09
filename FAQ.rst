@@ -129,3 +129,23 @@ How can I run a job only once?
         return schedule.CancelJob
 
     schedule.every().day.at('22:30').do(job_that_executes_once)
+
+
+Clear job by tag
+~~~~~~~~~~~~~~~~
+
+You can cancel the scheduling of a group of jobs selecting them by a unique identifier.
+
+.. code-block:: python
+
+    def greet(name):
+        print('Hello {}'.format(name))
+
+    schedule.every().day.do(greet, 'Andrea').tag('daily-tasks', 'friend')
+    schedule.every().hour.do(greet, 'John').tag('hourly-tasks', 'friend')
+    schedule.every().hour.do(greet, 'Monica').tag('hourly-tasks', 'customer')
+    schedule.every().day.do(greet, 'Derek').tag('daily-tasks', 'guest')
+
+    schedule.clear('daily-tasks')
+
+Will prevent every job tagged as ``daily-tasks`` from running again.
