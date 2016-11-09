@@ -259,6 +259,18 @@ class SchedulerTests(unittest.TestCase):
         schedule.cancel_job(mj)
         assert len(schedule.jobs) == 0
 
+    def test_cancel_jobs(self):
+        def stop_job():
+            return schedule.CancelJob
+
+        every().second.do(stop_job)
+        every().second.do(stop_job)
+        every().second.do(stop_job)
+        assert len(schedule.jobs) == 3
+
+        schedule.run_all()
+        assert len(schedule.jobs) == 0
+
     def test_clear_by_tag(self):
         every().second.do(make_mock_job(name='job1')).tag('tag1')
         every().second.do(make_mock_job(name='job2')).tag('tag1', 'tag2')
