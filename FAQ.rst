@@ -99,21 +99,23 @@ in a decorator like this:
 
     import functools
 
-    def catch_exceptions(job_func):
+    def catch_exceptions(job_func, cancel_on_failure=False):
         @functools.wraps(job_func)
         def wrapper(*args, **kwargs):
             try:
-                job_func(*args, **kwargs)
+                return job_func(*args, **kwargs)
             except:
                 import traceback
                 print(traceback.format_exc())
+                if cancel_on_failure:
+                    return schedule.CancelJob
         return wrapper
 
-    @catch_exceptions
+    @catch_exceptions(cancel_on_failure=True)
     def bad_task():
         return 1 / 0
 
-    scheduler.every(5).minutes.do(bad_task)
+    schedule.every(5).minutes.do(bad_task)
 
 Another option would be to subclass Schedule like @mplewis did in `this example <https://gist.github.com/mplewis/8483f1c24f2d6259aef6>`_.
 
