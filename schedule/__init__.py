@@ -11,7 +11,8 @@ Inspired by Addam Wiggins' article "Rethinking Cron" [1] and the
 
 Features:
     - A simple to use API for scheduling jobs.
-    - Very lightweight and no external dependencies.
+    - Very lightweight with `python-dateutil
+      <https://pypi.python.org/pypi/python-dateutil>`_. as the only dependency.
     - Excellent test coverage.
     - Works with Python 2.7 and 3.3
 
@@ -25,6 +26,9 @@ Usage:
     >>> schedule.every(10).minutes.do(job)
     >>> schedule.every().hour.do(job, message='things')
     >>> schedule.every().day.at("10:30").do(job)
+    >>> # Timezone support!
+    >>> # If not specified, the local timezone is assumed.
+    >>> schedule.every().day.at("10:30 PDT").do(job)
 
     >>> while True:
     >>>     schedule.run_pending()
@@ -39,6 +43,10 @@ import datetime
 import functools
 import logging
 import time
+from dateutil import parser
+from dateutil.tz import tzlocal
+
+from .tz import tz_offsets
 
 logger = logging.getLogger('schedule')
 
@@ -112,7 +120,7 @@ class Scheduler(object):
     @property
     def idle_seconds(self):
         """Number of seconds until `next_run`."""
-        return (self.next_run - datetime.datetime.now()).total_seconds()
+        return (self.next_run - datetime.datetime.now(tzlocal())).total_seconds()
 
 
 class Job(object):
@@ -135,7 +143,7 @@ class Job(object):
 
     def __repr__(self):
         def format_time(t):
-            return t.strftime('%Y-%m-%d %H:%M:%S') if t else '[never]'
+            return t.strftime('%Y-%m-%d %H:%M:%S %Z').strip() if t else '[never]'
 
         timestats = '(last run: %s, next run: %s)' % (
                     format_time(self.last_run), format_time(self.next_run))
@@ -153,7 +161,8 @@ class Job(object):
             return 'Every %s %s at %s do %s %s' % (
                    self.interval,
                    self.unit[:-1] if self.interval == 1 else self.unit,
-                   self.at_time, call_repr, timestats)
+                   self.at_time.strftime('%H:%M:%S %Z').strip(), call_repr,
+                   timestats)
         else:
             return 'Every %s %s do %s %s' % (
                    self.interval,
@@ -268,15 +277,18 @@ class Job(object):
         N day(s).
         """
         assert self.unit in ('days', 'hours') or self.start_day
-        hour, minute = time_str.split(':')
-        minute = int(minute)
-        if self.unit == 'days' or self.start_day:
-            hour = int(hour)
-            assert 0 <= hour <= 23
-        elif self.unit == 'hours':
-            hour = 0
-        assert 0 <= minute <= 59
-        self.at_time = datetime.time(hour, minute)
+        try:
+            self.at_time = parser.parse(time_str, tzinfos=tz_offsets)
+        except ValueError:
+            hour, minute = time_str.split(':')
+            minute = int(minute)
+            if self.unit == 'days' or self.start_day:
+                hour = int(hour)
+                assert 0 <= hour <= 23
+            elif self.unit == 'hours':
+                hour = 0
+            assert 0 <= minute <= 59
+            self.at_time = datetime.datetime.now(tzlocal()).replace(hour = hour, minute = minute)
         return self
 
     def do(self, job_func, *args, **kwargs):
@@ -300,13 +312,13 @@ class Job(object):
     @property
     def should_run(self):
         """True if the job should be run now."""
-        return datetime.datetime.now() >= self.next_run
+        return datetime.datetime.now(tzlocal()) >= self.next_run
 
     def run(self):
         """Run the job and immediately reschedule it."""
         logger.info('Running job %s', self)
         ret = self.job_func()
-        self.last_run = datetime.datetime.now()
+        self.last_run = datetime.datetime.now(tzlocal())
         self._schedule_next_run()
         return ret
 
@@ -316,7 +328,7 @@ class Job(object):
         # pylint: disable=W0142
         assert self.unit in ('seconds', 'minutes', 'hours', 'days', 'weeks')
         self.period = datetime.timedelta(**{self.unit: self.interval})
-        self.next_run = datetime.datetime.now() + self.period
+        self.next_run = datetime.datetime.now(tzlocal()) + self.period
         if self.start_day is not None:
             assert self.unit == 'weeks'
             weekdays = (
@@ -343,19 +355,22 @@ class Job(object):
             }
             if self.unit == 'days' or self.start_day is not None:
                 kwargs['hour'] = self.at_time.hour
+            kwargs['tzinfo'] = self.at_time.tzinfo
             self.next_run = self.next_run.replace(**kwargs)
             # If we are running for the first time, make sure we run
             # at the specified time *today* (or *this hour*) as well
             if not self.last_run:
-                now = datetime.datetime.now()
-                if (self.unit == 'days' and self.at_time > now.time() and
+                now = datetime.datetime.now(tzlocal())
+                if self.at_time.tzinfo is not None:
+                    now = now.astimezone(self.at_time.tzinfo)
+                if (self.unit == 'days' and self.at_time.time() > now.time() and
                         self.interval == 1):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
                 elif self.unit == 'hours' and self.at_time.minute > now.minute:
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
-            if (self.next_run - datetime.datetime.now()).days >= 7:
+            if (self.next_run - datetime.datetime.now(tzlocal())).days >= 7:
                 self.next_run -= self.period
 
 # The following methods are shortcuts for not having to

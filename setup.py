@@ -19,6 +19,10 @@ def read_file(filename):
     with codecs.open(filename, 'r', 'utf8') as f:
         return f.read()
 
+requires = [
+    'python-dateutil',
+]
+
 setup(
     name='schedule',
     packages=['schedule'],
@@ -32,6 +36,8 @@ setup(
     author='Daniel Bader',
     author_email='mail@dbader.org',
     url='https://github.com/dbader/schedule',
+    install_requires=requires,
+    tests_require=requires,
     download_url=SCHEDULE_DOWNLOAD_URL,
     keywords=[
         'schedule', 'periodic', 'jobs', 'scheduling', 'clockwork',
