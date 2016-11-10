@@ -270,3 +270,30 @@ class SchedulerTests(unittest.TestCase):
 
         schedule.run_all()
         assert len(schedule.jobs) == 0
+
+    def test_tag_type_enforcement(self):
+
+        job1 = every().second.do(make_mock_job(name='job1'))
+        self.assertRaises(TypeError, job1.tag, {})
+        self.assertRaises(TypeError, job1.tag, 1, 'a', [])
+        job1.tag(0, 'a', True)
+        assert len(job1.tags) == 3
+
+    def test_clear_by_tag(self):
+
+        every().second.do(make_mock_job(name='job1')).tag('tag1')
+        every().second.do(make_mock_job(name='job2')).tag('tag1', 'tag2')
+        every().second.do(make_mock_job(name='job3')).tag('tag3', 'tag3',
+                                                          'tag3', 'tag2')
+        assert len(schedule.jobs) == 3
+        schedule.run_all()
+        assert len(schedule.jobs) == 3
+        schedule.clear('tag3')
+        assert len(schedule.jobs) == 2
+        schedule.clear('tag1')
+        assert len(schedule.jobs) == 0
+        every().second.do(make_mock_job(name='job1'))
+        every().second.do(make_mock_job(name='job2'))
+        every().second.do(make_mock_job(name='job3'))
+        schedule.clear()
+        assert len(schedule.jobs) == 0

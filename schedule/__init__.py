@@ -34,6 +34,7 @@ Usage:
 [2] https://github.com/tomykaira/clockwork
 [3] http://adam.heroku.com/past/2010/6/30/replace_cron_with_clockwork/
 """
+import collections
 import datetime
 import functools
 import logging
@@ -75,9 +76,13 @@ class Scheduler(object):
             self._run_job(job)
             time.sleep(delay_seconds)
 
-    def clear(self):
-        """Deletes all scheduled jobs."""
-        del self.jobs[:]
+    def clear(self, tag=None):
+        """Deletes scheduled jobs marked with the given tag, or all jobs
+        if tag is omitted"""
+        if tag is None:
+            del self.jobs[:]
+        else:
+            self.jobs[:] = [job for job in self.jobs if tag not in job.tags]
 
     def cancel_job(self, job):
         """Delete a scheduled job."""
@@ -121,6 +126,7 @@ class Job(object):
         self.next_run = None  # datetime of the next run
         self.period = None  # timedelta between runs, only valid for
         self.start_day = None  # Specific day of the week to start on
+        self.tags = set()  # unique set of tags for the job
 
     def __lt__(self, other):
         """PeriodicJobs are sortable based on the scheduled time
@@ -245,6 +251,15 @@ class Job(object):
         assert self.interval == 1, 'Use sundays instead of sunday'
         self.start_day = 'sunday'
         return self.weeks
+
+    def tag(self, *tags):
+        """Tags a job with one or more unique indentifiers.
+
+        Duplicate values are discarded."""
+        if any([not isinstance(tag, collections.Hashable) for tag in tags]):
+            raise TypeError('Every tag should be hashable')
+        self.tags.update(tags)
+        return self
 
     def at(self, time_str):
         """Schedule the job every day at a specific time.
@@ -379,9 +394,10 @@ def run_all(delay_seconds=0):
     default_scheduler.run_all(delay_seconds=delay_seconds)
 
 
-def clear():
-    """Deletes all scheduled jobs."""
-    default_scheduler.clear()
+def clear(tag=None):
+    """Deletes scheduled jobs marked with the given tag, or all jobs
+    if tag is omitted"""
+    default_scheduler.clear(tag)
 
 
 def cancel_job(job):

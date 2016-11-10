@@ -99,21 +99,23 @@ in a decorator like this:
 
     import functools
 
-    def catch_exceptions(job_func):
+    def catch_exceptions(job_func, cancel_on_failure=False):
         @functools.wraps(job_func)
         def wrapper(*args, **kwargs):
             try:
-                job_func(*args, **kwargs)
+                return job_func(*args, **kwargs)
             except:
                 import traceback
                 print(traceback.format_exc())
+                if cancel_on_failure:
+                    return schedule.CancelJob
         return wrapper
 
-    @catch_exceptions
+    @catch_exceptions(cancel_on_failure=True)
     def bad_task():
         return 1 / 0
 
-    scheduler.every(5).minutes.do(bad_task)
+    schedule.every(5).minutes.do(bad_task)
 
 Another option would be to subclass Schedule like @mplewis did in `this example <https://gist.github.com/mplewis/8483f1c24f2d6259aef6>`_.
 
@@ -127,3 +129,23 @@ How can I run a job only once?
         return schedule.CancelJob
 
     schedule.every().day.at('22:30').do(job_that_executes_once)
+
+
+Clear job by tag
+~~~~~~~~~~~~~~~~
+
+You can cancel the scheduling of a group of jobs selecting them by a unique identifier.
+
+.. code-block:: python
+
+    def greet(name):
+        print('Hello {}'.format(name))
+
+    schedule.every().day.do(greet, 'Andrea').tag('daily-tasks', 'friend')
+    schedule.every().hour.do(greet, 'John').tag('hourly-tasks', 'friend')
+    schedule.every().hour.do(greet, 'Monica').tag('hourly-tasks', 'customer')
+    schedule.every().day.do(greet, 'Derek').tag('daily-tasks', 'guest')
+
+    schedule.clear('daily-tasks')
+
+Will prevent every job tagged as ``daily-tasks`` from running again.
