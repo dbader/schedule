@@ -10,3 +10,4 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - dylwhich <https://github.com/dylwhich>
 - fkromer <https://github.com/fkromer>
 - alaingilbert <https://github.com/alaingilbert>
+- Zerrossetto <https://github.com/Zerrossettot>
