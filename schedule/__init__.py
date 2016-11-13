@@ -92,7 +92,7 @@ class Scheduler(object):
         if tag is None:
             del self.jobs[:]
         else:
-            self.jobs[:] = [job for job in self.jobs if tag not in job.tags]
+            self.jobs[:] = (job for job in self.jobs if tag not in job.tags)
 
     def cancel_job(self, job):
         """Delete a scheduled job.
@@ -285,13 +285,16 @@ class Job(object):
     def tag(self, *tags):
         """Tags the job with one or more unique indentifiers.
 
-        Duplicate values are discarded.
+        Tags must be hashable. Duplicate tags are discarded.
 
-        :param tags: A uninque list of ``Hashable`` tags.
+        :param tags: A unique list of ``Hashable`` tags.
         :return: The invoked job instance
         """
         if any([not isinstance(tag, collections.Hashable) for tag in tags]):
             raise TypeError('Every tag should be hashable')
+
+        if not all(isinstance(tag, collections.Hashable) for tag in tags):
+            raise TypeError('Tags must be hashable')
         self.tags.update(tags)
         return self
 
