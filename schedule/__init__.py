@@ -406,6 +406,7 @@ class Job(object):
             if (self.next_run - datetime.datetime.now()).days >= 7:
                 self.next_run -= self.period
 
+
 # The following methods are shortcuts for not having to
 # create a Scheduler instance:
 
