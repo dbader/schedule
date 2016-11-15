@@ -57,11 +57,11 @@ class Scheduler(object):
     def run_pending(self):
         """Run all jobs that are scheduled to run.
 
-        Please note that it is *intended behavior that tick() does not
-        run missed jobs*. For example, if you've registered a job that
-        should run every minute and you only call tick() in one hour
-        increments then your job won't be run 60 times in between but
-        only once.
+        Please note that it is *intended behavior that run_pending()
+        does not run missed jobs*. For example, if you've registered a job
+        that should run every minute and you only call run_pending()
+        in one hour increments then your job won't be run 60 times in
+        between but only once.
         """
         runnable_jobs = (job for job in self.jobs if job.should_run)
         for job in sorted(runnable_jobs):
