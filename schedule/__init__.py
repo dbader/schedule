@@ -145,8 +145,9 @@ class Job(object):
     * a :meth:`time unit <Job.second>`
     * a quantity of `time units` defined by `interval`
 
-    a job is usually created and returned by :meth:`Scheduler.every`
-    method, which also defines its `interval`"""
+    A job is usually created and returned by :meth:`Scheduler.every`
+    method, which also defines its `interval`.
+    """
     def __init__(self, interval):
         self.interval = interval  # pause interval * unit between runs
         self.job_func = None  # the job job_func to run
