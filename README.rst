@@ -18,7 +18,7 @@ for configuration. Schedule lets you run Python functions (or any other
 callable) periodically at pre-determined intervals using a simple,
 human-friendly syntax.
 
-Inspired by `Adam Wiggins' <https://github.com/adamwiggins>`_ article `"Rethinking Cron" <http://adam.heroku.com/past/2010/4/13/rethinking_cron/>`_ (`Google cache <http://webcache.googleusercontent.com/search?q=cache:F14k7BNcufsJ:adam.heroku.com/past/2010/4/13/rethinking_cron/+&cd=1&hl=de&ct=clnk&gl=de>`_) and the `clockwork <https://github.com/tomykaira/clockwork>`_ Ruby module.
+Inspired by `Adam Wiggins' <https://github.com/adamwiggins>`_ article `"Rethinking Cron" <http://adam.heroku.com/past/2010/4/13/rethinking_cron/>`_ (`Google cache <http://webcache.googleusercontent.com/search?q=cache:F14k7BNcufsJ:adam.heroku.com/past/2010/4/13/rethinking_cron/+&cd=1&hl=de&ct=clnk&gl=de>`_) and the `clockwork <https://github.com/Rykian/clockwork>`_ Ruby module.
 
 Features
 --------
