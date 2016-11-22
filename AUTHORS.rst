@@ -11,3 +11,4 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - fkromer <https://github.com/fkromer>
 - alaingilbert <https://github.com/alaingilbert>
 - Zerrossetto <https://github.com/Zerrossettot>
+- tusharmakkar08 <https://github.com/tusharmakkar08>
