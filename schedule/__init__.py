@@ -335,22 +335,54 @@ class Job(object):
         """
         Schedule the job every day at a specific time.
 
-        Calling this is only valid for jobs scheduled to run
-        every N day(s).
+        Examples:
 
-        :param time_str: A string in `XX:YY` format.
+        Daily:
+            schedule.every().day.at("10:30").do(job)
+
+        Hourly (at half hour mark):
+            schedule.every().hour.at(":30").do(job)
+        Hourly (30 minute and 45 second mark):
+            schedule.every().hour.at(":30:45").do(job)
+
+        Every minute:
+            schedule.every().minute.at("::00").do(job)
+        Every minute (at 30 second mark):
+            schedule.every().minute.at("::30").do(job)
+
+        :param time_str: A string in `HH:MM` or `HH:MM:SS` format.
         :return: The invoked job instance
         """
-        assert self.unit in ('days', 'hours') or self.start_day
-        hour, minute = time_str.split(':')
-        minute = int(minute)
+        assert self.unit in ('days', 'hours', 'minutes') or self.start_day
+        pieces = time_str.split(':')
+        if len(pieces) == 2:
+            hour, minute = pieces
+            second = '0'
+        elif len(pieces) == 3:
+            hour, minute, second = pieces
+        else:
+            assert False, 'Invalid time string: {0}'.format(time_str)
+
+        second = _parse_second(second)
         if self.unit == 'days' or self.start_day:
-            hour = int(hour)
-            assert 0 <= hour <= 23
+            hour = _parse_hour(hour)
+            minute = _parse_minute(minute)
         elif self.unit == 'hours':
+            minute = _parse_minute(minute)
+            assert len(hour) == 0, \
+                'specifying hour does not make sense if units are hours, ' \
+                'do you mean ":{0}"?'.format(minute)
             hour = 0
-        assert 0 <= minute <= 59
-        self.at_time = datetime.time(hour, minute)
+        elif self.unit == 'minutes':
+            assert len(hour) == 0, \
+                'specifying hour does not make sense if units are minutes, ' \
+                'do you mean ":{0}"?'.format(minute)
+            hour = 0
+            assert len(minute) == 0, \
+                'specifying minutes does not make sense if units are ' \
+                'minutes, do you mean "::{0}"?'.format(second)
+            minute = 0
+        self.at_time = datetime.time(hour, minute, second)
         return self
 
     def to(self, latest):
@@ -442,14 +474,17 @@ class Job(object):
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
         if self.at_time is not None:
-            assert self.unit in ('days', 'hours') or self.start_day is not None
+            assert self.unit in ('days', 'hours', 'minutes') \
+                or self.start_day is not None
             kwargs = {
-                'minute': self.at_time.minute,
                 'second': self.at_time.second,
                 'microsecond': 0
             }
             if self.unit == 'days' or self.start_day is not None:
                 kwargs['hour'] = self.at_time.hour
+                kwargs['minute'] = self.at_time.minute
+            if self.unit == 'hours' or self.start_day is not None:
+                kwargs['minute'] = self.at_time.minute
             self.next_run = self.next_run.replace(**kwargs)
             # If we are running for the first time, make sure we run
             # at the specified time *today* (or *this hour*) as well
@@ -460,6 +495,10 @@ class Job(object):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
                 elif self.unit == 'hours' and self.at_time.minute > now.minute:
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
+                elif self.unit == 'minutes' \
+                        and self.at_time.second > now.second:
+                    self.next_run = self.next_run \
+                        - datetime.timedelta(minutes=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:
@@ -523,3 +562,41 @@ def idle_seconds():
     :data:`default scheduler instance <default_scheduler>`.
     """
     return default_scheduler.idle_seconds
+
+
+def _is_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
+
+def _parse_second(second_str):
+    assert len(second_str) > 0, 'second not specified'
+    assert _is_int(second_str), 'second is not an integer: {0}'\
+        .format(second_str)
+    second = int(second_str)
+    assert 0 <= second <= 59, \
+        'second should be an integer between 0 and 59: {0}'.format(second)
+    return second
+
+
+def _parse_minute(minute_str):
+    assert len(minute_str) > 0, 'minute not specified'
+    assert _is_int(minute_str), \
+        'minute is not an integer: {0}'.format(minute_str)
+    minute = int(minute_str)
+    assert 0 <= minute <= 59, \
+        'minute should be an integer between 0 and 59: {0}'.format(minute)
+    return minute
+
+
+def _parse_hour(hour_str):
+    assert len(hour_str) > 0, 'hour not specified'
+    assert _is_int(hour_str), \
+        'hour is not an integer: {0}'.format(hour_str)
+    hour = int(hour_str)
+    assert 0 <= hour <= 23, \
+        'hour should be an integer between 0 and 23: {0}'.format(hour)
+    return hour

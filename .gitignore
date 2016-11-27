@@ -42,3 +42,6 @@ venv
 
 .cache
 docs/_build
+
+# IntelliJ IDEA folder
+.idea

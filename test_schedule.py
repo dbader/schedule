@@ -22,12 +22,13 @@ class mock_datetime(object):
     """
     Monkey-patch datetime for predictable results
     """
-    def __init__(self, year, month, day, hour, minute):
+    def __init__(self, year, month, day, hour, minute, second=0):
         self.year = year
         self.month = month
         self.day = day
         self.hour = hour
         self.minute = minute
+        self.second = second
 
     def __enter__(self):
         class MockDate(datetime.datetime):
@@ -38,7 +39,7 @@ class mock_datetime(object):
             @classmethod
             def now(cls):
                 return cls(self.year, self.month, self.day,
-                           self.hour, self.minute)
+                           self.hour, self.minute, self.second)
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
@@ -99,8 +100,75 @@ class SchedulerTests(unittest.TestCase):
             assert every().hour.at(':30').do(mock_job).next_run.minute == 30
             assert every().hour.at(':10').do(mock_job).next_run.hour == 13
             assert every().hour.at(':10').do(mock_job).next_run.minute == 10
+            assert every().hour.at(':10').do(mock_job).next_run.second == 0
             assert every().hour.at(':00').do(mock_job).next_run.hour == 13
             assert every().hour.at(':00').do(mock_job).next_run.minute == 0
+            assert every().hour.at(':00').do(mock_job).next_run.second == 0
+
+    def test_at_time_hour_specify_seconds(self):
+        with mock_datetime(2010, 1, 6, 12, 20):
+            mock_job = make_mock_job()
+            assert every().hour.at(':30:01').do(mock_job).next_run.hour == 12
+            assert every().hour.at(':30:01').do(mock_job).next_run.minute == 30
+            assert every().hour.at(':10:01').do(mock_job).next_run.hour == 13
+            assert every().hour.at(':10:01').do(mock_job).next_run.second == 1
+            assert every().hour.at(':10:02').do(mock_job).next_run.minute == 10
+            assert every().hour.at(':00:02').do(mock_job).next_run.hour == 13
+            assert every().hour.at(':00:02').do(mock_job).next_run.minute == 0
+            assert every().hour.at(':00:02').do(mock_job).next_run.second == 2
+
+    def test_at_time_minute(self):
+        with mock_datetime(2010, 1, 6, 12, 20, second=15):
+            mock_job = make_mock_job()
+            assert every().minute.at('::30').do(mock_job).next_run.hour == 12
+            assert every().minute.at('::30').do(mock_job).next_run.minute == 20
+            assert every().minute.at('::30').do(mock_job).next_run.second == 30
+            assert every().minute.at('::00').do(mock_job).next_run.hour == 12
+            assert every().minute.at('::00').do(mock_job).next_run.minute == 21
+            assert every().minute.at('::00').do(mock_job).next_run.second == 0
+
+    def test_at_time_second(self):
+        with mock_datetime(2010, 1, 6, 12, 20, second=10):
+            mock_job = make_mock_job()
+            assert every().day.at("09:24:57").do(mock_job).next_run\
+                .hour == 9
+            assert every().day.at("09:24:57").do(mock_job).next_run\
+                .minute == 24
+            assert every().day.at("09:24:57").do(mock_job).next_run\
+                .second == 57
+
+    def test_at_time_validation(self):
+        mock_job = make_mock_job()
+        self.assertRaises(AssertionError,
+                          lambda: every().day.at('A:30').do(mock_job))
+        self.assertRaises(AssertionError,
+                          lambda: every().day.at(':30').do(mock_job))
+        self.assertRaises(AssertionError,
+                          lambda: every().day.at('24:30').do(mock_job))
+        self.assertRaises(AssertionError,
+                          lambda: every().hour.at('00:B').do(mock_job))
+        self.assertRaises(AssertionError,
+                          lambda: every().hour.at(':60').do(mock_job))
+        self.assertRaises(AssertionError,
+                          lambda: every().minute.at('::C').do(mock_job))
+        self.assertRaises(AssertionError,
+                          lambda: every().minute.at('::60').do(mock_job))
+        self.assertRaises(AssertionError,
+                          lambda: every().minute.at('12:30:00:00')
+                          .do(mock_job))
+
+    def test_at_time_validation2(self):
+        """ Test situations that don't make sense. """
+        mock_job = make_mock_job()
+        # Doesn't make sense to say every hour at 2:30. Should be :30
+        self.assertRaises(AssertionError,
+                          lambda: every().hour.at('2:30').do(mock_job))
+        # Doesn't maek sense to say every minute at 2:30:00 or :30:00,
+        # should be ::00
+        self.assertRaises(AssertionError,
+                          lambda: every().minute.at('2:30:00').do(mock_job))
+        self.assertRaises(AssertionError,
+                          lambda: every().minute.at(':30:00').do(mock_job))
 
     def test_next_run_time(self):
         with mock_datetime(2010, 1, 6, 12, 15):

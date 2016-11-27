@@ -217,3 +217,43 @@ How can I pass arguments to the job function?
 
     schedule.every(2).seconds.do(greet, name='Alice')
     schedule.every(4).seconds.do(greet, name='Bob')    
+
+How can I make a job run every day at a particular time?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+... code-block:: python
+
+    def job():
+        print 'Do your job here...'
+
+    schedule.every().day.at("02:30").do(job)
+    # OR
+    schedule.every().day.at("02:30:00").do(job)
+
+will run job() every day at 02:30. In other words, once per day, at 02:30
+
+How can I make a job run every hour at a particular time?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+... code-block:: python
+
+    def job():
+        print 'Do your job here...'
+
+    schedule.every().day.at(":30").do(job)
+    # OR
+    schedule.every().day.at(":30:00").do(job)
+
+will run job() at 00:30, 01:30, 02:30, etc... in other words, every hour at the half hour mark.
+
+How can I make a job run every minute at a particular time?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+... code-block:: python
+
+    def job():
+        print 'Do your job here...'
+
+    schedule.every().day.at("::00").do(job)
+
+will run job() at 00:00:00, 00:01:00, 00:02:00, etc... in other words, every hour and second of the day, at the 0 second mark.

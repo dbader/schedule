@@ -3,6 +3,13 @@
 History
 -------
 
+0.next (TBD)
+++++++++++++++++++++
+
+- .at() now supports units of minutes, this adds support for running every minute, using '::00' syntax, similar to running every hour syntax ':00'
+- .at() now supports times with seconds in string
+- More assertions/validation of time string passed in to .at() function
+
 0.5.0 (2017-11-16)
 ++++++++++++++++++
 
@@ -21,9 +28,8 @@ History
 
 - Publish to PyPI as a universal (py2/py3) wheel
 
-
 0.4.0 (2016-11-28)
-++++++++++++++++++
+++++++++++++++++++++
 
 - Add proper HTML (Sphinx) docs available at https://schedule.readthedocs.io/
 - CI builds now run against Python 2.7 and 3.5 (3.3 and 3.4 should work fine but are untested)
