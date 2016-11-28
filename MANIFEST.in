@@ -1,1 +1,8 @@
-include README.rst LICENSE.txt HISTORY.rst test_schedule.py
+include README.rst
+include HISTORY.rst
+include LICENSE.txt
+
+include test_schedule.py
+
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]

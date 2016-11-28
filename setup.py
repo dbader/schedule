@@ -1,13 +1,20 @@
+"""
+Publish a new version:
+
+$ git tag X.Y.Z -m "Release X.Y.Z"
+$ git push --tags
+
+$ pip install --upgrade twine wheel
+$ python setup.py sdist bdist_wheel
+$ twine upload dist/*
+"""
 import codecs
 import os
 import sys
-from distutils.core import setup
+from setuptools import setup
 
-if sys.argv[-1] == 'publish':
-    os.system('python setup.py sdist upload -r pypi')
-    sys.exit()
 
-SCHEDULE_VERSION = '0.4.0-dev'
+SCHEDULE_VERSION = '0.4.0'
 SCHEDULE_DOWNLOAD_URL = (
     'https://github.com/dbader/schedule/tarball/' + SCHEDULE_VERSION
 )
