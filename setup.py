@@ -14,7 +14,7 @@ import sys
 from setuptools import setup
 
 
-SCHEDULE_VERSION = '0.4.0'
+SCHEDULE_VERSION = '0.4.1'
 SCHEDULE_DOWNLOAD_URL = (
     'https://github.com/dbader/schedule/tarball/' + SCHEDULE_VERSION
 )
@@ -31,11 +31,8 @@ setup(
     packages=['schedule'],
     version=SCHEDULE_VERSION,
     description='Job scheduling for humans.',
-    long_description=(
-        read_file('README.rst') + '\n\n' +
-        read_file('HISTORY.rst')
-    ),
-    license=read_file('LICENSE.txt'),
+    long_description=read_file('README.rst'),
+    license='MIT',
     author='Daniel Bader',
     author_email='mail@dbader.org',
     url='https://github.com/dbader/schedule',
