@@ -1,6 +1,8 @@
 """
 Python job scheduling for humans.
 
+github.com/dbader/schedule
+
 An in-process scheduler for periodic jobs that uses the builder pattern
 for configuration. Schedule lets you run Python functions (or any other
 callable) periodically at pre-determined intervals using a simple,
@@ -44,18 +46,23 @@ logger = logging.getLogger('schedule')
 
 
 class CancelJob(object):
-    """Can be returned from a job to unschedule itself"""
+    """
+    Can be returned from a job to unschedule itself.
+    """
     pass
 
 
 class Scheduler(object):
-    """Objects instantiated by the `Scheduler` are factories to create jobs,
-    keep record of scheduled jobs and handle their execution"""
+    """
+    Objects instantiated by the `Scheduler` are factories to create
+    jobs, keep record of scheduled jobs and handle their execution.
+    """
     def __init__(self):
         self.jobs = []
 
     def run_pending(self):
-        """Run all jobs that are scheduled to run.
+        """
+        Run all jobs that are scheduled to run.
 
         Please note that it is *intended behavior that tick() does not
         run missed jobs*. For example, if you've registered a job that
@@ -84,10 +91,12 @@ class Scheduler(object):
             time.sleep(delay_seconds)
 
     def clear(self, tag=None):
-        """Deletes scheduled jobs marked with the given tag, or all jobs
-        if tag is omitted
+        """
+        Deletes scheduled jobs marked with the given tag, or all jobs
+        if tag is omitted.
 
-        :param tag: An identifier used to identify a subset of jobs to delete
+        :param tag: An identifier used to identify a subset of
+                    jobs to delete
         """
         if tag is None:
             del self.jobs[:]
@@ -95,7 +104,8 @@ class Scheduler(object):
             self.jobs[:] = (job for job in self.jobs if tag not in job.tags)
 
     def cancel_job(self, job):
-        """Delete a scheduled job.
+        """
+        Delete a scheduled job.
 
         :param job: The job to be unscheduled
         """
@@ -105,7 +115,8 @@ class Scheduler(object):
             pass
 
     def every(self, interval=1):
-        """Schedule a new periodic job.
+        """
+        Schedule a new periodic job.
 
         :param interval: A quantity of a certain time unit
         :return: An empty job
@@ -121,7 +132,8 @@ class Scheduler(object):
 
     @property
     def next_run(self):
-        """Datetime when the next job should run.
+        """
+        Datetime when the next job should run.
 
         :return: A :class:`~datetime.datetime` object
         """
@@ -132,21 +144,24 @@ class Scheduler(object):
     @property
     def idle_seconds(self):
         """
-        :return: Number of seconds until :meth:`next_run <Scheduler.next_run>`.
+        :return: Number of seconds until
+                 :meth:`next_run <Scheduler.next_run>`.
         """
         return (self.next_run - datetime.datetime.now()).total_seconds()
 
 
 class Job(object):
-    """A periodic job as used by :class:`Scheduler`.
+    """
+    A periodic job as used by :class:`Scheduler`.
 
     Every job runs at a given fixed time interval that is defined by:
 
     * a :meth:`time unit <Job.second>`
     * a quantity of `time units` defined by `interval`
 
-    a job is usually created and returned by :meth:`Scheduler.every`
-    method, which also defines its `interval`"""
+    A job is usually created and returned by :meth:`Scheduler.every`
+    method, which also defines its `interval`
+    """
     def __init__(self, interval):
         self.interval = interval  # pause interval * unit between runs
         self.job_func = None  # the job job_func to run
@@ -159,8 +174,10 @@ class Job(object):
         self.tags = set()  # unique set of tags for the job
 
     def __lt__(self, other):
-        """PeriodicJobs are sortable based on the scheduled time
-        they run next."""
+        """
+        PeriodicJobs are sortable based on the scheduled time they
+        run next.
+        """
         return self.next_run < other.next_run
 
     def __repr__(self):
@@ -283,7 +300,8 @@ class Job(object):
         return self.weeks
 
     def tag(self, *tags):
-        """Tags the job with one or more unique indentifiers.
+        """
+        Tags the job with one or more unique indentifiers.
 
         Tags must be hashable. Duplicate tags are discarded.
 
@@ -299,10 +317,11 @@ class Job(object):
         return self
 
     def at(self, time_str):
-        """Schedule the job every day at a specific time.
+        """
+        Schedule the job every day at a specific time.
 
-        Calling this is only valid for jobs scheduled to run every
-        N day(s).
+        Calling this is only valid for jobs scheduled to run
+        every N day(s).
 
         :param time_str: A string in `XX:YY` format.
         :return: The invoked job instance
@@ -320,7 +339,8 @@ class Job(object):
         return self
 
     def do(self, job_func, *args, **kwargs):
-        """Specifies the job_func that should be called every time the
+        """
+        Specifies the job_func that should be called every time the
         job runs.
 
         Any additional arguments are passed on to job_func when
@@ -348,7 +368,8 @@ class Job(object):
         return datetime.datetime.now() >= self.next_run
 
     def run(self):
-        """Run the job and immediately reschedule it.
+        """
+        Run the job and immediately reschedule it.
 
         :return: The return value returned by the `job_func`
         """
@@ -359,9 +380,9 @@ class Job(object):
         return ret
 
     def _schedule_next_run(self):
-        """Compute the instant when this job should run next."""
-        # Allow *, ** magic temporarily:
-        # pylint: disable=W0142
+        """
+        Compute the instant when this job should run next.
+        """
         assert self.unit in ('seconds', 'minutes', 'hours', 'days', 'weeks')
         self.period = datetime.timedelta(**{self.unit: self.interval})
         self.next_run = datetime.datetime.now() + self.period
@@ -418,16 +439,19 @@ jobs = default_scheduler.jobs  # todo: should this be a copy, e.g. jobs()?
 
 
 def every(interval=1):
-    """Schedule a new periodic job with the default module scheduler.
+    """
+    Schedule a new periodic job with the default module scheduler.
 
-    :param interval: A quantity of any given :meth:`time unit <Job.second>`
+    :param interval: A quantity of any given
+                     :meth:`time unit <Job.second>`
     :return: The default :obj:`Scheduler` instance
     """
     return default_scheduler.every(interval)
 
 
 def run_pending():
-    """Run all jobs that are scheduled to run.
+    """
+    Run all jobs that are scheduled to run.
 
     Please note that it is *intended behavior that run_pending()
     does not run missed jobs*. For example, if you've registered a job
@@ -439,19 +463,23 @@ def run_pending():
 
 
 def run_all(delay_seconds=0):
-    """Run all jobs regardless if they are scheduled to run or not.
+    """
+    Run all jobs regardless if they are scheduled to run or not.
 
     A delay of `delay` seconds is added between each job. This can help
     to distribute the system load generated by the jobs more evenly over
-    time."""
+    time.
+    """
     default_scheduler.run_all(delay_seconds=delay_seconds)
 
 
 def clear(tag=None):
-    """Deletes scheduled jobs on the default scheduler marked with the given
-    tag, or all jobs if tag is omitted
+    """
+    Deletes scheduled jobs on the default scheduler marked with the
+    given tag, or all jobs if tag is omitted
 
-    :param tag: An identifier used to identify a subset of jobs to delete
+    :param tag: An identifier used to identify a subset of
+                jobs to delete
     """
     default_scheduler.clear(tag)
 
@@ -474,6 +502,7 @@ def next_run():
 
 def idle_seconds():
     """
-    :return: Number of seconds until :meth:`next_run <Scheduler.next_run>`.
+    :return: Number of seconds until
+             :meth:`next_run <Scheduler.next_run>`.
     """
     return default_scheduler.idle_seconds
