@@ -5,7 +5,7 @@ $ git tag X.Y.Z -m "Release X.Y.Z"
 $ git push --tags
 
 $ pip install --upgrade twine wheel
-$ python setup.py sdist bdist_wheel
+$ python setup.py sdist bdist_wheel --universal
 $ twine upload dist/*
 """
 import codecs
@@ -14,7 +14,7 @@ import sys
 from setuptools import setup
 
 
-SCHEDULE_VERSION = '0.4.1'
+SCHEDULE_VERSION = '0.4.2'
 SCHEDULE_DOWNLOAD_URL = (
     'https://github.com/dbader/schedule/tarball/' + SCHEDULE_VERSION
 )
@@ -44,6 +44,8 @@ setup(
     classifiers=[
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
         'Natural Language :: English',
