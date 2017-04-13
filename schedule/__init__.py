@@ -374,7 +374,11 @@ class Job(object):
         :return: The return value returned by the `job_func`
         """
         logger.info('Running job %s', self)
-        ret = self.job_func()
+        ret = None
+        try:
+            ret = self.job_func()
+        except:
+            logger.exception('Job %s Died Unexpectedly', self)
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
         return ret
