@@ -33,7 +33,7 @@ Usage:
     >>>     time.sleep(1)
 
 [1] https://adam.herokuapp.com/past/2010/4/13/rethinking_cron/
-[2] https://github.com/adamwiggins/clockwork
+[2] https://github.com/Rykian/clockwork
 [3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
 import collections
