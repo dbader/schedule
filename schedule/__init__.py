@@ -506,3 +506,10 @@ def idle_seconds():
              :meth:`next_run <Scheduler.next_run>`.
     """
     return default_scheduler.idle_seconds
+
+
+def loop(interval=1):
+    """ Loop and call run_pending() every `interval` seconds """
+    while True:
+        run_pending()
+        time.sleep(interval)
