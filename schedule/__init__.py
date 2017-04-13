@@ -506,3 +506,66 @@ def idle_seconds():
              :meth:`next_run <Scheduler.next_run>`.
     """
     return default_scheduler.idle_seconds
+
+
+def schedule_every(unit, interval=1, at=None):
+    """Function decorator for schedule.every."""
+    def _schedule(function):
+        if 'second' in unit:
+            # plural
+            if unit[-1] == 's':
+                if at:
+                    every(interval).seconds.at(at).do(function)
+                else:
+                    every(interval).seconds.do(function)
+            # singular
+            else:
+                if at:
+                    every().second.at(at).do(function)
+                else:
+                    every().second.do(function)
+        if 'minute' in unit:
+            if unit[-1] == 's':
+                if at:
+                    every(interval).minutes.at(at).do(function)
+                else:
+                    every(interval).minutes.do(function)
+            else:
+                if at:
+                    every().minute.at(at).do(function)
+                else:
+                    every().minute.do(function)
+        if 'hour' in unit:
+            if unit[-1] == 's':
+                if at:
+                    every(interval).hours.at(at).do(function)
+                else:
+                    every(interval).hours.do(function)
+            else:
+                if at:
+                    every().hour.at(at).do(function)
+                else:
+                    every().hour.do(function)
+        if 'day' in unit:
+            if unit[-1] == 's':
+                if at:
+                    every(interval).days.at(at).do(function)
+                else:
+                    every(interval).days.do(function)
+            else:
+                if at:
+                    every().day.at(at).do(function)
+                else:
+                    every().day.do(function)
+        if 'week' in unit:
+            if unit[-1] == 's':
+                if at:
+                    every(interval).weeks.at(at).do(function)
+                else:
+                    every(interval).weeks.do(function)
+            else:
+                if at:
+                    every().week.at(at).do(function)
+                else:
+                    every().week.do(function)
+    return _schedule
