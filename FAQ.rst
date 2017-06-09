@@ -59,6 +59,7 @@ If you want tighter control on the number of threads use a shared jobqueue and o
         while 1:
             job_func = jobqueue.get()
             job_func()
+            jobqueue.task_done()
 
     jobqueue = Queue.Queue()
 

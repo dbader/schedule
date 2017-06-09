@@ -32,9 +32,9 @@ Usage:
     >>>     schedule.run_pending()
     >>>     time.sleep(1)
 
-[1] http://adam.heroku.com/past/2010/4/13/rethinking_cron/
-[2] https://github.com/tomykaira/clockwork
-[3] http://adam.heroku.com/past/2010/6/30/replace_cron_with_clockwork/
+[1] https://adam.herokuapp.com/past/2010/4/13/rethinking_cron/
+[2] https://github.com/Rykian/clockwork
+[3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
 import collections
 import datetime
