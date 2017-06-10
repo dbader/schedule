@@ -39,7 +39,7 @@ setup(
     download_url=SCHEDULE_DOWNLOAD_URL,
     keywords=[
         'schedule', 'periodic', 'jobs', 'scheduling', 'clockwork',
-        'cron'
+        'cron', 'scheduler', 'job scheduling'
     ],
     classifiers=[
         'Intended Audience :: Developers',

@@ -467,7 +467,7 @@ def clear(tag=None):
 
 
 def cancel_job(job):
-    """Calls :meth:`cancel_job <Scheduler.candel_job>` on the
+    """Calls :meth:`cancel_job <Scheduler.cancel_job>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
     default_scheduler.cancel_job(job)
