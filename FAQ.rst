@@ -132,8 +132,8 @@ How can I run a job only once?
     schedule.every().day.at('22:30').do(job_that_executes_once)
 
 
-Clear job by tag
-~~~~~~~~~~~~~~~~
+How can I cancel several jobs at once?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can cancel the scheduling of a group of jobs selecting them by a unique identifier.
 
@@ -152,8 +152,7 @@ You can cancel the scheduling of a group of jobs selecting them by a unique iden
 Will prevent every job tagged as ``daily-tasks`` from running again.
 
 
-Why it shows to me the error 'module' has no attribute 'every'
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+I'm getting an ``AttributeError: 'module' object has no attribute 'every'`` when I try to use schedule. How can I fix this?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If an error like this is shown running your schedule, first of all ensure that you're importing ``schedule`` in a right way and then please ensure your script is not called ``schedule.py``.
-
+This happens if your code imports the wrong ``schedule`` module. Make sure you don't have a ``schedule.py`` file in your project that overrides the ``schedule`` module provided by this library.
