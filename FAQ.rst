@@ -59,6 +59,7 @@ If you want tighter control on the number of threads use a shared jobqueue and o
         while 1:
             job_func = jobqueue.get()
             job_func()
+            jobqueue.task_done()
 
     jobqueue = Queue.Queue()
 
@@ -131,8 +132,8 @@ How can I run a job only once?
     schedule.every().day.at('22:30').do(job_that_executes_once)
 
 
-Clear job by tag
-~~~~~~~~~~~~~~~~
+How can I cancel several jobs at once?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can cancel the scheduling of a group of jobs selecting them by a unique identifier.
 
@@ -149,3 +150,9 @@ You can cancel the scheduling of a group of jobs selecting them by a unique iden
     schedule.clear('daily-tasks')
 
 Will prevent every job tagged as ``daily-tasks`` from running again.
+
+
+I'm getting an ``AttributeError: 'module' object has no attribute 'every'`` when I try to use schedule. How can I fix this?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This happens if your code imports the wrong ``schedule`` module. Make sure you don't have a ``schedule.py`` file in your project that overrides the ``schedule`` module provided by this library.

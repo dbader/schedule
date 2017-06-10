@@ -3,14 +3,21 @@
 History
 -------
 
-0.4.0 (next release)
-++++++++++++++++++++
+0.4.2 (2016-11-29)
+++++++++++++++++++
+
+- Publish to PyPI as a universal (py2/py3) wheel
+
+
+0.4.0 (2016-11-28)
+++++++++++++++++++
 
 - Add proper HTML (Sphinx) docs available at https://schedule.readthedocs.io/
 - CI builds now run against Python 2.7 and 3.5 (3.3 and 3.4 should work fine but are untested)
 - Fixed an issue with ``run_all()`` and having more than one job that deletes itself in the same iteration. Thanks @alaingilbert.
 - Add ability to tag jobs and to cancel jobs by tag. Thanks @Zerrossetto.
 - Improve schedule docs. Thanks @Zerrossetto.
+- Additional docs fixes by @fkromer and @yetingsky.
 
 0.3.2 (2015-07-02)
 ++++++++++++++++++
