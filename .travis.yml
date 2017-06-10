@@ -1,9 +1,8 @@
 sudo: false
 language: python
 python:
-    - "2.7"
+    - "2.7.11"
     - "3.5"
-    - "3.6"
 install: pip install tox-travis
 script: tox
 after_success: coveralls
