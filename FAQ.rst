@@ -150,3 +150,10 @@ You can cancel the scheduling of a group of jobs selecting them by a unique iden
     schedule.clear('daily-tasks')
 
 Will prevent every job tagged as ``daily-tasks`` from running again.
+
+
+Why it shows to me the error 'module' has no attribute 'every'
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If an error like this is shown running your schedule, first of all ensure that you're importing ``schedule`` in a right way and then please ensure your script is not called ``schedule.py``.
+
