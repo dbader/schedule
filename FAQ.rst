@@ -156,3 +156,38 @@ I'm getting an ``AttributeError: 'module' object has no attribute 'every'`` when
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This happens if your code imports the wrong ``schedule`` module. Make sure you don't have a ``schedule.py`` file in your project that overrides the ``schedule`` module provided by this library.
+
+How can I add generic logging to my scheduled jobs?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The easiest way to add generic logging functionality to your schedule
+job functions is to implement a decorator that handles logging
+in a reusable way:
+
+.. code-block:: python
+
+    import functools
+    import time
+
+    import schedule
+
+
+    # This decorator can be applied to
+    def with_logging(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            print('LOG: Running job "%s"' % func.__name__)
+            result = func(*args, **kwargs)
+            print('LOG: Job "%s" completed' % func.__name__)
+            return result
+        return wrapper
+
+    @with_logging
+    def job():
+        print('Hello, World.')
+
+    schedule.every(3).seconds.do(job)
+
+    while 1:
+        schedule.run_pending()
+        time.sleep(1)
