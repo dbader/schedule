@@ -295,3 +295,13 @@ class SchedulerTests(unittest.TestCase):
         every().second.do(make_mock_job(name='job3'))
         schedule.clear()
         assert len(schedule.jobs) == 0
+
+    def test_misconfigured_job_wont_break_scheduler(self):
+        """
+        Ensure an interrupted job definition chain won't break
+        the scheduler instance permanently.
+        """
+        scheduler = schedule.Scheduler()
+        scheduler.every()
+        scheduler.every(10).seconds
+        scheduler.run_pending()

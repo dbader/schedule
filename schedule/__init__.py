@@ -54,8 +54,9 @@ class CancelJob(object):
 
 class Scheduler(object):
     """
-    Objects instantiated by the `Scheduler` are factories to create
-    jobs, keep record of scheduled jobs and handle their execution.
+    Objects instantiated by the :class:`Scheduler <Scheduler>` are
+    factories to create jobs, keep record of scheduled jobs and
+    handle their execution.
     """
     def __init__(self):
         self.jobs = []
@@ -119,10 +120,9 @@ class Scheduler(object):
         Schedule a new periodic job.
 
         :param interval: A quantity of a certain time unit
-        :return: An empty job
+        :return: An unconfigured :class:`Job <Job>`
         """
-        job = Job(interval)
-        self.jobs.append(job)
+        job = Job(interval, self)
         return job
 
     def _run_job(self, job):
@@ -154,6 +154,11 @@ class Job(object):
     """
     A periodic job as used by :class:`Scheduler`.
 
+    :param interval: A quantity of a certain time unit
+    :param scheduler: The :class:`Scheduler <Scheduler>` instance that
+                      this job will register itself with once it has
+                      been fully configured in :meth:`Job.do()`.
+
     Every job runs at a given fixed time interval that is defined by:
 
     * a :meth:`time unit <Job.second>`
@@ -162,7 +167,7 @@ class Job(object):
     A job is usually created and returned by :meth:`Scheduler.every`
     method, which also defines its `interval`.
     """
-    def __init__(self, interval):
+    def __init__(self, interval, scheduler=None):
         self.interval = interval  # pause interval * unit between runs
         self.job_func = None  # the job job_func to run
         self.unit = None  # time units, e.g. 'minutes', 'hours', ...
@@ -172,6 +177,7 @@ class Job(object):
         self.period = None  # timedelta between runs, only valid for
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
+        self.scheduler = scheduler  # scheduler to register with
 
     def __lt__(self, other):
         """
@@ -358,6 +364,7 @@ class Job(object):
             # call will fail.
             pass
         self._schedule_next_run()
+        self.scheduler.jobs.append(self)
         return self
 
     @property
