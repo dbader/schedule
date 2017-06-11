@@ -42,6 +42,12 @@ import functools
 import logging
 import time
 
+try:
+    from concurrent.futures import ThreadPoolExecutor
+    CAN_USE_THREADED = True
+except ImportError:
+    CAN_USE_THREADED = False
+
 logger = logging.getLogger('schedule')
 
 
@@ -485,3 +491,45 @@ def idle_seconds():
     :data:`default scheduler instance <default_scheduler>`.
     """
     return default_scheduler.idle_seconds
+
+
+class ThreadedScheduler(schedule.Scheduler):
+    """
+    A scheduler which will run each job in a separate thread instead of
+    blocking the scheduler until the job is finished.
+    """
+    def __init__(self, max_workers=5):
+        if not CAN_USE_THREADED:
+            raise RuntimeError("concurrent.futures is not available, so "
+                               "you can't use the ThreadedScheduler")
+
+        super().__init__()
+        self.pool = ThreadPoolExecutor(max_workers=max_workers)
+
+    def _run_job(self, job):
+        """
+        Submit super()._run_job() to the ThreadPoolExecutor so it will be
+        executed in another thread.
+        """
+        # Queue running of the job
+        fut = self.pool.submit(super()._run_job, job)
+
+        # Add the error handler to check if there were exceptions in the job
+        fut.add_done_callback(self._error_handler)
+
+    def _error_handler(self, fut):
+        """
+        The callback run once a job is completed.
+
+        The main purpose of this is to catch any errors raised and log them.
+        Feel free to override this method if you want to add some custom
+        error handling.
+        """
+        try:
+            # When accessing the result, any exceptions encountered are
+            # automatically raised.
+            fut.result()
+        except Exception as e:
+            logger.exception('The job encountered an exception')
+
+
