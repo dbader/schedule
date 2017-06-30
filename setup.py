@@ -14,7 +14,7 @@ import sys
 from setuptools import setup
 
 
-SCHEDULE_VERSION = '0.4.3'
+SCHEDULE_VERSION = '0.4.4'
 SCHEDULE_DOWNLOAD_URL = (
     'https://github.com/dbader/schedule/tarball/' + SCHEDULE_VERSION
 )

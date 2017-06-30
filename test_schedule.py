@@ -9,7 +9,7 @@ import unittest
 # pylint: disable-msg=R0201,C0111,E0102,R0904,R0901
 
 import schedule
-from schedule import every
+from schedule import every, repeat
 
 
 def make_mock_job(name=None):
@@ -103,6 +103,20 @@ class SchedulerTests(unittest.TestCase):
         every().minute.do(mock_job)
         every().hour.do(mock_job)
         every().day.at('11:00').do(mock_job)
+        schedule.run_all()
+        assert mock_job.call_count == 3
+
+    def test_run_all_with_decorator(self):
+        mock_job = make_mock_job()
+        @repeat(every().minute)
+        def _job1():
+            mock_job()
+        @repeat(every().hour)
+        def _job2():
+            mock_job()
+        @repeat(every().day.at('11:00'))
+        def _job3():
+            mock_job()
         schedule.run_all()
         assert mock_job.call_count == 3
 
