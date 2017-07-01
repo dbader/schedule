@@ -108,12 +108,15 @@ class SchedulerTests(unittest.TestCase):
 
     def test_run_all_with_decorator(self):
         mock_job = make_mock_job()
+
         @repeat(every().minute)
         def _job1():
             mock_job()
+
         @repeat(every().hour)
         def _job2():
             mock_job()
+
         @repeat(every().day.at('11:00'))
         def _job3():
             mock_job()
