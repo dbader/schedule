@@ -174,6 +174,7 @@ class Job(object):
         self.at_time = None  # optional time at which this job runs
         self.last_run = None  # datetime of the last run
         self.next_run = None  # datetime of the next run
+        self.last_result = None  # result of the last run
         self.period = None  # timedelta between runs, only valid for
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
@@ -202,16 +203,19 @@ class Job(object):
                   for k, v in self.job_func.keywords.items()]
         call_repr = job_func_name + '(' + ', '.join(args + kwargs) + ')'
 
+        return_str = "Every %s %s" % (
+                     self.interval,
+                     self.unit[:-1] if self.interval == 1 else self.unit)
+
         if self.at_time is not None:
-            return 'Every %s %s at %s do %s %s' % (
-                   self.interval,
-                   self.unit[:-1] if self.interval == 1 else self.unit,
-                   self.at_time, call_repr, timestats)
-        else:
-            return 'Every %s %s do %s %s' % (
-                   self.interval,
-                   self.unit[:-1] if self.interval == 1 else self.unit,
-                   call_repr, timestats)
+            return_str += " at %s" % (self.at_time)
+
+        return_str += " do %s %s" % (call_repr, timestats)
+
+        if self.last_result:
+            return_str += " (last result: %s)" % (self.last_result)
+
+        return return_str
 
     @property
     def second(self):
@@ -383,6 +387,7 @@ class Job(object):
         logger.info('Running job %s', self)
         ret = self.job_func()
         self.last_run = datetime.datetime.now()
+        self.last_result = ret
         self._schedule_next_run()
         return ret
 
