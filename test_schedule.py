@@ -64,6 +64,21 @@ class SchedulerTests(unittest.TestCase):
         assert every().day.unit == every().days.unit
         assert every().week.unit == every().weeks.unit
 
+    def test_time_range(self):
+        with mock_datetime(2014, 6, 28, 12, 0):
+            mock_job = make_mock_job()
+
+            # Choose a sample size large enough that it's unlikely the
+            # same value will be chosen each time.
+            minutes = set([
+                every(5).to(30).minutes.do(mock_job).next_run.minute
+                for i in range(100)
+            ])
+
+            assert len(minutes) > 1
+            assert min(minutes) >= 5
+            assert max(minutes) <= 30
+
     def test_at_time(self):
         mock_job = make_mock_job()
         assert every().day.at('10:30').do(mock_job).next_run.hour == 10
