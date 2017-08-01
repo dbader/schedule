@@ -492,7 +492,7 @@ def repeat(job):
     functions/methods should not accept any arguments.
 
     Usage:
-        >>> from schedule import every
+        >>> from schedule import every, repeat
         >>> import schedule
         >>> import time
 
