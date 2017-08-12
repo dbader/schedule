@@ -211,10 +211,19 @@ class Job(object):
                    self.unit[:-1] if self.interval == 1 else self.unit,
                    self.at_time, call_repr, timestats)
         else:
-            return 'Every %s %s do %s %s' % (
-                   self.interval,
-                   self.unit[:-1] if self.interval == 1 else self.unit,
-                   call_repr, timestats)
+            fmt = (
+                'Every %(interval)s ' +
+                ('to %(latest)s ' if self.latest is not None else '') +
+                '%(unit)s do %(call_repr)s %(timestats)s'
+            )
+
+            return fmt % dict(
+                interval=self.interval,
+                latest=self.latest,
+                unit=(self.unit[:-1] if self.interval == 1 else self.unit),
+                call_repr=call_repr,
+                timestats=timestats
+            )
 
     @property
     def second(self):
