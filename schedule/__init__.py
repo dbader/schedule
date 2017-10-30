@@ -54,9 +54,8 @@ class CancelJob(object):
 
 class Scheduler(object):
     """
-    Objects instantiated by the :class:`Scheduler <Scheduler>` are
-    factories to create jobs, keep record of scheduled jobs and
-    handle their execution.
+    Objects instantiated by the `Scheduler` are factories to create
+    jobs, keep record of scheduled jobs and handle their execution.
     """
     def __init__(self):
         self.jobs = []
@@ -120,9 +119,10 @@ class Scheduler(object):
         Schedule a new periodic job.
 
         :param interval: A quantity of a certain time unit
-        :return: An unconfigured :class:`Job <Job>`
+        :return: An empty job
         """
-        job = Job(interval, self)
+        job = Job(interval)
+        self.jobs.append(job)
         return job
 
     def _run_job(self, job):
@@ -147,17 +147,13 @@ class Scheduler(object):
         :return: Number of seconds until
                  :meth:`next_run <Scheduler.next_run>`.
         """
-        return (self.next_run - datetime.datetime.now()).total_seconds()
+        now = datetime.datetime.now(tz=self.at_time.tzinfo)
+        return (self.next_run - now).total_seconds()
 
 
 class Job(object):
     """
     A periodic job as used by :class:`Scheduler`.
-
-    :param interval: A quantity of a certain time unit
-    :param scheduler: The :class:`Scheduler <Scheduler>` instance that
-                      this job will register itself with once it has
-                      been fully configured in :meth:`Job.do()`.
 
     Every job runs at a given fixed time interval that is defined by:
 
@@ -167,7 +163,7 @@ class Job(object):
     A job is usually created and returned by :meth:`Scheduler.every`
     method, which also defines its `interval`.
     """
-    def __init__(self, interval, scheduler=None):
+    def __init__(self, interval):
         self.interval = interval  # pause interval * unit between runs
         self.job_func = None  # the job job_func to run
         self.unit = None  # time units, e.g. 'minutes', 'hours', ...
@@ -177,7 +173,6 @@ class Job(object):
         self.period = None  # timedelta between runs, only valid for
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
-        self.scheduler = scheduler  # scheduler to register with
 
     def __lt__(self, other):
         """
@@ -322,7 +317,7 @@ class Job(object):
         self.tags.update(tags)
         return self
 
-    def at(self, time_str):
+    def at(self, time_str, tz=None):
         """
         Schedule the job every day at a specific time.
 
@@ -341,7 +336,7 @@ class Job(object):
         elif self.unit == 'hours':
             hour = 0
         assert 0 <= minute <= 59
-        self.at_time = datetime.time(hour, minute)
+        self.at_time = datetime.time(hour, minute, tzinfo=tz)
         return self
 
     def do(self, job_func, *args, **kwargs):
@@ -364,7 +359,6 @@ class Job(object):
             # call will fail.
             pass
         self._schedule_next_run()
-        self.scheduler.jobs.append(self)
         return self
 
     @property
@@ -372,7 +366,7 @@ class Job(object):
         """
         :return: ``True`` if the job should be run now.
         """
-        return datetime.datetime.now() >= self.next_run
+        return datetime.datetime.now(tz=self.at_time.tzinfo) >= self.next_run
 
     def run(self):
         """
@@ -382,7 +376,7 @@ class Job(object):
         """
         logger.info('Running job %s', self)
         ret = self.job_func()
-        self.last_run = datetime.datetime.now()
+        self.last_run = datetime.datetime.now(tz=self.at_time.tzinfo)
         self._schedule_next_run()
         return ret
 
@@ -390,9 +384,10 @@ class Job(object):
         """
         Compute the instant when this job should run next.
         """
+        now = datetime.datetime.now(tz=self.at_time.tzinfo)
         assert self.unit in ('seconds', 'minutes', 'hours', 'days', 'weeks')
         self.period = datetime.timedelta(**{self.unit: self.interval})
-        self.next_run = datetime.datetime.now() + self.period
+        self.next_run = now + self.period
         if self.start_day is not None:
             assert self.unit == 'weeks'
             weekdays = (
@@ -423,7 +418,6 @@ class Job(object):
             # If we are running for the first time, make sure we run
             # at the specified time *today* (or *this hour*) as well
             if not self.last_run:
-                now = datetime.datetime.now()
                 if (self.unit == 'days' and self.at_time > now.time() and
                         self.interval == 1):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
@@ -431,7 +425,7 @@ class Job(object):
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
-            if (self.next_run - datetime.datetime.now()).days >= 7:
+            if (self.next_run - now).days >= 7:
                 self.next_run -= self.period
 
 
