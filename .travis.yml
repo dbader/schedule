@@ -7,4 +7,4 @@ python:
 install: pip install tox-travis coveralls
 script:
     - tox
-    - if [ $TRAVIS_TEST_RESULT -eq 0 ]; coveralls; fi
+    - if [ $TRAVIS_TEST_RESULT -eq 0 ]; then coveralls; fi
