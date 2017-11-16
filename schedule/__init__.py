@@ -357,10 +357,16 @@ class Job(object):
         return self
 
     def to(self, latest):
-        """Schedule the job to run at an irregular interval.
+        """
+        Schedule the job to run at an irregular (randomized) interval.
 
-        The job's interval will vary from the value given to `every` to
-        `latest`.
+        The job's interval will randomly vary from the value given to `every`
+        to `latest`. The range defined is inclusive on both ends. For example,
+        `every(A).to(B).seconds` executes the job function every N seconds 
+        such that A <= N <= B.
+
+        :param latest: Maximum interval between randomized job executions
+        :return: The invoked job instance
         """
         self.latest = latest
         return self
