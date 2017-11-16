@@ -3,6 +3,13 @@
 History
 -------
 
+0.5.0 (2017-11-16)
+++++++++++++++++++
+
+- Keep partially scheduled jobs from breaking the scheduler (#125)
+- Add support for random intervals (Thanks @grampajoe and @gilbsgilbs)
+
+
 0.4.3 (2017-06-10)
 ++++++++++++++++++
 
