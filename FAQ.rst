@@ -191,3 +191,14 @@ in a reusable way:
     while 1:
         schedule.run_pending()
         time.sleep(1)
+
+How to run a job at random intervals?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    def my_job():
+        # This job will execute every 5 to 10 seconds.
+        print('Foo')
+
+    schedule.every(5).to(10).seconds.do(my_job)
