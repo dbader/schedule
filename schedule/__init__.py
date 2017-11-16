@@ -360,12 +360,12 @@ class Job(object):
         """
         Schedule the job to run at an irregular (randomized) interval.
 
-        The job's interval will randomly vary from the value given to `every`
-        to `latest`. The range defined is inclusive on both ends. For example,
-        `every(A).to(B).seconds` executes the job function every N seconds 
-        such that A <= N <= B.
+        The job's interval will randomly vary from the value given 
+        to  `every` to `latest`. The range defined is inclusive on 
+        both ends. For example, `every(A).to(B).seconds` executes 
+        the job function every N seconds such that A <= N <= B.
 
-        :param latest: Maximum interval between randomized job executions
+        :param latest: Maximum interval between randomized job runs
         :return: The invoked job instance
         """
         self.latest = latest
