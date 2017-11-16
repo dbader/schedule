@@ -5,5 +5,6 @@ python:
     - "3.5"
     - "3.6"
 install: pip install tox-travis coveralls
-script: tox
-after_success: coveralls
+script:
+    - tox
+    - if [ $TRAVIS_TEST_RESULT -eq 0 ]; coveralls; fi
