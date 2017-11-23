@@ -127,6 +127,21 @@ class Scheduler(object):
         job = Job(interval, self)
         return job
 
+    def when(self, interval_definition):
+        """
+        Schedule a new periodic job.
+
+        :param interval_definition: See :meth:`Job.when <Job.when>`.
+        :return: A partially configured :class:`Job <Job>`
+        """
+        job = Job(1, self)
+        try:
+            job.when(interval_definition)
+        except Exception:
+            self.cancel_job(job)
+            raise
+        return job
+
     def _run_job(self, job):
         ret = job.run()
         if isinstance(ret, CancelJob) or ret is CancelJob:
@@ -181,6 +196,7 @@ class Job(object):
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
         self.scheduler = scheduler  # scheduler to register with
+        self.directive_map = None  # map of directive names to function calls
 
     def __lt__(self, other):
         """
@@ -391,6 +407,94 @@ class Job(object):
         self.scheduler.jobs.append(self)
         return self
 
+    def _build_directive_map(self):
+        """
+        Build a map of directive names to function calls for the parser
+        """
+        if self.directive_map is not None:
+            return
+
+        # a list of valid directives
+        directive_names = ['second', 'seconds', 'minute', 'minutes', 'hour',
+                           'hours', 'day', 'days', 'week', 'weeks', 'monday',
+                           'tuesday', 'wednesday', 'thursday', 'friday',
+                           'saturday', 'sunday', 'at', 'to']
+
+        # get an appropriate setter reference
+        def get_attr(obj, attr):
+            for obj in [obj] + obj.__class__.mro():
+                if attr in obj.__dict__:
+                    ret = obj.__dict__[attr]
+                    if isinstance(ret, property):
+                        return lambda x: ret.__get__(x, type(x))
+                    return ret
+
+        # build the dictionary of properties
+        self.directive_map = {}
+        for d in directive_names:
+            self.directive_map[d] = get_attr(self, d)
+
+    def when(self, interval_definition):
+        """
+        Schedule a job according to an interval definition. The definition
+        is a string that is the same as a sequence of method calls, except
+        that dots and parentheses are replaced with spaces. For example:
+        `when('every monday at 17:51')`.
+
+        :param interval_definition: the interval definition
+        :return: The invoked job instance
+        """
+        directives = interval_definition.lower().split()
+        assert len(directives) >= 2, 'definition too short'
+        assert directives[0] == 'every', \
+            'the definition must start with "every"'
+
+        # set up the interval if necessary
+        try:
+            interval = int(directives[1])
+            self.interval = interval
+            assert len(directives) >= 3, "definition to short"
+            directives = directives[2:]
+        except ValueError:
+            directives = directives[1:]
+
+        # parse the definition
+        self._build_directive_map()
+        directives.reverse()
+        while directives:
+            directive = directives.pop()
+            assert directive in self.directive_map, \
+                'unknown directive: '+directive
+
+            args = []
+
+            # check the argument to "to"
+            if directive == 'to':
+                arg = directives.pop()
+                try:
+                    arg = int(arg)
+                except ValueError:
+                    assert False, 'the "to" directive expects an integer'
+                args.append(arg)
+
+            # check the argument to "at"
+            elif directive == 'at':
+                arg = directives.pop()
+                arg_split = arg.split(':')
+                assert len(arg_split) == 2, \
+                    'the "at" directive expects a string like "12:34"'
+                try:
+                    int(arg_split[0])
+                    int(arg_split[1])
+                except ValueError:
+                    assert False, \
+                           'the "at" directive expects a string like "12:34"'
+                args.append(arg)
+
+            # call the setter function
+            self.directive_map[directive](self, *args)
+        return self
+
     @property
     def should_run(self):
         """
@@ -481,6 +585,13 @@ def every(interval=1):
     :data:`default scheduler instance <default_scheduler>`.
     """
     return default_scheduler.every(interval)
+
+
+def when(interval_definition):
+    """Calls :meth:`when <Scheduler.when>` on the
+    :data:`default scheduler instance <default_scheduler>`.
+    """
+    return default_scheduler.when(interval_definition)
 
 
 def run_pending():
