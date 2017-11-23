@@ -9,7 +9,7 @@ import unittest
 # pylint: disable-msg=R0201,C0111,E0102,R0904,R0901
 
 import schedule
-from schedule import every
+from schedule import every, when
 
 
 def make_mock_job(name=None):
@@ -120,6 +120,27 @@ class SchedulerTests(unittest.TestCase):
             assert every().friday.do(mock_job).next_run.day == 8
             assert every().saturday.do(mock_job).next_run.day == 9
             assert every().sunday.do(mock_job).next_run.day == 10
+
+    def test_when(self):
+        mock_job = make_mock_job()
+
+        invalid_definitions = ['', 'foo bar', 'every 2', 'every 2 foobar',
+                               'every 2 to foo days', 'every monday at foo',
+                               'every monday at foo:bar']
+        valid_definitions = ['every 2 days', 'every 3 to 5 days',
+                             'every monday at 17:51']
+
+        for definition in invalid_definitions:
+            try:
+                when(definition).do(mock_job)
+                assert False, "Invalid definition should not be parsed"
+            except Exception:
+                pass
+
+        for definition in valid_definitions:
+            when(definition).do(mock_job)
+
+        when('every 2 days').when('every 2 days').do(mock_job)
 
     def test_run_all(self):
         mock_job = make_mock_job()
