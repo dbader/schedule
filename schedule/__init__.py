@@ -43,6 +43,7 @@ import functools
 import logging
 import random
 import time
+import select
 
 logger = logging.getLogger('schedule')
 
@@ -523,3 +524,12 @@ def idle_seconds():
     :data:`default scheduler instance <default_scheduler>`.
     """
     return default_scheduler.idle_seconds
+
+
+def wait_next():
+    wait = functools.partial(select.select, [], [], [])
+
+    if default_scheduler.next_run:
+        wait(idle_seconds())
+    else:
+        raise ValueError('next job not exist.')
