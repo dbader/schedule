@@ -127,6 +127,15 @@ class Scheduler(object):
         job = Job(interval, self)
         return job
 
+    def one(self, interval=1):
+        """
+        Schedule a new job, that run once.
+
+        :param interval: A quantity of a certain time unit
+        :return: An unconfigured :class:`Job <Job>`
+        """
+        return self.every(interval).once
+
     def _run_job(self, job):
         ret = job.run()
         if isinstance(ret, CancelJob) or ret is CancelJob:
@@ -181,6 +190,7 @@ class Job(object):
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
         self.scheduler = scheduler  # scheduler to register with
+        self._once = False
 
     def __lt__(self, other):
         """
@@ -317,6 +327,11 @@ class Job(object):
         self.start_day = 'sunday'
         return self.weeks
 
+    @property
+    def once(self):
+        self._once = True
+        return self
+
     def tag(self, *tags):
         """
         Tags the job with one or more unique indentifiers.
@@ -407,8 +422,18 @@ class Job(object):
         logger.info('Running job %s', self)
         ret = self.job_func()
         self.last_run = datetime.datetime.now()
-        self._schedule_next_run()
+        if not self._once:
+            self._schedule_next_run()
+        else:
+            self.cancel()
         return ret
+
+    def cancel(self):
+        """
+        Delete current job from scheduler.
+        """
+        if self.scheduler:
+            self.scheduler.cancel_job(self)
 
     def _schedule_next_run(self):
         """
@@ -482,6 +507,11 @@ def every(interval=1):
     """
     return default_scheduler.every(interval)
 
+def one(interval=1):
+    """Calls :meth:`one <Scheduler.every>` on the
+    :data:`default scheduler instance <default_scheduler>`.
+    """
+    return default_scheduler.one(interval)
 
 def run_pending():
     """Calls :meth:`run_pending <Scheduler.run_pending>` on the

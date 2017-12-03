@@ -127,6 +127,15 @@ How can I run a job only once?
 
     def job_that_executes_once():
         # Do some work ...
+
+    schedule.one().day.at('22:30').do(job_that_executes_once)
+
+Or you can do it this way:
+
+.. code-block:: python
+
+    def job_that_executes_once():
+        # Do some work ...
         return schedule.CancelJob
 
     schedule.every().day.at('22:30').do(job_that_executes_once)
