@@ -190,7 +190,7 @@ class Job(object):
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
         self.scheduler = scheduler  # scheduler to register with
-        self._once = False
+        self._times = None
 
     def __lt__(self, other):
         """
@@ -329,7 +329,11 @@ class Job(object):
 
     @property
     def once(self):
-        self._once = True
+        self._times = 1
+        return self
+
+    def times(self, num):
+        self._times = num
         return self
 
     def tag(self, *tags):
@@ -403,7 +407,8 @@ class Job(object):
             # call will fail.
             pass
         self._schedule_next_run()
-        self.scheduler.jobs.append(self)
+        if self.scheduler:
+            self.scheduler.jobs.append(self)
         return self
 
     @property
@@ -422,7 +427,9 @@ class Job(object):
         logger.info('Running job %s', self)
         ret = self.job_func()
         self.last_run = datetime.datetime.now()
-        if not self._once:
+        if self._times:
+            self._times -= 1
+        if self._times or self._times is None:
             self._schedule_next_run()
         else:
             self.cancel()
