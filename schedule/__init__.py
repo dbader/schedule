@@ -514,11 +514,13 @@ def every(interval=1):
     """
     return default_scheduler.every(interval)
 
+
 def one(interval=1):
     """Calls :meth:`one <Scheduler.every>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
     return default_scheduler.one(interval)
+
 
 def run_pending():
     """Calls :meth:`run_pending <Scheduler.run_pending>` on the
