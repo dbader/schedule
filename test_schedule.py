@@ -79,13 +79,13 @@ class SchedulerTests(unittest.TestCase):
             assert min(minutes) >= 5
             assert max(minutes) <= 30
 
-    def test_time_range_repr(self):
+    def test_time_range_str(self):
         mock_job = make_mock_job()
 
         with mock_datetime(2014, 6, 28, 12, 0):
-            job_repr = repr(every(5).to(30).minutes.do(mock_job))
+            job_str = str(every(5).to(30).minutes.do(mock_job))
 
-        assert job_repr.startswith('Every 5 to 30 minutes do job()')
+        assert job_str.startswith('Every 5 to 30 minutes do job()')
 
     def test_at_time(self):
         mock_job = make_mock_job()
@@ -142,6 +142,14 @@ class SchedulerTests(unittest.TestCase):
         assert 'job_fun' in s
         assert 'foo' in s
         assert 'bar=23' in s
+
+    def test_job_as_arg(self):
+        mock_job = make_mock_job()
+        job = every().second
+        job.do(mock_job, job, 1)
+        # Check to see if __repr__ causes the error with job as arg
+        s = str([str(job) for job in schedule.jobs])
+        schedule.run_all()
 
     def test_to_string_lambda_job_func(self):
         assert len(str(every().minute.do(lambda: 1))) > 1

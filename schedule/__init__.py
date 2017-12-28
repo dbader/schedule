@@ -190,6 +190,38 @@ class Job(object):
         return self.next_run < other.next_run
 
     def __repr__(self):
+        if hasattr(self.job_func, '__name__'):
+            job_func_name = self.job_func.__name__
+        else:
+            job_func_name = repr(self.job_func)
+
+        args = [repr(x) if x is not self else "self" for x in self.job_func.args]
+        kwargs = ['%s=%s' % (k, repr(v))
+                  for k, v in self.job_func.keywords.items()]
+        args = ', '.join(args + kwargs)
+
+        if self.at_time is not None:
+            return 'Job(every=%s,unit=%s,at=%s,do=%s,args=,%s)' % (
+                   self.interval,
+                   self.unit[:-1] if self.interval == 1 else self.unit,
+                   self.at_time, job_func_name, args)
+        else:
+            fmt = (
+                'Job(every=%(interval)s,' +
+                ('to=%(latest)s,' if self.latest is not None else '') +
+                'unit=%(unit)s,do=%(job_func_name)s,args=[%(args)s])'
+            )
+
+            return fmt % dict(
+                interval=self.interval,
+                latest=self.latest,
+                unit=(self.unit[:-1] if self.interval == 1 else self.unit),
+                job_func_name=job_func_name,
+                args=args,
+                kwargs=kwargs
+            )
+
+    def __str__(self):
         def format_time(t):
             return t.strftime('%Y-%m-%d %H:%M:%S') if t else '[never]'
 
@@ -200,7 +232,7 @@ class Job(object):
             job_func_name = self.job_func.__name__
         else:
             job_func_name = repr(self.job_func)
-        args = [repr(x) for x in self.job_func.args]
+        args = [repr(x) if x is not self else "self" for x in self.job_func.args]
         kwargs = ['%s=%s' % (k, repr(v))
                   for k, v in self.job_func.keywords.items()]
         call_repr = job_func_name + '(' + ', '.join(args + kwargs) + ')'
