@@ -216,6 +216,20 @@ Run a job at random intervals
 ``every(A).to(B).seconds`` executes the job function every N seconds such that A <= N <= B.
 
 
+Run a job until a certain time
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    def my_job():
+        print('Boo')
+
+    schedule.every(1).hours.until("15:30").do(my_job)
+
+``every(A).until(B).hours`` executes the job function every A hours until time B.
+
+
+
 Time until the next execution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Use ``schedule.idle_seconds()`` to get the number of seconds until the next job is scheduled to run.

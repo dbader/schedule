@@ -214,7 +214,6 @@ class Job(object):
     A job is usually created and returned by :meth:`Scheduler.every`
     method, which also defines its `interval`.
     """
-
     def __init__(self, interval: int, scheduler: Scheduler = None):
         self.interval: int = interval  # pause interval * unit between runs
         self.latest: Optional[int] = None  # upper limit to the interval
@@ -237,6 +236,9 @@ class Job(object):
 
         # Specific day of the week to start on
         self.start_day: Optional[str] = None
+
+        # optional time of final run
+        self.cancel_after: Optional[datetime.datetime] = None
 
         self.tags: Set[Hashable] = set()  # unique set of tags for the job
         self.scheduler: Optional[Scheduler] = scheduler  # scheduler to register with
@@ -511,6 +513,69 @@ class Job(object):
         self.latest = latest
         return self
 
+    def until(self, until_time: Union[datetime.datetime, str]):
+        """
+        Schedule job will run until the specified time.  The final execution time
+        of this job can be greater than until_time if the interval that run_pending
+        is called on is longer than the interval the job is being executed on.
+
+        For example:
+
+        >>> schedule.every(10).seconds.until("00:48").do(
+        >>>     lambda: print(datetime.datetime.now())
+        >>> )
+        >>> while True:
+        >>>     schedule.run_pending()
+        >>>     time.sleep(24)
+
+        could result in the following output:
+
+        2021-02-25 00:47:20.440422
+        2021-02-25 00:47:44.462194
+        2021-02-25 00:48:08.485673
+
+        :param until_time: A datetime or str for a different day representing the
+            latest time a job can be run. If only a time is supplied, it is assumed
+            that date is the current date.
+        :return: The invoked job instance
+        """
+        VALID_TS_FORMATS = (
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%d %H:%M",
+            "%Y-%m-%d",
+            "%H:%M:%S",
+            "%H:%M",
+        )
+
+        def convert_str_to_datetime(ts_str):
+            now = datetime.datetime.now()
+            for format_ in VALID_TS_FORMATS:
+                try:
+                    time = datetime.datetime.strptime(ts_str, format_)
+                except ValueError:
+                    pass
+                else:
+                    if "%Y-%m-%d" not in format_:
+                        time = time.replace(
+                            year=now.year, month=now.month, day=now.day
+                        )
+                    return time
+
+            raise ScheduleValueError(
+                "until() param %s did not match any of the following formats: %s",
+                ts_str,
+                VALID_TS_FORMATS
+            )
+
+        if isinstance(until_time, datetime.datetime):
+            self.cancel_after = until_time
+        elif isinstance(until_time, str):
+            self.cancel_after = convert_str_to_datetime(until_time)
+        else:
+            raise TypeError("until() takes a datetime.datetime or str parameter")
+
+        return self
+
     def do(self, job_func: Callable, *args, **kwargs):
         """
         Specifies the job_func that should be called every time the
@@ -547,10 +612,19 @@ class Job(object):
 
         :return: The return value returned by the `job_func`
         """
-        logger.debug("Running job %s", self)
-        ret = self.job_func()
-        self.last_run = datetime.datetime.now()
-        self._schedule_next_run()
+        if (
+            self.cancel_after is not None
+            and self.next_run is not None
+            and self.next_run > self.cancel_after
+        ):
+            logger.debug("Cancelling job %s", self)
+            ret = CancelJob
+        else:
+            logger.debug("Running job %s", self)
+            ret = self.job_func()
+            self.last_run = datetime.datetime.now()
+            self._schedule_next_run()
+
         return ret
 
     def _schedule_next_run(self) -> None:
