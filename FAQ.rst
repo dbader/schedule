@@ -202,3 +202,16 @@ How to run a job at random intervals?
         print('Foo')
 
     schedule.every(5).to(10).seconds.do(my_job)
+
+How can I pass arguments to the job function?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``do()`` passes extra arguments to the job function:
+
+.. code-block:: python
+
+    def greet(name):
+        print('Hello', name)
+
+    schedule.every(2).seconds.do(greet, name='Alice')
+    schedule.every(4).seconds.do(greet, name='Bob')    
