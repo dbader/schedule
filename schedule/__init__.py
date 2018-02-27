@@ -128,10 +128,15 @@ class Scheduler(object):
         return job
 
     def _run_job(self, job):
-        ret = job.run()
-        if isinstance(ret, CancelJob) or ret is CancelJob:
-            self.cancel_job(job)
-
+        try:
+            ret = job.run()
+            if isinstance(ret, CancelJob) or ret is CancelJob:
+                self.cancel_job(job)
+        except Exception as e:
+            job.last_run = datetime.datetime.now()
+            job._schedule_next_run()
+            e.job = job
+            raise e
     @property
     def next_run(self):
         """
