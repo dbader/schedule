@@ -230,6 +230,7 @@ class Job(object):
         self.job_func = None  # the job job_func to run
         self.unit = None  # time units, e.g. 'minutes', 'hours', ...
         self.at_time = None  # optional time at which this job runs
+        self.at_time_fn = None  # optional time at which this job runs
         self.last_run = None  # datetime of the last run
         self.next_run = None  # datetime of the next run
         self.period = None  # timedelta between runs, only valid for
@@ -418,7 +419,8 @@ class Job(object):
         """
         Specify a particular time that the job should be run at.
 
-        :param time_str: A string in one of the following formats: `HH:MM:SS`,
+        :param time_str: A function returning a datetime.time object, or
+        a string in one of the following formats: `HH:MM:SS`,
             `HH:MM`,`:MM`, `:SS`. The format must make sense given how often
             the job is repeating; for example, a job that repeats every minute
             should not be given a string in the form `HH:MM:SS`. The difference
@@ -429,41 +431,44 @@ class Job(object):
         if (self.unit not in ('days', 'hours', 'minutes')
                 and not self.start_day):
             raise ScheduleValueError('Invalid unit')
-        if not isinstance(time_str, str):
-            raise TypeError('at() should be passed a string')
-        if self.unit == 'days' or self.start_day:
-            if not re.match(r'^([0-2]\d:)?[0-5]\d:[0-5]\d$', time_str):
-                raise ScheduleValueError('Invalid time format')
-        if self.unit == 'hours':
-            if not re.match(r'^([0-5]\d)?:[0-5]\d$', time_str):
-                raise ScheduleValueError(('Invalid time format for'
-                                          ' an hourly job'))
-        if self.unit == 'minutes':
-            if not re.match(r'^:[0-5]\d$', time_str):
-                raise ScheduleValueError(('Invalid time format for'
-                                          ' a minutely job'))
-        time_values = time_str.split(':')
-        if len(time_values) == 3:
-            hour, minute, second = time_values
-        elif len(time_values) == 2 and self.unit == 'minutes':
-            hour = 0
-            minute = 0
-            _, second = time_values
+        if callable(time_str):
+            self.at_time_fn = time_str
         else:
-            hour, minute = time_values
-            second = 0
-        if self.unit == 'days' or self.start_day:
-            hour = int(hour)
-            if not (0 <= hour <= 23):
-                raise ScheduleValueError('Invalid number of hours')
-        elif self.unit == 'hours':
-            hour = 0
-        elif self.unit == 'minutes':
-            hour = 0
-            minute = 0
-        minute = int(minute)
-        second = int(second)
-        self.at_time = datetime.time(hour, minute, second)
+            if not isinstance(time_str, str):
+                raise TypeError('at() should be passed a string')
+            if self.unit == 'days' or self.start_day:
+                if not re.match(r'^([0-2]\d:)?[0-5]\d:[0-5]\d$', time_str):
+                    raise ScheduleValueError('Invalid time format')
+            if self.unit == 'hours':
+                if not re.match(r'^([0-5]\d)?:[0-5]\d$', time_str):
+                    raise ScheduleValueError(('Invalid time format for'
+                                              ' an hourly job'))
+            if self.unit == 'minutes':
+                if not re.match(r'^:[0-5]\d$', time_str):
+                    raise ScheduleValueError(('Invalid time format for'
+                                              ' a minutely job'))
+            time_values = time_str.split(':')
+            if len(time_values) == 3:
+                hour, minute, second = time_values
+            elif len(time_values) == 2 and self.unit == 'minutes':
+                hour = 0
+                minute = 0
+                _, second = time_values
+            else:
+                hour, minute = time_values
+                second = 0
+            if self.unit == 'days' or self.start_day:
+                hour = int(hour)
+                if not (0 <= hour <= 23):
+                    raise ScheduleValueError('Invalid number of hours')
+            elif self.unit == 'hours':
+                hour = 0
+            elif self.unit == 'minutes':
+                hour = 0
+                minute = 0
+            minute = int(minute)
+            second = int(second)
+            self.at_time = datetime.time(hour, minute, second)
         return self
 
     def to(self, latest):
@@ -572,6 +577,10 @@ class Job(object):
             if days_ahead <= 0:  # Target day already happened this week
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
+        if self.at_time_fn is not None:
+            self.at_time = self.at_time_fn(self.next_run)
+            if isinstance(self.at_time, datetime.datetime):
+                self.at_time = self.at_time.time()
         if self.at_time is not None:
             if (self.unit not in ('days', 'hours', 'minutes')
                     and self.start_day is None):
