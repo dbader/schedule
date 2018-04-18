@@ -53,6 +53,18 @@ Usage
         schedule.run_pending()
         time.sleep(1)
 
+Passing arguments to your functions
+
+.. code-block:: python
+
+        import schedule
+
+        def job(message='stuff'):
+            print("I'm working on:", message)
+
+        schedule.every(10).minutes.do(job)
+        schedule.every().hour.do(job, message='things')
+
 Documentation
 -------------
 
