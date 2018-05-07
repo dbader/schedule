@@ -295,7 +295,7 @@ class Job(object):
 
     @property
     def thursday(self):
-        assert self.interval == 1, 'Use thursday instead of thursday'
+        assert self.interval == 1, 'Use thursdays instead of thursday'
         self.start_day = 'thursday'
         return self.weeks
 
