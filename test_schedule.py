@@ -79,11 +79,6 @@ class SchedulerTests(unittest.TestCase):
             assert min(minutes) >= 5
             assert max(minutes) <= 30
 
-    def test_do(self):
-        mock_job = make_mock_job()
-        with self.assertRaises(AttributeError):
-            every().minute.do(mock_job).nothing
-
     def test_time_range_repr(self):
         mock_job = make_mock_job()
 
@@ -113,8 +108,6 @@ class SchedulerTests(unittest.TestCase):
             assert schedule.next_run() is None
             assert every().minute.do(mock_job).next_run.minute == 16
             assert every(5).minutes.do(mock_job).next_run.minute == 20
-            assert every(2, 10).minutes.do(mock_job).till == 10
-            assert every(2, 0).minutes.do(mock_job).till == 0
             assert every().hour.do(mock_job).next_run.hour == 13
             assert every().day.do(mock_job).next_run.day == 7
             assert every().day.at('09:00').do(mock_job).next_run.day == 7
@@ -127,16 +120,17 @@ class SchedulerTests(unittest.TestCase):
             assert every().friday.do(mock_job).next_run.day == 8
             assert every().saturday.do(mock_job).next_run.day == 9
             assert every().sunday.do(mock_job).next_run.day == 10
+            assert every(2, 10).minutes.do(mock_job).till == 10
+            assert every(2, 0).minutes.do(mock_job).till == 0
 
     def test_run_all(self):
         mock_job = make_mock_job()
         every().minute.do(mock_job)
-        every(1, 2).seconds.do(mock_job)
         every().hour.do(mock_job)
         every().day.at('11:00').do(mock_job)
+        every(1, 2).seconds.do(mock_job)
         schedule.run_all()
         assert mock_job.call_count == 4
-
 
     def test_job_func_args_are_passed_on(self):
         mock_job = make_mock_job()
@@ -157,7 +151,7 @@ class SchedulerTests(unittest.TestCase):
         assert len(str(every().day.at('10:30').do(lambda: 1))) > 1
 
     def test_to_string_functools_partial_job_func(self):
-        def job_fun():
+        def job_fun(arg):
             pass
         job_fun = functools.partial(job_fun, 'foo')
         job_repr = repr(every().minute.do(job_fun, bar=True, somekey=23))
@@ -335,6 +329,7 @@ class SchedulerTests(unittest.TestCase):
         """
         scheduler = schedule.Scheduler()
         scheduler.every()
+        scheduler.every(10).seconds
         scheduler.every(10).seconds
         schedule.every(10, 1).seconds
         scheduler.run_pending()
