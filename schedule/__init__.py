@@ -396,9 +396,9 @@ class Job(object):
         """
         :retrun: ``True`` Keep running till counter is not equal to till.
         """
-        while self.counter is not self.till:
-            return datetime.datetime.now() >= self.next_run
-        return datetime.datetime.now() >= self.next_run
+        while datetime.datetime.now() >= self.next_run:
+            if self.counter is self.till:
+                return False
 
     def run(self):
         """
