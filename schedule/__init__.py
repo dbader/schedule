@@ -415,6 +415,7 @@ class Job(object):
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
         self.counter += 1
+        self.till is self.counter
         return ret
 
     def _schedule_next_run(self):
