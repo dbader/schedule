@@ -388,8 +388,7 @@ class Job(object):
             # job_funcs already wrapped by functools.partial won't have
             # __name__, __module__ or __doc__ and the update_wrapper()
             # call will fail.
-            # pass
-            raise AttributeError
+            pass
         self._schedule_next_run()
         self.scheduler.jobs.append(self)
         return self
