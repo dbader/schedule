@@ -120,17 +120,14 @@ class SchedulerTests(unittest.TestCase):
             assert every().friday.do(mock_job).next_run.day == 8
             assert every().saturday.do(mock_job).next_run.day == 9
             assert every().sunday.do(mock_job).next_run.day == 10
-            assert every(2, 10).minutes.do(mock_job).till == 10
-            assert every(2, 0).minutes.do(mock_job).till == 0
 
     def test_run_all(self):
         mock_job = make_mock_job()
         every().minute.do(mock_job)
         every().hour.do(mock_job)
         every().day.at('11:00').do(mock_job)
-        every(1, 2).seconds.do(mock_job)
         schedule.run_all()
-        assert mock_job.call_count == 4
+        assert mock_job.call_count == 3
 
     def test_job_func_args_are_passed_on(self):
         mock_job = make_mock_job()
@@ -330,6 +327,4 @@ class SchedulerTests(unittest.TestCase):
         scheduler = schedule.Scheduler()
         scheduler.every()
         scheduler.every(10).seconds
-        scheduler.every(10).seconds
-        schedule.every(10, 1).seconds
         scheduler.run_pending()

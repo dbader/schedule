@@ -120,7 +120,6 @@ class Scheduler(object):
     def every(self, interval=1, till=None):
         """
         Schedule a new periodic job.
-
         :param till:
         :param interval: A quantity of a certain time unit
         :return: An unconfigured :class:`Job <Job>`
@@ -381,16 +380,14 @@ class Job(object):
 
         :param job_func: The function to be scheduled
         :return: The invoked job instance
-
-        # job_funcs already wrapped by functools.partial won't have
-            # __name__, __module__ or __doc__ and the update_wrapper()
-            # call will fail.
-
         """
         self.job_func = functools.partial(job_func, *args, **kwargs)
         try:
             functools.update_wrapper(self.job_func, job_func)
         except AttributeError:
+            # job_funcs already wrapped by functools.partial won't have
+            # __name__, __module__ or __doc__ and the update_wrapper()
+            # call will fail.
             pass
         self._schedule_next_run()
         self.scheduler.jobs.append(self)
