@@ -117,14 +117,14 @@ class Scheduler(object):
         except ValueError:
             pass
 
-    def every(self, interval=1):
+    def every(self, interval=1, till=None):
         """
         Schedule a new periodic job.
 
         :param interval: A quantity of a certain time unit
         :return: An unconfigured :class:`Job <Job>`
         """
-        job = Job(interval, self)
+        job = Job(interval, till, self)
         return job
 
     def _run_job(self, job):
@@ -132,6 +132,9 @@ class Scheduler(object):
         if isinstance(ret, CancelJob) or ret is CancelJob:
             self.cancel_job(job)
 
+    # def end(self, interval):
+    #     if interval == 1:
+    #         cancel_job(job=end)
     @property
     def next_run(self):
         """
@@ -152,6 +155,7 @@ class Scheduler(object):
         return (self.next_run - datetime.datetime.now()).total_seconds()
 
 
+
 class Job(object):
     """
     A periodic job as used by :class:`Scheduler`.
@@ -169,7 +173,7 @@ class Job(object):
     A job is usually created and returned by :meth:`Scheduler.every`
     method, which also defines its `interval`.
     """
-    def __init__(self, interval, scheduler=None):
+    def __init__(self, interval, till, scheduler=None):
         self.interval = interval  # pause interval * unit between runs
         self.latest = None  # upper limit to the interval
         self.job_func = None  # the job job_func to run
@@ -181,6 +185,8 @@ class Job(object):
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
         self.scheduler = scheduler  # scheduler to register with
+        self.till = till
+        self.counter = 0
 
     def __lt__(self, other):
         """
@@ -396,6 +402,8 @@ class Job(object):
         """
         :return: ``True`` if the job should be run now.
         """
+        'todo : should add end method here'
+
         return datetime.datetime.now() >= self.next_run
 
     def run(self):
@@ -408,6 +416,9 @@ class Job(object):
         ret = self.job_func()
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
+        self.counter += 1
+        if self.counter == self.till:
+            cancel_job(self)
         return ret
 
     def _schedule_next_run(self):
@@ -476,11 +487,11 @@ default_scheduler = Scheduler()
 jobs = default_scheduler.jobs  # todo: should this be a copy, e.g. jobs()?
 
 
-def every(interval=1):
+def every(interval=1, till=None):
     """Calls :meth:`every <Scheduler.every>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
-    return default_scheduler.every(interval)
+    return default_scheduler.every(interval, till)
 
 
 def run_pending():
