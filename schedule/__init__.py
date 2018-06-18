@@ -400,6 +400,8 @@ class Job(object):
         :return: ``True`` if the job should be run now.
         """
         if datetime.datetime.now() >= self.next_run:
+            if self.counter == self.till:
+                return False
             return True
         else:
             return False
@@ -415,7 +417,7 @@ class Job(object):
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
         self.counter += 1
-        self.till is self.counter
+        # self.till is self.counter
         return ret
 
     def _schedule_next_run(self):
