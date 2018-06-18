@@ -18,18 +18,18 @@ Features:
     - Tested on Python 2.7, 3.5 and 3.6
 
 Usage:
-    >>> import schedule
-    >>> import time
-    >>> def job(message='stuff'):
-    >>>     print("I'm working on:", message)
-    >>> schedule.every(10).minutes.do(job)
-    >>> schedule.every(5).to(10).days.do(job)
-    >>> schedule.every().hour.do(job, message='things')
-    >>> schedule.every().day.at("10:30").do(job)
-    >>> schedule.every(5, 1).seconds.do(job)
-    >>> while True:
-    >>>     schedule.run_pending()
-    >>>     time.sleep(1)
+    # >>> import schedule
+    # >>> import time
+    # >>> def job(message='stuff'):
+    # >>>     print("I'm working on:", message)
+    # >>> schedule.every(10).minutes.do(job)
+    # >>> schedule.every(5).to(10).days.do(job)
+    # >>> schedule.every().hour.do(job, message='things')
+    # >>> schedule.every().day.at("10:30").do(job)
+    # >>> schedule.every(5, 1).seconds.do(job)
+    # >>> while True:
+    # >>>     schedule.run_pending()
+    # >>>     time.sleep(1)
 
 
 [1] https://adam.herokuapp.com/past/2010/4/13/rethinking_cron/
