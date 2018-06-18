@@ -403,7 +403,8 @@ class Job(object):
         """
         # return datetime.datetime.now() >= self.next_run
         while datetime.datetime.now() >= self.next_run:
-            if self.counter is self.till: return False
+            if self.counter is self.till:
+                return False
             else:
                 return True
 
