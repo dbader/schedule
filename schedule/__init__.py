@@ -117,14 +117,15 @@ class Scheduler(object):
         except ValueError:
             pass
 
-    def every(self, interval=1, till = None):
+    def every(self, interval=1, till=None):
         """
         Schedule a new periodic job.
 
+        :param till:
         :param interval: A quantity of a certain time unit
         :return: An unconfigured :class:`Job <Job>`
         """
-        job = Job(interval, till, self)
+        job = Job(interval,till, self)
         return job
 
     def _run_job(self, job):
@@ -398,7 +399,11 @@ class Job(object):
         """
         :return: ``True`` if the job should be run now.
         """
-        return datetime.datetime.now() >= self.next_run
+        if datetime.datetime.now() >= self.next_run:
+            while self.counter < self.till:
+                return True
+        else:
+            return False
 
     def run(self):
         """
@@ -411,9 +416,6 @@ class Job(object):
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
         self.counter += 1
-        if self.counter == self.till:
-            cancel_job(self)
-            return ret
         return ret
 
     def _schedule_next_run(self):
