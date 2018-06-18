@@ -20,18 +20,17 @@ Features:
 Usage:
     >>> import schedule
     >>> import time
-
     >>> def job(message='stuff'):
     >>>     print("I'm working on:", message)
-
     >>> schedule.every(10).minutes.do(job)
     >>> schedule.every(5).to(10).days.do(job)
     >>> schedule.every().hour.do(job, message='things')
     >>> schedule.every().day.at("10:30").do(job)
-
+    >>> schedule.every(5, 1).seconds.do(job)
     >>> while True:
     >>>     schedule.run_pending()
     >>>     time.sleep(1)
+
 
 [1] https://adam.herokuapp.com/past/2010/4/13/rethinking_cron/
 [2] https://github.com/Rykian/clockwork
@@ -121,6 +120,7 @@ class Scheduler(object):
         """
         Schedule a new periodic job.
 
+        :param till:
         :param interval: A quantity of a certain time unit
         :return: An unconfigured :class:`Job <Job>`
         """
@@ -155,7 +155,6 @@ class Scheduler(object):
         return (self.next_run - datetime.datetime.now()).total_seconds()
 
 
-
 class Job(object):
     """
     A periodic job as used by :class:`Scheduler`.
@@ -185,7 +184,7 @@ class Job(object):
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
         self.scheduler = scheduler  # scheduler to register with
-        self.till = till
+        self.till = till #runs scheduler till this value
         self.counter = 0
 
     def __lt__(self, other):
@@ -417,6 +416,7 @@ class Job(object):
         self.counter += 1
         if self.counter == self.till:
             cancel_job(self)
+            return ret
         return ret
 
     def _schedule_next_run(self):
@@ -515,6 +515,7 @@ def clear(tag=None):
 
 def cancel_job(job):
     """Calls :meth:`cancel_job <Scheduler.cancel_job>` on the
+    :rtype: object
     :data:`default scheduler instance <default_scheduler>`.
     """
     default_scheduler.cancel_job(job)

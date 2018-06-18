@@ -108,6 +108,7 @@ class SchedulerTests(unittest.TestCase):
             assert schedule.next_run() is None
             assert every().minute.do(mock_job).next_run.minute == 16
             assert every(5).minutes.do(mock_job).next_run.minute == 20
+            assert every(2, 10).minutes.do(mock_job).till == 10
             assert every().hour.do(mock_job).next_run.hour == 13
             assert every().day.do(mock_job).next_run.day == 7
             assert every().day.at('09:00').do(mock_job).next_run.day == 7
@@ -124,10 +125,11 @@ class SchedulerTests(unittest.TestCase):
     def test_run_all(self):
         mock_job = make_mock_job()
         every().minute.do(mock_job)
+        every(1, 2).seconds.do(mock_job)
         every().hour.do(mock_job)
         every().day.at('11:00').do(mock_job)
         schedule.run_all()
-        assert mock_job.call_count == 3
+        assert mock_job.call_count == 4
 
     def test_job_func_args_are_passed_on(self):
         mock_job = make_mock_job()
@@ -148,7 +150,7 @@ class SchedulerTests(unittest.TestCase):
         assert len(str(every().day.at('10:30').do(lambda: 1))) > 1
 
     def test_to_string_functools_partial_job_func(self):
-        def job_fun(arg):
+        def job_fun():
             pass
         job_fun = functools.partial(job_fun, 'foo')
         job_repr = repr(every().minute.do(job_fun, bar=True, somekey=23))
@@ -327,4 +329,5 @@ class SchedulerTests(unittest.TestCase):
         scheduler = schedule.Scheduler()
         scheduler.every()
         scheduler.every(10).seconds
+        schedule.every(10, 1).seconds
         scheduler.run_pending()
