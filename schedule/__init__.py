@@ -121,7 +121,6 @@ class Scheduler(object):
         """
         Schedule a new periodic job.
 
-        :param till:
         :param interval: A quantity of a certain time unit
         :return: An unconfigured :class:`Job <Job>`
         """
@@ -381,8 +380,6 @@ class Job(object):
 
         :param job_func: The function to be scheduled
         :return: The invoked job instance
-
-
         """
         self.job_func = functools.partial(job_func, *args, **kwargs)
         try:
@@ -403,7 +400,8 @@ class Job(object):
         """
         # return datetime.datetime.now() >= self.next_run
         while datetime.datetime.now() >= self.next_run:
-            if self.counter is self.till: return False
+            if self.counter is self.till:
+                return False
             else:
                 return True
 
