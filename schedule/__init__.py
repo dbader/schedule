@@ -386,6 +386,10 @@ class Job(object):
         try:
             functools.update_wrapper(self.job_func, job_func)
         except AttributeError:
+            # job_funcs already wrapped by functools.partial won't have
+            # __name__, __module__ or __doc__ and the update_wrapper()
+            # call will fail.
+            # pass
             raise AttributeError
         self._schedule_next_run()
         self.scheduler.jobs.append(self)
@@ -394,11 +398,12 @@ class Job(object):
     @property
     def should_run(self):
         """
-        :retrun: ``True`` Keep running till counter is not equal to till.
+        :return: ``True`` if the job should be run now.
         """
         while datetime.datetime.now() >= self.next_run:
             if self.counter is self.till:
                 return False
+            return True
 
     def run(self):
         """
