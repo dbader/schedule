@@ -18,20 +18,19 @@ Features:
     - Tested on Python 2.7, 3.5 and 3.6
 
 Usage:
-    >>> import schedule
-    >>> import time
+    # >>> import schedule
+    # >>> import time
+    # >>> def job(message='stuff'):
+    # >>>     print("I'm working on:", message)
+    # >>> schedule.every(10).minutes.do(job)
+    # >>> schedule.every(5).to(10).days.do(job)
+    # >>> schedule.every().hour.do(job, message='things')
+    # >>> schedule.every().day.at("10:30").do(job)
+    # >>> schedule.every(5, 1).seconds.do(job)
+    # >>> while True:
+    # >>>     schedule.run_pending()
+    # >>>     time.sleep(1)
 
-    >>> def job(message='stuff'):
-    >>>     print("I'm working on:", message)
-
-    >>> schedule.every(10).minutes.do(job)
-    >>> schedule.every(5).to(10).days.do(job)
-    >>> schedule.every().hour.do(job, message='things')
-    >>> schedule.every().day.at("10:30").do(job)
-
-    >>> while True:
-    >>>     schedule.run_pending()
-    >>>     time.sleep(1)
 
 [1] https://adam.herokuapp.com/past/2010/4/13/rethinking_cron/
 [2] https://github.com/Rykian/clockwork
@@ -117,14 +116,15 @@ class Scheduler(object):
         except ValueError:
             pass
 
-    def every(self, interval=1):
+    def every(self, interval=1, till=None):
         """
         Schedule a new periodic job.
 
+        :param till:
         :param interval: A quantity of a certain time unit
         :return: An unconfigured :class:`Job <Job>`
         """
-        job = Job(interval, self)
+        job = Job(interval, till, self)
         return job
 
     def _run_job(self, job):
@@ -132,6 +132,9 @@ class Scheduler(object):
         if isinstance(ret, CancelJob) or ret is CancelJob:
             self.cancel_job(job)
 
+    # def end(self, interval):
+    #     if interval == 1:
+    #         cancel_job(job=end)
     @property
     def next_run(self):
         """
@@ -169,7 +172,7 @@ class Job(object):
     A job is usually created and returned by :meth:`Scheduler.every`
     method, which also defines its `interval`.
     """
-    def __init__(self, interval, scheduler=None):
+    def __init__(self, interval, till, scheduler=None):
         self.interval = interval  # pause interval * unit between runs
         self.latest = None  # upper limit to the interval
         self.job_func = None  # the job job_func to run
@@ -181,6 +184,8 @@ class Job(object):
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
         self.scheduler = scheduler  # scheduler to register with
+        self.till = till   # runs scheduler till this value
+        self.counter = 0
 
     def __lt__(self, other):
         """
@@ -408,6 +413,14 @@ class Job(object):
         ret = self.job_func()
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
+        """
+        Runs the job till the counter reaches the provided till Variable. after cancelling the job the scheduler doesn't
+        Exit, so that other scheduler can continue to run.
+        """
+        self.counter += 1
+        if self.counter == self.till:
+            cancel_job(self)
+            return ret
         return ret
 
     def _schedule_next_run(self):
@@ -476,11 +489,11 @@ default_scheduler = Scheduler()
 jobs = default_scheduler.jobs  # todo: should this be a copy, e.g. jobs()?
 
 
-def every(interval=1):
+def every(interval=1, till=None):
     """Calls :meth:`every <Scheduler.every>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
-    return default_scheduler.every(interval)
+    return default_scheduler.every(interval, till)
 
 
 def run_pending():
@@ -506,6 +519,7 @@ def clear(tag=None):
 
 def cancel_job(job):
     """Calls :meth:`cancel_job <Scheduler.cancel_job>` on the
+    :rtype: object
     :data:`default scheduler instance <default_scheduler>`.
     """
     default_scheduler.cancel_job(job)

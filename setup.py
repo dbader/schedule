@@ -19,12 +19,14 @@ SCHEDULE_DOWNLOAD_URL = (
     'https://github.com/dbader/schedule/tarball/' + SCHEDULE_VERSION
 )
 
+
 def read_file(filename):
     """
     Read a utf8 encoded text file and return its contents.
     """
     with codecs.open(filename, 'r', 'utf8') as f:
         return f.read()
+
 
 setup(
     name='schedule',
