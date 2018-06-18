@@ -172,7 +172,7 @@ class Job(object):
     A job is usually created and returned by :meth:`Scheduler.every`
     method, which also defines its `interval`.
     """
-    def __init__(self, interval, till, scheduler=None):
+    def __init__(self, interval, scheduler=None):
         self.interval = interval  # pause interval * unit between runs
         self.latest = None  # upper limit to the interval
         self.job_func = None  # the job job_func to run
@@ -184,8 +184,8 @@ class Job(object):
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
         self.scheduler = scheduler  # scheduler to register with
-        self.till = till   # runs scheduler till this value
-        self.counter = 0
+        #self.till = till   # runs scheduler till this value
+        #self.counter = 0
 
     def __lt__(self, other):
         """
@@ -413,10 +413,10 @@ class Job(object):
         ret = self.job_func()
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
-        self.counter += 1
-        if self.counter == self.till:
-            cancel_job(self)
-            return ret
+        # self.counter += 1
+        # if self.counter == self.till:
+        #     cancel_job(self)
+        #     return ret
         return ret
 
     def _schedule_next_run(self):
