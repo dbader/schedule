@@ -383,11 +383,10 @@ class Job(object):
         :return: The invoked job instance
         """
         self.job_func = functools.partial(job_func, *args, **kwargs)
-        # try:
-        #
-        # except AttributeError:
-        #     raise AttributeError
-        functools.update_wrapper(self.job_func, job_func)
+        try:
+            functools.update_wrapper(self.job_func, job_func)
+        except AttributeError:
+            raise AttributeError
         self._schedule_next_run()
         self.scheduler.jobs.append(self)
         return self
@@ -397,8 +396,9 @@ class Job(object):
         """
         :retrun: ``True`` Keep running till counter is not equal to till.
         """
-        if self.counter is not self.till:
+        while self.counter is not self.till:
             return datetime.datetime.now() >= self.next_run
+        return datetime.datetime.now() >= self.next_run
 
     def run(self):
         """
