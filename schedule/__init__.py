@@ -125,7 +125,7 @@ class Scheduler(object):
         :param interval: A quantity of a certain time unit
         :return: An unconfigured :class:`Job <Job>`
         """
-        job = Job(interval,till, self)
+        job = Job(interval, till, self)
         return job
 
     def _run_job(self, job):
@@ -170,7 +170,7 @@ class Job(object):
     A job is usually created and returned by :meth:`Scheduler.every`
     method, which also defines its `interval`.
     """
-    def __init__(self, interval, till, scheduler=None):
+    def __init__(self, interval, till=None, scheduler=None):
         self.interval = interval  # pause interval * unit between runs
         self.latest = None  # upper limit to the interval
         self.job_func = None  # the job job_func to run
@@ -399,12 +399,10 @@ class Job(object):
         """
         :return: ``True`` if the job should be run now.
         """
-        if datetime.datetime.now() >= self.next_run:
-            if self.counter == self.till:
+        while datetime.datetime.now() >= self.next_run:
+            if self.counter is self.till:
                 return False
             return True
-        else:
-            return False
 
     def run(self):
         """
@@ -417,7 +415,6 @@ class Job(object):
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
         self.counter += 1
-        # self.till is self.counter
         return ret
 
     def _schedule_next_run(self):
