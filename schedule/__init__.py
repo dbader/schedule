@@ -22,11 +22,11 @@ Usage:
     >>> import time
 
     >>> def job(message='stuff'):
-    >>>     print("I'm working on something:", message)
+    >>>     print("I'm working on:", message)
 
     >>> schedule.every(10).minutes.do(job)
     >>> schedule.every(5).to(10).days.do(job)
-    >>> schedule.every().hour.do(job, message='better')
+    >>> schedule.every().hour.do(job, message='things')
     >>> schedule.every().day.at("10:30").do(job)
 
     >>> while True:
@@ -121,7 +121,6 @@ class Scheduler(object):
         """
         Schedule a new periodic job.
 
-        :param till:
         :param interval: A quantity of a certain time unit
         :return: An unconfigured :class:`Job <Job>`
         """
@@ -182,7 +181,7 @@ class Job(object):
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
         self.scheduler = scheduler  # scheduler to register with
-        self.till = till  # runs scheduler till this value
+        self.till = till
         self.counter = 0
 
     def __lt__(self, other):
@@ -389,8 +388,7 @@ class Job(object):
             # job_funcs already wrapped by functools.partial won't have
             # __name__, __module__ or __doc__ and the update_wrapper()
             # call will fail.
-            # pass
-            raise AttributeError
+            pass
         self._schedule_next_run()
         self.scheduler.jobs.append(self)
         return self
@@ -400,10 +398,12 @@ class Job(object):
         """
         :return: ``True`` if the job should be run now.
         """
+        # return datetime.datetime.now() >= self.next_run
         while datetime.datetime.now() >= self.next_run:
             if self.counter is self.till:
                 return False
-            return True
+            else:
+                return True
 
     def run(self):
         """
