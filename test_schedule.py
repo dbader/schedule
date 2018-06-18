@@ -31,7 +31,6 @@ class mock_datetime(object):
 
     def __enter__(self):
         class MockDate(datetime.datetime):
-
             @classmethod
             def today(cls):
                 return cls(self.year, self.month, self.day)
@@ -140,7 +139,8 @@ class SchedulerTests(unittest.TestCase):
         mock_job.assert_called_once_with(1, 2, 'three', foo=23, bar={})
 
     def test_to_string(self):
-        def job_fun(): pass
+        def job_fun():
+            pass
         s = str(every().minute.do(job_fun, 'foo', bar=23))
         assert 'job_fun' in s
         assert 'foo' in s
@@ -151,7 +151,8 @@ class SchedulerTests(unittest.TestCase):
         assert len(str(every().day.at('10:30').do(lambda: 1))) > 1
 
     def test_to_string_functools_partial_job_func(self):
-        def job_fun(arg): pass
+        def job_fun(arg):
+            pass
         job_fun = functools.partial(job_fun, 'foo')
         job_repr = repr(every().minute.do(job_fun, bar=True, somekey=23))
         assert 'functools.partial' in job_repr
