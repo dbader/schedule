@@ -402,8 +402,6 @@ class Job(object):
         """
         :return: ``True`` if the job should be run now.
         """
-        'todo : should add end method here'
-
         return datetime.datetime.now() >= self.next_run
 
     def run(self):
