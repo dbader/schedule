@@ -184,7 +184,7 @@ class Job(object):
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
         self.scheduler = scheduler  # scheduler to register with
-        self.till = till #runs scheduler till this value
+        self.till = till   # runs scheduler till this value
         self.counter = 0
 
     def __lt__(self, other):
