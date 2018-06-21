@@ -399,8 +399,7 @@ class Job(object):
         :return: ``True`` if the job should be run now.
         """
         # return datetime.datetime.now() >= self.next_run
-        while datetime.datetime.now() >= self.next_run:
-            return True
+        return datetime.datetime.now() >= self.next_run
 
     def run(self):
         """
@@ -412,11 +411,12 @@ class Job(object):
         logger.info('Running job %s', self)
         ret = self.job_func()
         self.last_run = datetime.datetime.now()
-        if self.counter is self.till:
-            cancel_job()
-        else:
-            self._schedule_next_run()
+        while self.counter is self.till:
+            cancel_job(self)
+            return ret
+        self._schedule_next_run()
         return ret
+
 
     def _schedule_next_run(self):
         """
