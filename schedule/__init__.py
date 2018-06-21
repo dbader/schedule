@@ -121,6 +121,7 @@ class Scheduler(object):
         """
         Schedule a new periodic job.
 
+        :param till:
         :param interval: A quantity of a certain time unit
         :return: An unconfigured :class:`Job <Job>`
         """
