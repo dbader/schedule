@@ -464,6 +464,7 @@ class Job(object):
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:
                 self.next_run -= self.period
+        logger.info('Scheduled job %s', self)
 
 
 # The following methods are shortcuts for not having to
