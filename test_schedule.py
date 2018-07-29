@@ -210,32 +210,32 @@ class SchedulerTests(unittest.TestCase):
 
     def test_run_every_businessday(self):
         mock_job = make_mock_job()
-        with mock_datetime(2010, 1, 7, 13, 16): # thursday
+        with mock_datetime(2010, 1, 7, 13, 16):  # thursday
             every().businessday.at('14:12').do(mock_job)
             schedule.run_pending()
             assert mock_job.call_count == 0
 
-        with mock_datetime(2010, 1, 7, 14, 16): # thursday
+        with mock_datetime(2010, 1, 7, 14, 16):  # thursday
             schedule.run_pending()
             assert mock_job.call_count == 1
 
-        with mock_datetime(2010, 1, 8, 14, 16): # friday
+        with mock_datetime(2010, 1, 8, 14, 16):  # friday
             schedule.run_pending()
             assert mock_job.call_count == 2
 
-        with mock_datetime(2010, 1, 9, 14, 16): # saturday
+        with mock_datetime(2010, 1, 9, 14, 16):  # saturday
             schedule.run_pending()
             assert mock_job.call_count == 2
 
-        with mock_datetime(2010, 1, 10, 14, 16): # sunday
+        with mock_datetime(2010, 1, 10, 14, 16):  # sunday
             schedule.run_pending()
             assert mock_job.call_count == 2
 
-        with mock_datetime(2010, 1, 11, 14, 16): # monday
+        with mock_datetime(2010, 1, 11, 14, 16):  # monday
             schedule.run_pending()
             assert mock_job.call_count == 3
 
-        with mock_datetime(2010, 1, 12, 14, 16): # tuesday
+        with mock_datetime(2010, 1, 12, 14, 16):  # tuesday
             schedule.run_pending()
             assert mock_job.call_count == 4
 
@@ -360,4 +360,3 @@ class SchedulerTests(unittest.TestCase):
         scheduler.every()
         scheduler.every(10).seconds
         scheduler.run_pending()
-

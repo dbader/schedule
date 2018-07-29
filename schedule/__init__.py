@@ -179,7 +179,7 @@ class Job(object):
         self.next_run = None  # datetime of the next run
         self.period = None  # timedelta between runs, only valid for
         self.start_day = None  # Specific day of the week to start on
-        self.skip = []  # specific days of the week to skip (Monday is 0, Sunday is 6)
+        self.skip = []   # specific days of the week to skip (Mon = 0, Sun = 6)
         self.tags = set()  # unique set of tags for the job
         self.scheduler = scheduler  # scheduler to register with
 
@@ -321,7 +321,7 @@ class Job(object):
     @property
     def businessday(self):
         assert self.interval == 1, 'Use days instead of day'
-        self.skip = [5, 6] # skip saturdays and sundays
+        self.skip = [5, 6]  # skip saturdays and sundays
         return self.days
 
     def tag(self, *tags):
@@ -404,7 +404,7 @@ class Job(object):
         :return: ``True`` if the job should be run now.
         """
         return (datetime.datetime.now() >= self.next_run and
-            datetime.datetime.now().weekday() not in self.skip)
+                datetime.datetime.now().weekday() not in self.skip)
 
     def run(self):
         """
