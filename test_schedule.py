@@ -110,6 +110,7 @@ class SchedulerTests(unittest.TestCase):
             assert every(5).minutes.do(mock_job).next_run.minute == 20
             assert every().hour.do(mock_job).next_run.hour == 13
             assert every().day.do(mock_job).next_run.day == 7
+            assert every().businessday.do(mock_job).next_run.day == 7
             assert every().day.at('09:00').do(mock_job).next_run.day == 7
             assert every().day.at('12:30').do(mock_job).next_run.day == 6
             assert every().week.do(mock_job).next_run.day == 13
@@ -206,6 +207,37 @@ class SchedulerTests(unittest.TestCase):
         with mock_datetime(2010, 1, 6, 14, 16):
             schedule.run_pending()
             assert mock_job.call_count == 1
+
+    def test_run_every_businessday(self):
+        mock_job = make_mock_job()
+        with mock_datetime(2010, 1, 7, 13, 16): # thursday
+            every().businessday.at('14:12').do(mock_job)
+            schedule.run_pending()
+            assert mock_job.call_count == 0
+
+        with mock_datetime(2010, 1, 7, 14, 16): # thursday
+            schedule.run_pending()
+            assert mock_job.call_count == 1
+
+        with mock_datetime(2010, 1, 8, 14, 16): # friday
+            schedule.run_pending()
+            assert mock_job.call_count == 2
+
+        with mock_datetime(2010, 1, 9, 14, 16): # saturday
+            schedule.run_pending()
+            assert mock_job.call_count == 2
+
+        with mock_datetime(2010, 1, 10, 14, 16): # sunday
+            schedule.run_pending()
+            assert mock_job.call_count == 2
+
+        with mock_datetime(2010, 1, 11, 14, 16): # monday
+            schedule.run_pending()
+            assert mock_job.call_count == 3
+
+        with mock_datetime(2010, 1, 12, 14, 16): # tuesday
+            schedule.run_pending()
+            assert mock_job.call_count == 4
 
     def test_run_every_weekday_at_specific_time_past_today(self):
         mock_job = make_mock_job()
@@ -328,3 +360,4 @@ class SchedulerTests(unittest.TestCase):
         scheduler.every()
         scheduler.every(10).seconds
         scheduler.run_pending()
+
