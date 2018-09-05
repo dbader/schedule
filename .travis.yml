@@ -4,6 +4,7 @@ python:
     - "2.7.11"
     - "3.5"
     - "3.6"
+    - "3.7"
 install: pip install tox-travis coveralls
 script:
     - tox
