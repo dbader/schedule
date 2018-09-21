@@ -93,6 +93,23 @@ class Scheduler(object):
             self._run_job(job)
             time.sleep(delay_seconds)
 
+    def run_forever(self):
+        """
+        Run all jobs in the current thread, forever. This is a blocking
+        call, you might want to call it in its own thread or process.
+        Handy for a daemon process or daemon thread.
+        """
+        if not self.jobs:
+            logging.info('no jobs to run, exiting...')
+            return
+        while True:
+            self.run_pending()
+            try:
+                time.sleep(self.idle_seconds)
+            except KeyboardInterrupt:
+                logging.info('received interrupt signal, exiting...')
+                break
+
     def clear(self, tag=None):
         """
         Deletes scheduled jobs marked with the given tag, or all jobs
@@ -495,6 +512,13 @@ def run_all(delay_seconds=0):
     :data:`default scheduler instance <default_scheduler>`.
     """
     default_scheduler.run_all(delay_seconds=delay_seconds)
+
+
+def run_forever():
+    """Calls :meth:`run_forever <Scheduler.run_forever>` on the
+    :data:`default scheduler instance <default_scheduler>`.
+    """
+    default_scheduler.run_forever()
 
 
 def clear(tag=None):
