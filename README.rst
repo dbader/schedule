@@ -66,6 +66,6 @@ Meta
 
 Daniel Bader - `@dbader_org <https://twitter.com/dbader_org>`_ - mail@dbader.org
 
-Distributed under the MIT license. See ``LICENSE.txt`` for more information.
+Distributed under the MIT license. See `LICENSE.txt <https://github.com/dbader/schedule/blob/master/LICENSE.txt>`_ for more information.
 
 https://github.com/dbader/schedule
