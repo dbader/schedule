@@ -11,6 +11,13 @@ import unittest
 import schedule
 from schedule import every
 
+try:
+    from datetime import timezone
+    utc = timezone.utc
+except ImportError:
+    from schedule.timezone import UTC
+    utc = UTC()
+
 
 def make_mock_job(name=None):
     job = mock.Mock()
@@ -36,9 +43,10 @@ class mock_datetime(object):
                 return cls(self.year, self.month, self.day)
 
             @classmethod
-            def now(cls):
+            def now(cls, tz=None):
                 return cls(self.year, self.month, self.day,
-                           self.hour, self.minute)
+                           self.hour, self.minute).replace(tzinfo=tz)
+
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
@@ -258,7 +266,8 @@ class SchedulerTests(unittest.TestCase):
             every().hour.do(hourly_job)
             assert len(schedule.jobs) == 2
             # Make sure the hourly job is first
-            assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
+            assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16,
+                                                            tzinfo=utc)
             assert schedule.idle_seconds() == 60 * 60
 
     def test_cancel_job(self):
