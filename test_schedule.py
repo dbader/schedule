@@ -1,4 +1,5 @@
 """Unit tests for schedule.py"""
+import sys
 import datetime
 import functools
 import mock
@@ -71,6 +72,22 @@ class SchedulerTests(unittest.TestCase):
         assert every().hour.unit == every().hours.unit
         assert every().day.unit == every().days.unit
         assert every().week.unit == every().weeks.unit
+
+    def test_utc_is_normal(self):
+        fo = utc
+        self.assertIsInstance(fo, datetime.tzinfo)
+        dt = datetime.datetime.now()
+        self.assertEqual(fo.utcoffset(dt), datetime.timedelta(0))
+        self.assertEqual(fo.tzname(dt), "UTC")
+
+    def test_utc_dst_is_dt(self):
+        fo = utc
+        dt = datetime.datetime.now()
+        if sys.version_info > (3, 0, 0):
+            dst_arg = None
+        else:
+            dst_arg = datetime.timedelta(0)
+        self.assertEqual(fo.dst(dt), dst_arg)
 
     def test_time_range(self):
         with mock_datetime(2014, 6, 28, 12, 0):
