@@ -16,6 +16,7 @@ Main Interface
 .. autodata:: jobs
 
 .. autofunction:: every
+.. autofunction:: when
 .. autofunction:: run_pending
 .. autofunction:: run_all
 .. autofunction:: clear
