@@ -53,9 +53,6 @@ except ImportError:
     utc = UTC()
 
 
-logger = logging.getLogger('schedule')
-
-
 class CancelJob(object):
     """
     Can be returned from a job to unschedule itself.
@@ -71,6 +68,7 @@ class Scheduler(object):
     """
     def __init__(self):
         self.jobs = []
+        self.logger = logging.getLogger('schedule.Scheduler')
 
     def run_pending(self):
         """
@@ -96,8 +94,8 @@ class Scheduler(object):
 
         :param delay_seconds: A delay added between every executed job
         """
-        logger.info('Running *all* %i jobs with %is delay inbetween',
-                    len(self.jobs), delay_seconds)
+        self.logger.info('Running *all* %i jobs with %is delay inbetween',
+                         len(self.jobs), delay_seconds)
         for job in self.jobs[:]:
             self._run_job(job)
             time.sleep(delay_seconds)
@@ -190,6 +188,7 @@ class Job(object):
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
         self.scheduler = scheduler  # scheduler to register with
+        self.logger = logging.getLogger('schedule.Job')
 
     def __lt__(self, other):
         """
@@ -413,7 +412,7 @@ class Job(object):
 
         :return: The return value returned by the `job_func`
         """
-        logger.info('Running job %s', self)
+        self.logger.info('Running job %s', self)
         ret = self.job_func()
         self.last_run = datetime.datetime.now(utc)
         self._schedule_next_run()
