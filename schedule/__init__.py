@@ -171,6 +171,21 @@ class Scheduler(object):
         """
         return (self.next_run - datetime.datetime.now(utc)).total_seconds()
 
+    def idle_seconds_since(self, tag=None):
+        """
+        Get the time since the last run of a tagged job
+
+        :param tag: The tag to filter job list
+        :return: Number of seconds since
+                 :meth:`last_run <Scheduler.last_run>`.
+        """
+        if not self.jobs or tag is None:
+            return None
+        else:
+            runnable_jobs = (job for job in self.jobs if tag in job.tags)
+            last_job = min(runnable_jobs).last_run
+            return (datetime.datetime.now(timezone.utc) - last_job).total_seconds()
+
 
 class Job(object):
     """
@@ -193,6 +208,8 @@ class Job(object):
         self.interval = interval  # pause interval * unit between runs
         self.latest = None  # upper limit to the interval
         self.job_func = None  # the job job_func to run
+        self.job_name = None  # the name of job_func to run
+        self.job_info = None  # the job timestats (see below)
         self.unit = None  # time units, e.g. 'minutes', 'hours', ...
         self.at_time = None  # optional time at which this job runs
         self.last_run = None  # datetime of the last run
@@ -225,6 +242,9 @@ class Job(object):
         kwargs = ['%s=%s' % (k, repr(v))
                   for k, v in self.job_func.keywords.items()]
         call_repr = job_func_name + '(' + ', '.join(args + kwargs) + ')'
+
+        self.job_name = call_repr
+        self.job_info = timestats
 
         if self.at_time is not None:
             return 'Every %s %s at %s do %s %s' % (
@@ -419,6 +439,13 @@ class Job(object):
         """
         return datetime.datetime.now(utc) >= self.next_run
 
+    @property
+    def info(self):
+        """
+        :return: ``string`` with `job_func` name and timestats
+        """
+        return self.job_name + self.job_info
+
     def run(self):
         """
         Run the job and immediately reschedule it.
@@ -544,3 +571,10 @@ def idle_seconds():
     :data:`default scheduler instance <default_scheduler>`.
     """
     return default_scheduler.idle_seconds
+
+
+def idle_seconds_since(tag=None):
+    """Calls :meth:`idle_seconds_since <Scheduler.idle_seconds_since>` on the
+    :data:`default scheduler instance <default_scheduler>`.
+    """
+    return default_scheduler.idle_seconds_since(tag)
