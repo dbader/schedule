@@ -1,9 +1,17 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import time, logging
+import time
+import logging
+
 
 def setup_logging(debug):
+    """
+    Can be imported by ``<my_package>`` to create a log file for current
+    scheduler and job class logging.  In this example we use a ``debug``
+    flag set in ``<my_package>`` to change the Log Level.  We also use
+    UTC time and force the name in ``datefmt``.
+    """
     if debug:
         log_level = logging.getLevelName('DEBUG')
     else:
@@ -12,11 +20,13 @@ def setup_logging(debug):
     logging.basicConfig(level=log_level,
                         format="%(asctime)s %(name)s[%(process)d] %(levelname)s - %(message)s",
                         datefmt='%Y-%m-%d %H:%M:%S UTC',
-                        filename='/var/log/schedule.log')
+                        filename='/var/log/scheduler.log')
 
-    # BUG: this does not print the TZ name because logging module is stupid...
+    # BUG: This does not print the TZ name because logging module uses
+    #      time instead of tz-aware datetime objects (so we force the
+    #      correct name in datefmt above).
     logging.Formatter.converter = time.gmtime
 
-    #global logger
-    #logger = logging.getLogger("confd")
-
+    # To also log parent info, try something like this
+    # global logger
+    # logger = logging.getLogger("my_package")
