@@ -39,6 +39,7 @@ Usage:
 """
 import collections
 import datetime
+from datetime import tzinfo, timezone
 import functools
 import logging
 import random
@@ -358,7 +359,7 @@ class Job(object):
         elif self.unit == 'hours':
             hour = 0
         assert 0 <= minute <= 59
-        self.at_time = datetime.time(hour, minute)
+        self.at_time = datetime.timetz(hour, minute)
         return self
 
     def to(self, latest):
