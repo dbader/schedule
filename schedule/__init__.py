@@ -42,7 +42,6 @@ try:
 except ImportError:
     from collections import Hashable
 import datetime
-from datetime import tzinfo, timezone
 import functools
 import logging
 import random
