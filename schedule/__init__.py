@@ -183,7 +183,7 @@ class Scheduler(object):
         else:
             runnable_jobs = (job for job in self.jobs if tag in job.tags)
             last_job = min(runnable_jobs).last_run
-            return (datetime.datetime.now(timezone.utc) - last_job).total_seconds()
+            return (datetime.datetime.now(utc) - last_job).total_seconds()
 
 
 class Job(object):
