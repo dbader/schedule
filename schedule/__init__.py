@@ -170,20 +170,25 @@ class Scheduler(object):
         """
         return (self.next_run - datetime.datetime.now(utc)).total_seconds()
 
-    def idle_seconds_since(self, tag=None):
+    @property
+    def last_run(self):
         """
-        Get the time since the last run of a tagged job
+        Datetime when the last job ran (check for NoneType before using).
 
-        :param tag: The tag to filter job list
-        :return: Number of seconds since
-                 :meth:`last_run <Scheduler.last_run>`.
+        :return: A :class:`~datetime.datetime` object
         """
-        if not self.jobs or tag is None:
+        if not self.jobs:
             return None
-        else:
-            runnable_jobs = (job for job in self.jobs if tag in job.tags)
-            last_job = min(runnable_jobs).last_run
-            return (datetime.datetime.now(utc) - last_job).total_seconds()
+        return max(self.jobs).last_run
+
+    @property
+    def idle_seconds_since(self):
+        """
+        :return: Number of seconds since (check for NoneType before using).
+                 :meth:`next_run <Scheduler.next_run>`.
+        """
+        if self.last_run is not None:
+            return (datetime.datetime.now(utc) - self.last_run).total_seconds()
 
 
 class Job(object):
@@ -572,8 +577,15 @@ def idle_seconds():
     return default_scheduler.idle_seconds
 
 
-def idle_seconds_since(tag=None):
+def last_run():
+    """Calls :meth:`last_run <Scheduler.last_run>` on the
+    :data:`default scheduler instance <default_scheduler>`.
+    """
+    return default_scheduler.last_run
+
+
+def idle_seconds_since():
     """Calls :meth:`idle_seconds_since <Scheduler.idle_seconds_since>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
-    return default_scheduler.idle_seconds_since(tag)
+    return default_scheduler.idle_seconds_since
