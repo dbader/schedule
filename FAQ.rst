@@ -217,3 +217,9 @@ How can I pass arguments to the job function?
 
     schedule.every(2).seconds.do(greet, name='Alice')
     schedule.every(4).seconds.do(greet, name='Bob')    
+
+How can I make sure long-running jobs are always executed on time?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Schedule does not account for the time it takes the job function to execute. To guarantee a stable execution schedule you need to move long-running jobs off the main-thread (where the scheduler runs). See "How to execute jobs in parallel?" in the FAQ for a sample implementation. 
+
