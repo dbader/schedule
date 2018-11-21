@@ -76,7 +76,7 @@ class SchedulerTests(unittest.TestCase):
     def test_utc_is_normal(self):
         fo = utc
         self.assertIsInstance(fo, datetime.tzinfo)
-        dt = datetime.datetime.now()
+        dt = datetime.datetime.now(utc)
         self.assertEqual(fo.utcoffset(dt), datetime.timedelta(0))
         self.assertEqual(fo.tzname(dt), "UTC")
 
