@@ -1,9 +1,13 @@
 """Unit tests for schedule.py"""
+import os
 import sys
 import datetime
+import logging
 import functools
+import time
 import mock
 import unittest
+from test import support
 
 # Silence "missing docstring", "method could be a function",
 # "class already defined", and "too many public methods" messages:
@@ -11,6 +15,7 @@ import unittest
 
 import schedule
 from schedule import every, ScheduleError, ScheduleValueError, IntervalError
+from schedule.parent_logger import setup_logging
 
 try:
     from datetime import timezone
@@ -138,6 +143,7 @@ class SchedulerTests(unittest.TestCase):
         assert every().day.unit == every().days.unit
         assert every().week.unit == every().weeks.unit
 
+<<<<<<< HEAD
     def test_utc_is_normal(self):
         fo = utc
         self.assertIsInstance(fo, datetime.tzinfo)
@@ -154,6 +160,8 @@ class SchedulerTests(unittest.TestCase):
             dst_arg = datetime.timedelta(0)
         self.assertEqual(fo.dst(dt), dst_arg)
 
+=======
+>>>>>>> 61adaaa... hacky test updates, make logfile path an argument for setup_logging()
     def test_time_range(self):
         with mock_datetime(2014, 6, 28, 12, 0):
             mock_job = make_mock_job()
@@ -504,3 +512,151 @@ class SchedulerTests(unittest.TestCase):
         scheduler.every()
         scheduler.every(10).seconds
         scheduler.run_pending()
+
+
+@unittest.skipUnless(sys.version_info < (3, 0, 0),
+                     'schedule class timezone tests only for Python 2.7')
+class TimezoneTests(unittest.TestCase):
+    def test_utc_is_normal(self):
+        fo = utc
+        self.assertIsInstance(fo, datetime.tzinfo)
+        dt = datetime.datetime.now(utc)
+        self.assertEqual(fo.utcoffset(dt), datetime.timedelta(0))
+        self.assertEqual(fo.tzname(dt), "UTC")
+
+    def test_utc_dst_is_dt(self):
+        fo = utc
+        dt = datetime.datetime.now()
+        if sys.version_info > (3, 0, 0):
+            dst_arg = None
+        else:
+            dst_arg = datetime.timedelta(0)
+        self.assertEqual(fo.dst(dt), dst_arg)
+
+
+class LogFormatterTest(unittest.TestCase):
+
+    """Tests for logging formats"""
+
+    def setUp(self):
+        self.common = {
+            'name': 'formatter.test',
+            'level': logging.DEBUG,
+            'pathname': os.path.join('path', 'to', 'dummy.ext'),
+            'lineno': 42,
+            'exc_info': None,
+            'func': None,
+            'msg': 'Message with %d %s',
+            'args': (2, 'placeholders'),
+        }
+        self.variants = {
+        }
+
+    def get_record(self, name=None):
+        result = dict(self.common)
+        if name is not None:
+            result.update(self.variants[name])
+        return logging.makeLogRecord(result)
+
+    def test_percent(self):
+        # Test %-formatting
+        r = self.get_record()
+        f = logging.Formatter('${%(message)s}')
+        self.assertEqual(f.format(r), '${Message with 2 placeholders}')
+        f = logging.Formatter('%(random)s')
+        self.assertRaises(KeyError, f.format, r)
+        self.assertFalse(f.usesTime())
+        f = logging.Formatter('%(asctime)s')
+        self.assertTrue(f.usesTime())
+        f = logging.Formatter('%(asctime)-15s')
+        self.assertTrue(f.usesTime())
+        f = logging.Formatter('asctime')
+        self.assertFalse(f.usesTime())
+
+    def test_time(self):
+        original_datetime = datetime.datetime
+        tz = utc
+        with mock_datetime(1993, 2, 21, 12, 3):
+            r = self.get_record()
+            dt = original_datetime(1993, 2, 21, 4, 3, tzinfo=tz)
+            r.created = time.mktime(dt.astimezone(tz).timetuple())
+            r.msecs = 123
+            f = logging.Formatter('%(asctime)s %(message)s')
+            f.converter = time.gmtime
+            self.assertEqual(f.formatTime(r), '1993-02-21 12:03:00,123')
+            self.assertEqual(f.formatTime(r, '%Y:%d'), '1993:21')
+            f.format(r)
+            self.assertEqual(r.asctime, '1993-02-21 12:03:00,123')
+
+
+class BasicConfigTest(unittest.TestCase):
+
+    """Tests for logging.basicConfig."""
+
+    def setUp(self):
+        super(BasicConfigTest, self).setUp()
+        self.handlers = logging.root.handlers
+        self.saved_handlers = logging._handlers.copy()
+        self.saved_handler_list = logging._handlerList[:]
+        self.original_logging_level = logging.root.level
+        self.addCleanup(self.cleanup)
+        logging.root.handlers = []
+
+    def tearDown(self):
+        for h in logging.root.handlers[:]:
+            logging.root.removeHandler(h)
+            h.close()
+        super(BasicConfigTest, self).tearDown()
+
+    def cleanup(self):
+        setattr(logging.root, 'handlers', self.handlers)
+        logging._handlers.clear()
+        logging._handlers.update(self.saved_handlers)
+        logging._handlerList[:] = self.saved_handler_list
+        logging.root.level = self.original_logging_level
+
+    def test_debug_level(self):
+        old_level = logging.root.level
+        self.addCleanup(logging.root.setLevel, old_level)
+
+        debug = True
+        setup_logging(debug, '/dev/null')
+        self.assertEqual(logging.root.level, logging.DEBUG)
+        # Test that second call has no effect
+        logging.basicConfig(level=58)
+        self.assertEqual(logging.root.level, logging.DEBUG)
+
+    def test_info_level(self):
+        old_level = logging.root.level
+        self.addCleanup(logging.root.setLevel, old_level)
+
+        debug = False
+        setup_logging(debug, '/dev/null')
+        self.assertEqual(logging.root.level, logging.INFO)
+        # Test that second call has no effect
+        logging.basicConfig(level=58)
+        self.assertEqual(logging.root.level, logging.INFO)
+
+    def _test_log(self, method, level=None):
+        # logging.root has no handlers so basicConfig should be called
+        called = []
+
+        old_basic_config = logging.basicConfig
+
+        def my_basic_config(*a, **kw):
+            old_basic_config()
+            old_level = logging.root.level
+            logging.root.setLevel(100)  # avoid having messages in stderr
+            self.addCleanup(logging.root.setLevel, old_level)
+            called.append((a, kw))
+
+        support.patch(self, logging, 'basicConfig', my_basic_config)
+
+        log_method = getattr(logging, method)
+        if level is not None:
+            log_method(level, "test me")
+        else:
+            log_method("test me")
+
+        # basicConfig was called with no arguments
+        self.assertEqual(called, [((), {})])
