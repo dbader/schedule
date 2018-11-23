@@ -1,10 +1,9 @@
 """Unit tests for schedule.py"""
-import os
+
 import sys
 import datetime
 import logging
 import functools
-import time
 import mock
 import unittest
 # from test import support
@@ -583,61 +582,6 @@ class TimezoneTests(unittest.TestCase):
         else:
             dst_arg = datetime.timedelta(0)
         self.assertEqual(fo.dst(dt), dst_arg)
-
-
-class LogFormatterTest(unittest.TestCase):
-
-    """Tests for logging formats"""
-
-    def setUp(self):
-        self.common = {
-            'name': 'formatter.test',
-            'level': logging.DEBUG,
-            'pathname': os.path.join('path', 'to', 'dummy.ext'),
-            'lineno': 42,
-            'exc_info': None,
-            'func': None,
-            'msg': 'Message with %d %s',
-            'args': (2, 'placeholders'),
-        }
-        self.variants = {
-        }
-
-    def get_record(self, name=None):
-        result = dict(self.common)
-        if name is not None:
-            result.update(self.variants[name])
-        return logging.makeLogRecord(result)
-
-    def test_percent(self):
-        # Test %-formatting
-        r = self.get_record()
-        f = logging.Formatter('${%(message)s}')
-        self.assertEqual(f.format(r), '${Message with 2 placeholders}')
-        f = logging.Formatter('%(random)s')
-        self.assertRaises(KeyError, f.format, r)
-        self.assertFalse(f.usesTime())
-        f = logging.Formatter('%(asctime)s')
-        self.assertTrue(f.usesTime())
-        f = logging.Formatter('%(asctime)-15s')
-        self.assertTrue(f.usesTime())
-        f = logging.Formatter('asctime')
-        self.assertFalse(f.usesTime())
-
-    def test_time(self):
-        original_datetime = datetime.datetime
-        tz = utc
-        with mock_datetime(1993, 2, 21, 4, 3):
-            r = self.get_record()
-            dt = original_datetime(1993, 2, 21, 4, 3, tzinfo=tz)
-            r.created = time.mktime(dt.astimezone(tz).timetuple())
-            r.msecs = 123
-            f = logging.Formatter('%(asctime)s %(message)s')
-            f.converter = time.gmtime
-            self.assertEqual(f.formatTime(r), '1993-02-21 12:03:00,123')
-            self.assertEqual(f.formatTime(r, '%Y:%d'), '1993:21')
-            f.format(r)
-            self.assertEqual(r.asctime, '1993-02-21 12:03:00,123')
 
 
 class BasicConfigTest(unittest.TestCase):
