@@ -625,12 +625,12 @@ class LogFormatterTest(unittest.TestCase):
         self.assertFalse(f.usesTime())
 
     def test_time(self):
-        original_datetime = datetime.datetime
+        # original_datetime = datetime.datetime(1993, 2, 21, 4, 3, 0, 0, tzinfo=None)
         # tz = utc
-        with mock_datetime(1993, 2, 21, 12, 3):
+        with mock_datetime(1993, 2, 21, 4, 3):
             r = self.get_record()
-            dt = original_datetime(1993, 2, 21, 4, 3)
-            r.created = time.mktime(dt.timetuple())
+            dt = datetime.datetime.now(utc)
+            r.created = time.mktime(dt.astimezone(utc).timetuple())
             r.msecs = 123
             f = logging.Formatter('%(asctime)s %(message)s')
             f.converter = time.gmtime
