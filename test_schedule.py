@@ -586,6 +586,9 @@ class TimezoneTests(unittest.TestCase):
 
 
 class LogFormatterTest(unittest.TestCase):
+    if sys.version_info > (3, 0, 0):
+        from schedule.timezone import UTC
+        utc = UTC()
 
     """Tests for logging formats"""
 
@@ -629,7 +632,7 @@ class LogFormatterTest(unittest.TestCase):
         # tz = utc
         with mock_datetime(1993, 2, 21, 4, 3):
             r = self.get_record()
-            dt = datetime.datetime.now()
+            dt = datetime.datetime.now(utc)
             r.created = time.mktime(dt.timetuple())
             r.msecs = 123
             f = logging.Formatter('%(asctime)s %(message)s')
