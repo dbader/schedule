@@ -627,7 +627,7 @@ class LogFormatterTest(unittest.TestCase):
     def test_time(self):
         original_datetime = datetime.datetime
         tz = utc
-        with mock_datetime(1993, 2, 21, 12, 3):
+        with mock_datetime(1993, 2, 21, 4, 3):
             r = self.get_record()
             dt = original_datetime(1993, 2, 21, 4, 3, tzinfo=tz)
             r.created = time.mktime(dt.astimezone(tz).timetuple())
