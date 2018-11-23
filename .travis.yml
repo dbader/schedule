@@ -12,7 +12,7 @@ python:
 install: pip install tox-travis coveralls
 
 before_install:
-    - export TZ=PST8PDT
+    - export TZ=America/Los_Angeles
     - date
 
 script:
