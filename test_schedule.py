@@ -7,7 +7,7 @@ import functools
 import time
 import mock
 import unittest
-from test import support
+# from test import support
 
 # Silence "missing docstring", "method could be a function",
 # "class already defined", and "too many public methods" messages:
@@ -445,6 +445,40 @@ class SchedulerTests(unittest.TestCase):
                                                             tzinfo=utc)
             assert schedule.idle_seconds() == 60 * 60
 
+    def test_last_run_property(self):
+        original_datetime = datetime.datetime
+        with mock_datetime(2010, 1, 6, 13, 16):
+            hourly_job = make_mock_job('hourly')
+            daily_job = make_mock_job('daily')
+            every().day.do(daily_job)
+            every().hour.do(hourly_job)
+            schedule.run_all()
+            # Make sure jobs have last_run and idle_seconds_since
+            assert schedule.last_run() == original_datetime(2010, 1, 6, 13, 16,
+                                                            tzinfo=utc)
+            assert schedule.idle_seconds_since() == 0
+            schedule.clear()
+            assert schedule.last_run() is None
+
+    def test_job_info(self):
+        original_datetime = datetime.datetime
+        with mock_datetime(2010, 1, 6, 14, 16):
+            mock_job = make_mock_job(name='info_job')
+            info_job = every().second.do(mock_job, 1, 7, 'three')
+            schedule.run_all()
+            assert len(schedule.jobs) == 1
+            assert schedule.jobs[0] == info_job
+            info_job.job_name = repr(info_job)
+            dt = original_datetime(2010, 1, 6, 14, 16, tzinfo=utc)
+            ts = dt.strftime("%Y-%m-%d %H:%M:%S %Z")
+            info_job.job_info = "last_run: " + ts
+            for job in schedule.jobs:
+                s = info_job.info
+                assert 'info_job' in s
+                assert 'three' in s
+                assert 'UTC' in s
+                assert '7' in s
+
     def test_cancel_job(self):
         def stop_job():
             return schedule.CancelJob
@@ -514,13 +548,15 @@ class SchedulerTests(unittest.TestCase):
         scheduler.run_pending()
 
 
-@unittest.skipUnless(sys.version_info < (3, 0, 0),
-                     'schedule class timezone tests only for Python 2.7')
 class TimezoneTests(unittest.TestCase):
+    if sys.version_info > (3, 0, 0):
+        from schedule.timezone import UTC
+        utc = UTC()
+
     def test_utc_is_normal(self):
         fo = utc
         self.assertIsInstance(fo, datetime.tzinfo)
-        dt = datetime.datetime.now(utc)
+        dt = datetime.datetime.now()
         self.assertEqual(fo.utcoffset(dt), datetime.timedelta(0))
         self.assertEqual(fo.tzname(dt), "UTC")
 
@@ -636,27 +672,3 @@ class BasicConfigTest(unittest.TestCase):
         # Test that second call has no effect
         logging.basicConfig(level=58)
         self.assertEqual(logging.root.level, logging.INFO)
-
-    def _test_log(self, method, level=None):
-        # logging.root has no handlers so basicConfig should be called
-        called = []
-
-        old_basic_config = logging.basicConfig
-
-        def my_basic_config(*a, **kw):
-            old_basic_config()
-            old_level = logging.root.level
-            logging.root.setLevel(100)  # avoid having messages in stderr
-            self.addCleanup(logging.root.setLevel, old_level)
-            called.append((a, kw))
-
-        support.patch(self, logging, 'basicConfig', my_basic_config)
-
-        log_method = getattr(logging, method)
-        if level is not None:
-            log_method(level, "test me")
-        else:
-            log_method("test me")
-
-        # basicConfig was called with no arguments
-        self.assertEqual(called, [((), {})])
