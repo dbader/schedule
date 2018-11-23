@@ -626,10 +626,10 @@ class LogFormatterTest(unittest.TestCase):
 
     def test_time(self):
         original_datetime = datetime.datetime
-        tz = utc
-        with mock_datetime(1993, 2, 21, 4, 3):
+        # tz = utc
+        with mock_datetime(1993, 2, 21, 12, 3):
             r = self.get_record()
-            dt = original_datetime(1993, 2, 21, 4, 3, tzinfo=tz)
+            dt = original_datetime(1993, 2, 21, 4, 3)
             r.created = time.mktime(dt.timetuple())
             r.msecs = 123
             f = logging.Formatter('%(asctime)s %(message)s')
