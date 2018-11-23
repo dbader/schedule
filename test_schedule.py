@@ -294,6 +294,21 @@ class SchedulerTests(unittest.TestCase):
         every().day.at('11:00').do(mock_job)
         schedule.run_all()
         assert mock_job.call_count == 3
+        schedule.clear()
+
+        # setup new tagged jobs
+        job1 = every().second.do(make_mock_job(name='job1')).tag('tag1')
+        job2 = every().second.do(make_mock_job(name='job2')).tag('tag1', 'tag2')
+        job3 = every().second.do(make_mock_job(name='job3')).tag('tag3', 'tag3',
+                                                                 'tag3', 'tag2')
+        assert len(schedule.jobs) == 3
+        schedule.run_all(0, 'tag3')
+        assert 'tag3' in str(job3.tags)
+        assert 'tag3' not in str(job2.tags)
+        assert 'tag1' in str(job2.tags)
+        self.assertRaises(TypeError, job1.last_run)
+        self.assertRaises(TypeError, job2.last_run)
+        assert schedule.last_run() is not None
 
     def test_job_func_args_are_passed_on(self):
         mock_job = make_mock_job()
