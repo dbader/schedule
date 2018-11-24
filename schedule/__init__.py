@@ -206,8 +206,9 @@ class Scheduler(object):
         :return: Number of seconds since (check for NoneType before using).
                  :meth:`next_run <Scheduler.next_run>`.
         """
-        if self.last_run is not None:
-            return (datetime.datetime.now(utc) - self.last_run).total_seconds()
+        if self.last_run is None:
+            return None
+        return (datetime.datetime.now(utc) - self.last_run).total_seconds()
 
 
 class Job(object):
