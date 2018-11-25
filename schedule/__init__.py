@@ -648,3 +648,22 @@ def idle_seconds():
     :data:`default scheduler instance <default_scheduler>`.
     """
     return default_scheduler.idle_seconds
+
+
+def repeat(job):
+    """Decorator for scheduled functions/methods. The decorated
+    functions/methods should not accept any arguments.
+    Usage:
+        >>> from schedule import every, repeat
+        >>> import schedule
+        >>> import time
+        >>> @repeat(every(10).minutes)
+        >>> def job():
+        >>>     print("I am a scheduled job")
+        >>> while True:
+        >>>     schedule.run_pending()
+        >>>     time.sleep(1)"""
+    def _inner_decorator(decorated_function):
+        job.do(decorated_function)
+        return decorated_function
+    return _inner_decorator
