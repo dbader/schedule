@@ -216,4 +216,52 @@ How can I pass arguments to the job function?
         print('Hello', name)
 
     schedule.every(2).seconds.do(greet, name='Alice')
-    schedule.every(4).seconds.do(greet, name='Bob')    
+    schedule.every(4).seconds.do(greet, name='Bob')
+
+How to run a job with decorator?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    from schedule import every, repeat
+    import schedule
+    import time
+
+    @repeat(every(1).minutes)
+    def job_a():
+        print("Called function job_a()")
+
+    @repeat(every(15).seconds)
+    def job_b():
+        print("Called function job_b()")
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+How to run a job with string interval definitions?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    import threading
+    from schedule import when
+    import schedule
+    import time
+
+    def run_threaded(job_func):
+       job_thread = threading.Thread(target=job_func)
+       job_thread.start()
+
+    def job_a():
+       print("Called function job_a()")
+
+    def job_b():
+       print("Called function job_b()")
+
+    schedule.when('every 15 seconds').do(run_threaded, job_a)
+    schedule.when('every 1 minute').do(run_threaded, job_b)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
