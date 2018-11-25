@@ -354,19 +354,25 @@ class Job(object):
         Calling this is only valid for jobs scheduled to run
         every N day(s).
 
-        :param time_str: A string in `XX:YY` format.
+        :param time_str: A string in `HH:MM` or `HH:MM:SS` format.
         :return: The invoked job instance
         """
         assert self.unit in ('days', 'hours') or self.start_day
-        hour, minute = time_str.split(':')
+        parts = time_str.split(':')
+        assert 1 < len(parts) < 4, '`XX:YY` or `XX:YY:ZZ` format expected'
+        if len(parts) == 2:
+            parts.append(0)
+        hour, minute, second = parts
         minute = int(minute)
+        second = int(second)
         if self.unit == 'days' or self.start_day:
             hour = int(hour)
             assert 0 <= hour <= 23
         elif self.unit == 'hours':
             hour = 0
         assert 0 <= minute <= 59
-        self.at_time = datetime.time(hour, minute)
+        assert 0 <= second <= 59
+        self.at_time = datetime.time(hour, minute, second)
         return self
 
     def to(self, latest):
