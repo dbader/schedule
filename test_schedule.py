@@ -296,7 +296,6 @@ class SchedulerTests(unittest.TestCase):
 
     def test_run_tag(self):
         with mock_datetime(2010, 1, 6, 12, 15):
-            # setup new tagged jobs
             mock_job = make_mock_job()
             assert schedule.last_run() is None
             job1 = every().hour.do(mock_job(name='job1')).tag('tag1')
