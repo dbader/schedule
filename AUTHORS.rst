@@ -16,3 +16,5 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - grampajoe <https://github.com/grampajoe>
 - gilbsgilbs <https://github.com/gilbsgilbs>
 - ljanyst <https://github.com/ljanyst>
+- antwal <https://github.com/antwal> <https://bitbucket.org/antwal>
+
