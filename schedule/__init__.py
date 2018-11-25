@@ -44,6 +44,14 @@ import logging
 import random
 import time
 
+try:
+    from datetime import timezone
+    utc = timezone.utc
+except ImportError:
+    from schedule.timezone import UTC
+    utc = UTC()
+
+
 logger = logging.getLogger('schedule')
 
 
@@ -164,7 +172,7 @@ class Scheduler(object):
         :return: Number of seconds until
                  :meth:`next_run <Scheduler.next_run>`.
         """
-        return (self.next_run - datetime.datetime.now()).total_seconds()
+        return (self.next_run - datetime.datetime.now(utc)).total_seconds()
 
 
 class Job(object):
@@ -207,7 +215,7 @@ class Job(object):
 
     def __repr__(self):
         def format_time(t):
-            return t.strftime('%Y-%m-%d %H:%M:%S') if t else '[never]'
+            return t.strftime('%Y-%m-%d %H:%M:%S %Z') if t else '[never]'
 
         timestats = '(last run: %s, next run: %s)' % (
                     format_time(self.last_run), format_time(self.next_run))
@@ -506,7 +514,7 @@ class Job(object):
         """
         :return: ``True`` if the job should be run now.
         """
-        return datetime.datetime.now() >= self.next_run
+        return datetime.datetime.now(utc) >= self.next_run
 
     def run(self):
         """
@@ -516,7 +524,7 @@ class Job(object):
         """
         logger.info('Running job %s', self)
         ret = self.job_func()
-        self.last_run = datetime.datetime.now()
+        self.last_run = datetime.datetime.now(utc)
         self._schedule_next_run()
         return ret
 
@@ -533,7 +541,7 @@ class Job(object):
             interval = self.interval
 
         self.period = datetime.timedelta(**{self.unit: interval})
-        self.next_run = datetime.datetime.now() + self.period
+        self.next_run = datetime.datetime.now(utc) + self.period
         if self.start_day is not None:
             assert self.unit == 'weeks'
             weekdays = (
@@ -564,7 +572,7 @@ class Job(object):
             # If we are running for the first time, make sure we run
             # at the specified time *today* (or *this hour*) as well
             if not self.last_run:
-                now = datetime.datetime.now()
+                now = datetime.datetime.now(utc)
                 if (self.unit == 'days' and self.at_time > now.time() and
                         self.interval == 1):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
@@ -572,7 +580,7 @@ class Job(object):
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
-            if (self.next_run - datetime.datetime.now()).days >= 7:
+            if (self.next_run - datetime.datetime.now(utc)).days >= 7:
                 self.next_run -= self.period
 
 

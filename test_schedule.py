@@ -1,4 +1,5 @@
 """Unit tests for schedule.py"""
+import sys
 import datetime
 import functools
 import mock
@@ -10,6 +11,13 @@ import unittest
 
 import schedule
 from schedule import every, when
+
+try:
+    from datetime import timezone
+    utc = timezone.utc
+except ImportError:
+    from schedule.timezone import UTC
+    utc = UTC()
 
 
 def make_mock_job(name=None):
@@ -36,9 +44,10 @@ class mock_datetime(object):
                 return cls(self.year, self.month, self.day)
 
             @classmethod
-            def now(cls):
+            def now(cls, tz=None):
                 return cls(self.year, self.month, self.day,
-                           self.hour, self.minute)
+                           self.hour, self.minute).replace(tzinfo=tz)
+
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
@@ -63,6 +72,22 @@ class SchedulerTests(unittest.TestCase):
         assert every().hour.unit == every().hours.unit
         assert every().day.unit == every().days.unit
         assert every().week.unit == every().weeks.unit
+
+    def test_utc_is_normal(self):
+        fo = utc
+        self.assertIsInstance(fo, datetime.tzinfo)
+        dt = datetime.datetime.now()
+        self.assertEqual(fo.utcoffset(dt), datetime.timedelta(0))
+        self.assertEqual(fo.tzname(dt), "UTC")
+
+    def test_utc_dst_is_dt(self):
+        fo = utc
+        dt = datetime.datetime.now()
+        if sys.version_info > (3, 0, 0):
+            dst_arg = None
+        else:
+            dst_arg = datetime.timedelta(0)
+        self.assertEqual(fo.dst(dt), dst_arg)
 
     def test_time_range(self):
         with mock_datetime(2014, 6, 28, 12, 0):
@@ -281,7 +306,8 @@ class SchedulerTests(unittest.TestCase):
             every().hour.do(hourly_job)
             assert len(schedule.jobs) == 2
             # Make sure the hourly job is first
-            assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
+            assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16,
+                                                            tzinfo=utc)
             assert schedule.idle_seconds() == 60 * 60
 
     def test_cancel_job(self):
