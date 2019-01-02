@@ -464,8 +464,10 @@ class Job(object):
                 if (self.unit == 'days' and self.at_time > now.time() and
                         self.interval == 1):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
-                elif self.unit == 'hours' and self.at_time.minute > now.minute \
-                        or (self.at_time.minute == now.minute and self.at_time.second > now.second):
+                elif self.unit == 'hours' \
+                        and self.at_time.minute > now.minute \
+                        or (self.at_time.minute == now.minute
+                            and self.at_time.second > now.second):
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
