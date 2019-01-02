@@ -342,15 +342,21 @@ class Job(object):
         :return: The invoked job instance
         """
         assert self.unit in ('days', 'hours') or self.start_day
-        hour, minute = time_str.split(':')
-        minute = int(minute)
+        if time_str.count(':') == 2:
+            hour, minute, second = time_str.split(':')
+            second = int(second)
+            assert 0 <= second <= 59
+        else:
+            hour, minute = time_str.split(':')
+            second = 0
         if self.unit == 'days' or self.start_day:
             hour = int(hour)
             assert 0 <= hour <= 23
         elif self.unit == 'hours':
             hour = 0
+        minute = int(minute)
         assert 0 <= minute <= 59
-        self.at_time = datetime.time(hour, minute)
+        self.at_time = datetime.time(hour, minute, second)
         return self
 
     def to(self, latest):
@@ -458,7 +464,8 @@ class Job(object):
                 if (self.unit == 'days' and self.at_time > now.time() and
                         self.interval == 1):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
-                elif self.unit == 'hours' and self.at_time.minute > now.minute:
+                elif self.unit == 'hours' and self.at_time.minute > now.minute \
+                        or (self.at_time.minute == now.minute and self.at_time.second > now.second):
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
