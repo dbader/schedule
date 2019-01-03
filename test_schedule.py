@@ -22,12 +22,13 @@ class mock_datetime(object):
     """
     Monkey-patch datetime for predictable results
     """
-    def __init__(self, year, month, day, hour, minute):
+    def __init__(self, year, month, day, hour, minute, second=0):
         self.year = year
         self.month = month
         self.day = day
         self.hour = hour
         self.minute = minute
+        self.second = second
 
     def __enter__(self):
         class MockDate(datetime.datetime):
@@ -38,7 +39,7 @@ class mock_datetime(object):
             @classmethod
             def now(cls):
                 return cls(self.year, self.month, self.day,
-                           self.hour, self.minute)
+                           self.hour, self.minute, self.second)
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
@@ -105,6 +106,22 @@ class SchedulerTests(unittest.TestCase):
             assert every().hour.at(':00').do(mock_job).next_run.hour == 13
             assert every().hour.at(':00').do(mock_job).next_run.minute == 0
             assert every().hour.at(':00').do(mock_job).next_run.second == 0
+
+    def test_at_time_minute(self):
+        with mock_datetime(2010, 1, 6, 12, 20, 30):
+            mock_job = make_mock_job()
+            assert every().minute.at('::40').do(mock_job).next_run.hour == 12
+            assert every().minute.at('::40').do(mock_job).next_run.minute == 20
+            assert every().minute.at('::40').do(mock_job).next_run.second == 40
+            assert every().minute.at('::10').do(mock_job).next_run.hour == 12
+            assert every().minute.at('::10').do(mock_job).next_run.minute == 21
+            assert every().minute.at('::10').do(mock_job).next_run.second == 10
+            assert every().minute.at(':40').do(mock_job).next_run.hour == 12
+            assert every().minute.at(':40').do(mock_job).next_run.minute == 20
+            assert every().minute.at(':40').do(mock_job).next_run.second == 40
+            assert every().minute.at(':10').do(mock_job).next_run.hour == 12
+            assert every().minute.at(':10').do(mock_job).next_run.minute == 21
+            assert every().minute.at(':10').do(mock_job).next_run.second == 10
 
     def test_next_run_time(self):
         with mock_datetime(2010, 1, 6, 12, 15):

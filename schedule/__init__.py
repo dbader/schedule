@@ -341,11 +341,13 @@ class Job(object):
         :param time_str: A string in `XX:YY` format.
         :return: The invoked job instance
         """
-        assert self.unit in ('days', 'hours') or self.start_day
+        assert self.unit in ('days', 'hours', 'minutes') or self.start_day
         if time_str.count(':') == 2:
             hour, minute, second = time_str.split(':')
-            second = int(second)
-            assert 0 <= second <= 59
+        elif time_str.count(':') == 1 and self.unit == 'minutes':
+            hour = 0
+            minute = 0
+            _, second = time_str.split(':')
         else:
             hour, minute = time_str.split(':')
             second = 0
@@ -354,8 +356,13 @@ class Job(object):
             assert 0 <= hour <= 23
         elif self.unit == 'hours':
             hour = 0
+        elif self.unit == 'minutes':
+            hour = 0
+            minute = 0
         minute = int(minute)
         assert 0 <= minute <= 59
+        second = int(second)
+        assert 0 <= second <= 59
         self.at_time = datetime.time(hour, minute, second)
         return self
 
@@ -448,14 +455,16 @@ class Job(object):
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
         if self.at_time is not None:
-            assert self.unit in ('days', 'hours') or self.start_day is not None
+            assert self.unit in ('days', 'hours', 'minutes') \
+                   or self.start_day is not None
             kwargs = {
-                'minute': self.at_time.minute,
                 'second': self.at_time.second,
                 'microsecond': 0
             }
             if self.unit == 'days' or self.start_day is not None:
                 kwargs['hour'] = self.at_time.hour
+            if self.unit in ['days', 'hours'] or self.start_day is not None:
+                kwargs['minute'] = self.at_time.minute
             self.next_run = self.next_run.replace(**kwargs)
             # If we are running for the first time, make sure we run
             # at the specified time *today* (or *this hour*) as well
@@ -469,6 +478,10 @@ class Job(object):
                         or (self.at_time.minute == now.minute
                             and self.at_time.second > now.second):
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
+                elif self.unit == 'minutes' \
+                        and self.at_time.second > now.second:
+                    self.next_run = self.next_run - \
+                                    datetime.timedelta(minutes=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:
