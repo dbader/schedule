@@ -343,7 +343,7 @@ class Job(object):
         time_values = time_str.split(':')
         if len(time_values) == 3:
             hour, minute, second = time_values
-        elif len(time_values) == 1 and self.unit == 'minutes':
+        elif len(time_values) == 2 and self.unit == 'minutes':
             hour = 0
             minute = 0
             _, second = time_values
