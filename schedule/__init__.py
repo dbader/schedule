@@ -340,14 +340,15 @@ class Job(object):
         :return: The invoked job instance
         """
         assert self.unit in ('days', 'hours', 'minutes') or self.start_day
-        if time_str.count(':') == 2:
-            hour, minute, second = time_str.split(':')
-        elif time_str.count(':') == 1 and self.unit == 'minutes':
+        time_values = time_str.split(':')
+        if len(time_values) == 3:
+            hour, minute, second = time_values
+        elif len(time_values) == 1 and self.unit == 'minutes':
             hour = 0
             minute = 0
-            _, second = time_str.split(':')
+            _, second = time_values
         else:
-            hour, minute = time_str.split(':')
+            hour, minute = time_values
             second = 0
         if self.unit == 'days' or self.start_day:
             hour = int(hour)
