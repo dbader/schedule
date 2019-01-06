@@ -110,12 +110,6 @@ class SchedulerTests(unittest.TestCase):
     def test_at_time_minute(self):
         with mock_datetime(2010, 1, 6, 12, 20, 30):
             mock_job = make_mock_job()
-            assert every().minute.at('::40').do(mock_job).next_run.hour == 12
-            assert every().minute.at('::40').do(mock_job).next_run.minute == 20
-            assert every().minute.at('::40').do(mock_job).next_run.second == 40
-            assert every().minute.at('::10').do(mock_job).next_run.hour == 12
-            assert every().minute.at('::10').do(mock_job).next_run.minute == 21
-            assert every().minute.at('::10').do(mock_job).next_run.second == 10
             assert every().minute.at(':40').do(mock_job).next_run.hour == 12
             assert every().minute.at(':40').do(mock_job).next_run.minute == 20
             assert every().minute.at(':40').do(mock_job).next_run.second == 40
