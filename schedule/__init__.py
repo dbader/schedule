@@ -333,12 +333,10 @@ class Job(object):
 
     def at(self, time_str):
         """
-        Schedule the job every day at a specific time.
+        Specify a particular time that the job should be run at.
 
-        Calling this is only valid for jobs scheduled to run
-        every N day(s).
-
-        :param time_str: A string in `XX:YY` format.
+        :param time_str: A string in one of the following formats: `HH:MM:SS`,
+            `HH:MM`,`:MM`, `:SS`.
         :return: The invoked job instance
         """
         assert self.unit in ('days', 'hours', 'minutes') or self.start_day
