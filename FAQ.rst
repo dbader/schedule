@@ -256,4 +256,4 @@ How can I make a job run every minute at a particular time?
 
     schedule.every().day.at("::00").do(job)
 
-will run job() at 00:00:00, 00:01:00, 00:02:00, etc... in other words, every hour and second of the day, at the 0 second mark.
+will run job() at 00:00:00, 00:01:00, 00:02:00, etc... in other words, every hour and minute of the day, at the 0 second mark.
