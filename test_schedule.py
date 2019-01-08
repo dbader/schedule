@@ -94,6 +94,12 @@ class SchedulerTests(unittest.TestCase):
         assert every().day.at('10:30').do(mock_job).next_run.minute == 30
         assert every().day.at('10:30:50').do(mock_job).next_run.second == 50
 
+        self.assertRaises(ValueError, every().day.at, '2:30:000001')
+        self.assertRaises(ValueError, every().day.at, '::2')
+        self.assertRaises(ValueError, every().day.at, '.2')
+        self.assertRaises(ValueError, every().day.at, '2')
+        self.assertRaises(TypeError, every().day.at, 2)
+
     def test_at_time_hour(self):
         with mock_datetime(2010, 1, 6, 12, 20):
             mock_job = make_mock_job()
@@ -107,6 +113,12 @@ class SchedulerTests(unittest.TestCase):
             assert every().hour.at(':00').do(mock_job).next_run.minute == 0
             assert every().hour.at(':00').do(mock_job).next_run.second == 0
 
+            self.assertRaises(ValueError, every().hour.at, '2:30:000001')
+            self.assertRaises(ValueError, every().hour.at, '::2')
+            self.assertRaises(ValueError, every().hour.at, '.2')
+            self.assertRaises(ValueError, every().hour.at, '2')
+            self.assertRaises(TypeError, every().hour.at, 2)
+
     def test_at_time_minute(self):
         with mock_datetime(2010, 1, 6, 12, 20, 30):
             mock_job = make_mock_job()
@@ -116,6 +128,12 @@ class SchedulerTests(unittest.TestCase):
             assert every().minute.at(':10').do(mock_job).next_run.hour == 12
             assert every().minute.at(':10').do(mock_job).next_run.minute == 21
             assert every().minute.at(':10').do(mock_job).next_run.second == 10
+
+            self.assertRaises(ValueError, every().minute.at, '2:30:000001')
+            self.assertRaises(ValueError, every().minute.at, '::2')
+            self.assertRaises(ValueError, every().minute.at, '.2')
+            self.assertRaises(ValueError, every().minute.at, '2')
+            self.assertRaises(TypeError, every().minute.at, 2)
 
     def test_next_run_time(self):
         with mock_datetime(2010, 1, 6, 12, 15):

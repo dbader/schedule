@@ -42,6 +42,7 @@ import datetime
 import functools
 import logging
 import random
+import re
 import time
 
 logger = logging.getLogger('schedule')
@@ -340,6 +341,10 @@ class Job(object):
         :return: The invoked job instance
         """
         assert self.unit in ('days', 'hours', 'minutes') or self.start_day
+        if not isinstance(time_str, str):
+            raise TypeError("at() should be passed a string.")
+        if not re.match(r'^(([0-2]\d:)?[0-5]\d)?:[0-5]\d$', time_str):
+            raise ValueError("at() was given an invalid time format.")
         time_values = time_str.split(':')
         if len(time_values) == 3:
             hour, minute, second = time_values
