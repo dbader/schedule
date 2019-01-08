@@ -99,6 +99,7 @@ class SchedulerTests(unittest.TestCase):
         self.assertRaises(AssertionError, every().day.at, '.2')
         self.assertRaises(AssertionError, every().day.at, '2')
         self.assertRaises(AssertionError, every().day.at, ':2')
+        self.assertRaises(AssertionError, every().day.at, ' 2:30:00')
         self.assertRaises(TypeError, every().day.at, 2)
 
     def test_at_time_hour(self):
@@ -118,6 +119,7 @@ class SchedulerTests(unittest.TestCase):
             self.assertRaises(AssertionError, every().hour.at, '::2')
             self.assertRaises(AssertionError, every().hour.at, '.2')
             self.assertRaises(AssertionError, every().hour.at, '2')
+            self.assertRaises(AssertionError, every().hour.at, ' 2:30')
             self.assertRaises(TypeError, every().hour.at, 2)
 
     def test_at_time_minute(self):
@@ -135,6 +137,7 @@ class SchedulerTests(unittest.TestCase):
             self.assertRaises(AssertionError, every().minute.at, '2')
             self.assertRaises(AssertionError, every().minute.at, '2:30:00')
             self.assertRaises(AssertionError, every().minute.at, '2:30')
+            self.assertRaises(AssertionError, every().minute.at, ' :30')
             self.assertRaises(TypeError, every().minute.at, 2)
 
     def test_next_run_time(self):
