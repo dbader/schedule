@@ -337,7 +337,11 @@ class Job(object):
         Specify a particular time that the job should be run at.
 
         :param time_str: A string in one of the following formats: `HH:MM:SS`,
-            `HH:MM`,`:MM`, `:SS`.
+            `HH:MM`,`:MM`, `:SS`. The format must make sense given how often the
+            job is repeating; for example, a job that repeats every minute
+            should not be given a string in the form `HH:MM:SS`. The difference
+            between `:MM` and `:SS` is inferred from the selected time-unit
+            (e.g. `every().hour.at(':30')` vs. `every().minute.at(':30')`).
         :return: The invoked job instance
         """
         assert self.unit in ('days', 'hours', 'minutes') or self.start_day
