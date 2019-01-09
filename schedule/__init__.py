@@ -42,6 +42,7 @@ import datetime
 import functools
 import logging
 import random
+import re
 import time
 
 logger = logging.getLogger('schedule')
@@ -289,7 +290,7 @@ class Job(object):
 
     @property
     def wednesday(self):
-        assert self.interval == 1, 'Use wedesdays instead of wednesday'
+        assert self.interval == 1, 'Use wednesdays instead of wednesday'
         self.start_day = 'wednesday'
         return self.weeks
 
@@ -333,24 +334,51 @@ class Job(object):
 
     def at(self, time_str):
         """
-        Schedule the job every day at a specific time.
+        Specify a particular time that the job should be run at.
 
-        Calling this is only valid for jobs scheduled to run
-        every N day(s).
-
-        :param time_str: A string in `XX:YY` format.
+        :param time_str: A string in one of the following formats: `HH:MM:SS`,
+            `HH:MM`,`:MM`, `:SS`. The format must make sense given how often
+            the job is repeating; for example, a job that repeats every minute
+            should not be given a string in the form `HH:MM:SS`. The difference
+            between `:MM` and `:SS` is inferred from the selected time-unit
+            (e.g. `every().hour.at(':30')` vs. `every().minute.at(':30')`).
         :return: The invoked job instance
         """
-        assert self.unit in ('days', 'hours') or self.start_day
-        hour, minute = time_str.split(':')
-        minute = int(minute)
+        assert self.unit in ('days', 'hours', 'minutes') or self.start_day
+        if not isinstance(time_str, str):
+            raise TypeError("at() should be passed a string.")
+        if self.unit == 'days' or self.start_day:
+            assert re.match(r'^([0-2]\d:)?[0-5]\d:[0-5]\d$', time_str), \
+                ValueError("Invalid time format.")
+        if self.unit == 'hours':
+            assert re.match(r'^([0-5]\d)?:[0-5]\d$', time_str), \
+                ValueError("Invalid time format for an hourly job.")
+        if self.unit == 'minutes':
+            assert re.match(r'^:[0-5]\d$', time_str), \
+                ValueError("Invalid time format for a minutely job.")
+        time_values = time_str.split(':')
+        if len(time_values) == 3:
+            hour, minute, second = time_values
+        elif len(time_values) == 2 and self.unit == 'minutes':
+            hour = 0
+            minute = 0
+            _, second = time_values
+        else:
+            hour, minute = time_values
+            second = 0
         if self.unit == 'days' or self.start_day:
             hour = int(hour)
             assert 0 <= hour <= 23
         elif self.unit == 'hours':
             hour = 0
+        elif self.unit == 'minutes':
+            hour = 0
+            minute = 0
+        minute = int(minute)
         assert 0 <= minute <= 59
-        self.at_time = datetime.time(hour, minute)
+        second = int(second)
+        assert 0 <= second <= 59
+        self.at_time = datetime.time(hour, minute, second)
         return self
 
     def to(self, latest):
@@ -414,7 +442,8 @@ class Job(object):
         """
         Compute the instant when this job should run next.
         """
-        assert self.unit in ('seconds', 'minutes', 'hours', 'days', 'weeks')
+        assert self.unit in ('seconds', 'minutes', 'hours', 'days',
+                             'weeks')
 
         if self.latest is not None:
             assert self.latest >= self.interval
@@ -442,14 +471,16 @@ class Job(object):
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
         if self.at_time is not None:
-            assert self.unit in ('days', 'hours') or self.start_day is not None
+            assert self.unit in ('days', 'hours', 'minutes') \
+                   or self.start_day is not None
             kwargs = {
-                'minute': self.at_time.minute,
                 'second': self.at_time.second,
                 'microsecond': 0
             }
             if self.unit == 'days' or self.start_day is not None:
                 kwargs['hour'] = self.at_time.hour
+            if self.unit in ['days', 'hours'] or self.start_day is not None:
+                kwargs['minute'] = self.at_time.minute
             self.next_run = self.next_run.replace(**kwargs)
             # If we are running for the first time, make sure we run
             # at the specified time *today* (or *this hour*) as well
@@ -458,8 +489,15 @@ class Job(object):
                 if (self.unit == 'days' and self.at_time > now.time() and
                         self.interval == 1):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
-                elif self.unit == 'hours' and self.at_time.minute > now.minute:
+                elif self.unit == 'hours' \
+                        and self.at_time.minute > now.minute \
+                        or (self.at_time.minute == now.minute
+                            and self.at_time.second > now.second):
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
+                elif self.unit == 'minutes' \
+                        and self.at_time.second > now.second:
+                    self.next_run = self.next_run - \
+                                    datetime.timedelta(minutes=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:
