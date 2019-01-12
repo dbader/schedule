@@ -47,6 +47,7 @@ import time
 
 logger = logging.getLogger('schedule')
 
+
 class ScheduleError(Exception):
     """Base schedule exception"""
 
@@ -475,7 +476,8 @@ class Job(object):
             raise ScheduleValueError("Invalid unit.")
 
         if self.latest is not None:
-            assert self.latest >= self.interval
+            if not (self.latest >= self.interval):
+                raise ScheduleError
             interval = random.randint(self.interval, self.latest)
         else:
             interval = self.interval
