@@ -455,7 +455,7 @@ class Job(object):
         self.period = datetime.timedelta(**{self.unit: interval})
         self.next_run = datetime.datetime.now() + self.period
         if self.start_day is not None:
-            assert self.unit == 'weeks', ValueError('`unit` should be \'weeks\' ')
+            assert self.unit == 'weeks', ValueError('unit should be \'weeks\'')
             weekdays = (
                 'monday',
                 'tuesday',
