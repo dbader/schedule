@@ -366,19 +366,19 @@ class Job(object):
             (e.g. `every().hour.at(':30')` vs. `every().minute.at(':30')`).
         :return: The invoked job instance
         """
-        assert self.unit in ('days', 'hours', 'minutes') or self.start_day, \
-            ValueError('Invalid unit.')
+        if self.unit not in ('days', 'hours', 'minutes') and not self.start_day:
+            raise ScheduleValueError('Invalid unit.')
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string.")
         if self.unit == 'days' or self.start_day:
-            assert re.match(r'^([0-2]\d:)?[0-5]\d:[0-5]\d$', time_str), \
-                ValueError("Invalid time format.")
+            if not re.match(r'^([0-2]\d:)?[0-5]\d:[0-5]\d$', time_str):
+                raise ScheduleValueError("Invalid time format.")
         if self.unit == 'hours':
-            assert re.match(r'^([0-5]\d)?:[0-5]\d$', time_str), \
-                ValueError("Invalid time format for an hourly job.")
+            if not re.match(r'^([0-5]\d)?:[0-5]\d$', time_str):
+                raise ScheduleValueError("Invalid time format for an hourly job.")
         if self.unit == 'minutes':
-            assert re.match(r'^:[0-5]\d$', time_str), \
-                ValueError("Invalid time format for a minutely job.")
+            if not re.match(r'^:[0-5]\d$', time_str):
+                raise ScheduleValueError("Invalid time format for a minutely job.")
         time_values = time_str.split(':')
         if len(time_values) == 3:
             hour, minute, second = time_values
