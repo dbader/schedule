@@ -335,7 +335,7 @@ class Job(object):
 
     @property
     def sunday(self):
-        if self.interval == 1:
+        if self.interval != 1:
             raise IntervalError('Use sundays instead of sunday')
         self.start_day = 'sunday'
         return self.weeks
@@ -468,8 +468,8 @@ class Job(object):
         """
         Compute the instant when this job should run next.
         """
-        assert self.unit in ('seconds', 'minutes', 'hours', 'days',
-                             'weeks'), ValueError("Invalid unit.")
+        if self.unit not in ('seconds', 'minutes', 'hours', 'days', 'weeks'):
+            raise ScheduleValueError("Invalid unit.")
 
         if self.latest is not None:
             assert self.latest >= self.interval
@@ -480,7 +480,8 @@ class Job(object):
         self.period = datetime.timedelta(**{self.unit: interval})
         self.next_run = datetime.datetime.now() + self.period
         if self.start_day is not None:
-            assert self.unit == 'weeks', ValueError('unit should be \'weeks\'')
+            if self.unit != 'weeks':
+                raise ScheduleValueError("`unit` should be 'weeks'")
             weekdays = (
                 'monday',
                 'tuesday',
@@ -490,15 +491,16 @@ class Job(object):
                 'saturday',
                 'sunday'
             )
-            assert self.start_day in weekdays, ValueError("Invalid start day.")
+            if self.start_day not in weekdays:
+                raise ScheduleValueError("Invalid start day.")
             weekday = weekdays.index(self.start_day)
             days_ahead = weekday - self.next_run.weekday()
             if days_ahead <= 0:  # Target day already happened this week
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
         if self.at_time is not None:
-            assert self.unit in ('days', 'hours', 'minutes') \
-                   or self.start_day is not None
+            if self.unit not in ('days', 'hours', 'minutes') and self.start_day is None:
+                raise ScheduleValueError("Invalid unit without specifying start day.")
             kwargs = {
                 'second': self.at_time.second,
                 'microsecond': 0
