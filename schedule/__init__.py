@@ -234,7 +234,7 @@ class Job(object):
 
     @property
     def second(self):
-        if self.interval == 1:
+        if self.interval != 1:
             raise IntervalError('Use seconds instead of second')
         return self.seconds
 
