@@ -391,16 +391,19 @@ class Job(object):
             second = 0
         if self.unit == 'days' or self.start_day:
             hour = int(hour)
-            assert 0 <= hour <= 23, ValueError("Invalid number of hours.")
+            if 0 > hour or hour > 24:
+                raise ScheduleValueError("Invalid number of hours.")
         elif self.unit == 'hours':
             hour = 0
         elif self.unit == 'minutes':
             hour = 0
             minute = 0
         minute = int(minute)
-        assert 0 <= minute <= 59, ValueError("Invalid number of minutes.")
+        if 0 > minute or minute > 60:
+            raise ScheduleValueError("Invalid number of minutes.")
         second = int(second)
-        assert 0 <= second <= 59, ValueError("Invalid number of seconds.")
+        if 0 > second or second > 60:
+            raise ScheduleValueError("Invalid number of seconds.")
         self.at_time = datetime.time(hour, minute, second)
         return self
 
