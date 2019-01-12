@@ -366,7 +366,8 @@ class Job(object):
             (e.g. `every().hour.at(':30')` vs. `every().minute.at(':30')`).
         :return: The invoked job instance
         """
-        if self.unit not in ('days', 'hours', 'minutes') and not self.start_day:
+        if (self.unit not in ('days', 'hours', 'minutes')
+                and not self.start_day):
             raise ScheduleValueError('Invalid unit.')
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string.")
@@ -375,10 +376,12 @@ class Job(object):
                 raise ScheduleValueError("Invalid time format.")
         if self.unit == 'hours':
             if not re.match(r'^([0-5]\d)?:[0-5]\d$', time_str):
-                raise ScheduleValueError("Invalid time format for an hourly job.")
+                raise ScheduleValueError(("Invalid time format for"
+                                          " an hourly job."))
         if self.unit == 'minutes':
             if not re.match(r'^:[0-5]\d$', time_str):
-                raise ScheduleValueError("Invalid time format for a minutely job.")
+                raise ScheduleValueError(("Invalid time format for"
+                                          " a minutely job."))
         time_values = time_str.split(':')
         if len(time_values) == 3:
             hour, minute, second = time_values
@@ -499,8 +502,10 @@ class Job(object):
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
         if self.at_time is not None:
-            if self.unit not in ('days', 'hours', 'minutes') and self.start_day is None:
-                raise ScheduleValueError("Invalid unit without specifying start day.")
+            if (self.unit not in ('days', 'hours', 'minutes')
+                    and self.start_day is None):
+                raise ScheduleValueError(("Invalid unit without"
+                                          " specifying start day."))
             kwargs = {
                 'second': self.at_time.second,
                 'microsecond': 0
