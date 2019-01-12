@@ -245,7 +245,8 @@ class Job(object):
 
     @property
     def minute(self):
-        assert self.interval == 1, 'Use minutes instead of minute'
+        if self.interval != 1:
+            raise IntervalError('Use minutes instead of minute')
         return self.minutes
 
     @property
@@ -255,7 +256,8 @@ class Job(object):
 
     @property
     def hour(self):
-        assert self.interval == 1, 'Use hours instead of hour'
+        if self.interval != 1:
+            raise IntervalError('Use hours instead of hour')
         return self.hours
 
     @property
@@ -265,7 +267,8 @@ class Job(object):
 
     @property
     def day(self):
-        assert self.interval == 1, 'Use days instead of day'
+        if self.interval != 1:
+            raise IntervalError('Use days instead of day')
         return self.days
 
     @property
@@ -275,7 +278,8 @@ class Job(object):
 
     @property
     def week(self):
-        assert self.interval == 1, 'Use weeks instead of week'
+        if self.interval != 1:
+            raise IntervalError('Use weeks instead of week')
         return self.weeks
 
     @property
@@ -285,43 +289,50 @@ class Job(object):
 
     @property
     def monday(self):
-        assert self.interval == 1, 'Use mondays instead of monday'
+        if self.interval != 1:
+            raise IntervalError('Use mondays instead of monday')
         self.start_day = 'monday'
         return self.weeks
 
     @property
     def tuesday(self):
-        assert self.interval == 1, 'Use tuesdays instead of tuesday'
+        if self.interval != 1:
+            raise IntervalError('Use tuesdays instead of tuesday')
         self.start_day = 'tuesday'
         return self.weeks
 
     @property
     def wednesday(self):
-        assert self.interval == 1, 'Use wednesdays instead of wednesday'
+        if self.interval != 1:
+            raise IntervalError('Use wednesdays instead of wednesday')
         self.start_day = 'wednesday'
         return self.weeks
 
     @property
     def thursday(self):
-        assert self.interval == 1, 'Use thursdays instead of thursday'
+        if self.interval != 1:
+            raise IntervalError('Use thursdays instead of thursday')
         self.start_day = 'thursday'
         return self.weeks
 
     @property
     def friday(self):
-        assert self.interval == 1, 'Use fridays instead of friday'
+        if self.interval != 1:
+            raise IntervalError('Use fridays instead of friday')
         self.start_day = 'friday'
         return self.weeks
 
     @property
     def saturday(self):
-        assert self.interval == 1, 'Use saturdays instead of saturday'
+        if self.interval != 1:
+            raise IntervalError('Use saturdays instead of saturday')
         self.start_day = 'saturday'
         return self.weeks
 
     @property
     def sunday(self):
-        assert self.interval == 1, 'Use sundays instead of sunday'
+        if self.interval == 1:
+            raise IntervalError('Use sundays instead of sunday')
         self.start_day = 'sunday'
         return self.weeks
 
