@@ -50,16 +50,20 @@ logger = logging.getLogger('schedule')
 class ScheduleError(Exception):
     """Base schedule exception"""
 
+
 class ScheduleValueError(ScheduleError):
     """Base schedule value error"""
 
+
 class IntervalError(ScheduleValueError):
     """An improper interval was used"""
+
 
 class CancelJob(object):
     """
     Can be returned from a job to unschedule itself.
     """
+
 
 class Scheduler(object):
     """
