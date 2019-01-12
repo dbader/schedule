@@ -47,13 +47,19 @@ import time
 
 logger = logging.getLogger('schedule')
 
+class ScheduleError(Exception):
+    """Base schedule exception"""
+
+class ScheduleValueError(ScheduleError):
+    """Base schedule value error"""
+
+class IntervalError(ScheduleValueError):
+    """An improper interval was used"""
 
 class CancelJob(object):
     """
     Can be returned from a job to unschedule itself.
     """
-    pass
-
 
 class Scheduler(object):
     """
@@ -228,7 +234,8 @@ class Job(object):
 
     @property
     def second(self):
-        assert self.interval == 1, 'Use seconds instead of second'
+        if self.interval == 1:
+            raise IntervalError('Use seconds instead of second')
         return self.seconds
 
     @property
