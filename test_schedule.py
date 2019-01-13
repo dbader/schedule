@@ -58,6 +58,21 @@ class SchedulerTests(unittest.TestCase):
         assert every().days.unit == 'days'
         assert every().weeks.unit == 'weeks'
 
+        job_instance = schedule.Job(interval=2)
+        with self.assertRaises(IntervalError):
+            job_instance.second
+            job_instance.minute
+            job_instance.hour
+            job_instance.day
+            job_instance.week
+            job_instance.monday
+            job_instance.tuesday
+            job_instance.wednesday
+            job_instance.thursday
+            job_instance.friday
+            job_instance.saturday
+            job_instance.sunday
+
     def test_singular_time_units_match_plural_units(self):
         assert every().second.unit == every().seconds.unit
         assert every().minute.unit == every().minutes.unit
