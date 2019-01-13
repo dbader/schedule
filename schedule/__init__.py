@@ -403,11 +403,7 @@ class Job(object):
             hour = 0
             minute = 0
         minute = int(minute)
-        if 0 > minute or minute > 60:
-            raise ScheduleValueError("Invalid number of minutes.")
         second = int(second)
-        if 0 > second or second > 60:
-            raise ScheduleValueError("Invalid number of seconds.")
         self.at_time = datetime.time(hour, minute, second)
         return self
 
