@@ -101,6 +101,8 @@ class SchedulerTests(unittest.TestCase):
             every().day.at('2')
             every().day.at(':2')
             every().day.at(' 2:30:00')
+            every().day.at("25:00:00")
+            every().seconds.at("00:00:00")
 
             every().do(lambda: 0)
 
@@ -139,6 +141,9 @@ class SchedulerTests(unittest.TestCase):
                 every().hour.at('.2')
                 every().hour.at('2')
                 every().hour.at(' 2:30')
+                every().hour.at("61:00")
+                every().hour.at("00:61")
+                every().hour.at("01:61")
 
             self.assertRaises(TypeError, every().hour.at, 2)
 
@@ -159,7 +164,7 @@ class SchedulerTests(unittest.TestCase):
                 every().minute.at('2:30:00')
                 every().minute.at('2:30')
                 every().minute.at(' :30')
-                
+
             self.assertRaises(TypeError, every().minute.at, 2)
 
     def test_next_run_time(self):
