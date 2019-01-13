@@ -101,8 +101,12 @@ class SchedulerTests(unittest.TestCase):
 
         # test a valid unit with invalid hours/minutes/seconds
         job_instance.unit = "days"
+        self.assertRaises(ScheduleValueError, job_instance.at, "25:00:00")
+        self.assertRaises(ScheduleValueError, job_instance.at, "00:61:00")
+        self.assertRaises(ScheduleValueError, job_instance.at, "00:00:61")
+
+        # test invalid time format
         self.assertRaises(ScheduleValueError, job_instance.at, "25:0:0")
-        self.assertRaises(ScheduleValueError, job_instance.at, "0:0:0")
         self.assertRaises(ScheduleValueError, job_instance.at, "0:61:0")
         self.assertRaises(ScheduleValueError, job_instance.at, "0:0:61")
 
