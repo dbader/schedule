@@ -110,9 +110,14 @@ class SchedulerTests(unittest.TestCase):
         self.assertRaises(ScheduleValueError, job_instance.at, "0:61:0")
         self.assertRaises(ScheduleValueError, job_instance.at, "0:0:61")
 
-        job_instance.unit = "foo"
-        job_instance.at_time = "bar"
+        # test (very specific) seconds with unspecified start_day
+        job_instance.unit = "seconds"
+        job_instance.at_time = datetime.datetime.now()
         job_instance.start_day = None
+        self.assertRaises(ScheduleValueError, job_instance._schedule_next_run)
+
+        # test self.latest >= self.interval
+        job_instance.latest = 3
         self.assertRaises(ScheduleValueError, job_instance._schedule_next_run)
 
     def test_singular_time_units_match_plural_units(self):
