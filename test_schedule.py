@@ -152,11 +152,9 @@ class SchedulerTests(unittest.TestCase):
 
     def test_at_time(self):
         mock_job = make_mock_job()
-        assertEqual = self.assertEqual
-        assertEqual(every().day.at('10:30').do(mock_job).next_run.hour, 10)
-        assertEqual(every().day.at('10:30').do(mock_job).next_run.minute, 30)
-        assertEqual(every().day.at('10:30:50').do(mock_job).next_run.second,
-                    50)
+        assert every().day.at('10:30').do(mock_job).next_run.hour == 10
+        assert every().day.at('10:30').do(mock_job).next_run.minute == 30
+        assert every().day.at('10:30:50').do(mock_job).next_run.second == 50
 
         self.assertRaises(ScheduleValueError, every().day.at, '2:30:000001')
         self.assertRaises(ScheduleValueError, every().day.at, '::2')
@@ -201,18 +199,15 @@ class SchedulerTests(unittest.TestCase):
     def test_at_time_hour(self):
         with mock_datetime(2010, 1, 6, 12, 20):
             mock_job = make_mock_job()
-            assertEqual = self.assertEqual
-            assertEqual(every().hour.at(':30').do(mock_job).next_run.hour, 12)
-            assertEqual(every().hour.at(':30').do(mock_job).next_run.minute,
-                        30)
-            assertEqual(every().hour.at(':30').do(mock_job).next_run.second, 0)
-            assertEqual(every().hour.at(':10').do(mock_job).next_run.hour, 13)
-            assertEqual(every().hour.at(':10').do(mock_job).next_run.minute,
-                        10)
-            assertEqual(every().hour.at(':10').do(mock_job).next_run.second, 0)
-            assertEqual(every().hour.at(':00').do(mock_job).next_run.hour, 13)
-            assertEqual(every().hour.at(':00').do(mock_job).next_run.minute, 0)
-            assertEqual(every().hour.at(':00').do(mock_job).next_run.second, 0)
+            assert every().hour.at(':30').do(mock_job).next_run.hour == 12
+            assert every().hour.at(':30').do(mock_job).next_run.minute == 30
+            assert every().hour.at(':30').do(mock_job).next_run.second == 0
+            assert every().hour.at(':10').do(mock_job).next_run.hour == 13
+            assert every().hour.at(':10').do(mock_job).next_run.minute == 10
+            assert every().hour.at(':10').do(mock_job).next_run.second == 0
+            assert every().hour.at(':00').do(mock_job).next_run.hour == 13
+            assert every().hour.at(':00').do(mock_job).next_run.minute == 0
+            assert every().hour.at(':00').do(mock_job).next_run.second == 0
 
             self.assertRaises(ScheduleValueError, every().hour.at, '2:30:00')
             self.assertRaises(ScheduleValueError, every().hour.at, '::2')
@@ -237,19 +232,12 @@ class SchedulerTests(unittest.TestCase):
     def test_at_time_minute(self):
         with mock_datetime(2010, 1, 6, 12, 20, 30):
             mock_job = make_mock_job()
-            assertEqual = self.assertEqual
-            assertEqual(every().minute.at(':40').do(mock_job).next_run.hour,
-                        12)
-            assertEqual(every().minute.at(':40').do(mock_job).next_run.minute,
-                        20)
-            assertEqual(every().minute.at(':40').do(mock_job).next_run.second,
-                        40)
-            assertEqual(every().minute.at(':10').do(mock_job).next_run.hour,
-                        12)
-            assertEqual(every().minute.at(':10').do(mock_job).next_run.minute,
-                        21)
-            assertEqual(every().minute.at(':10').do(mock_job).next_run.second,
-                        10)
+            assert every().minute.at(':40').do(mock_job).next_run.hour == 12
+            assert every().minute.at(':40').do(mock_job).next_run.minute == 20
+            assert every().minute.at(':40').do(mock_job).next_run.second == 40
+            assert every().minute.at(':10').do(mock_job).next_run.hour == 12
+            assert every().minute.at(':10').do(mock_job).next_run.minute == 21
+            assert every().minute.at(':10').do(mock_job).next_run.second == 10
 
             self.assertRaises(ScheduleValueError, every().minute.at, '::2')
             self.assertRaises(ScheduleValueError, every().minute.at, '.2')
@@ -269,24 +257,8 @@ class SchedulerTests(unittest.TestCase):
     def test_next_run_time(self):
         with mock_datetime(2010, 1, 6, 12, 15):
             mock_job = make_mock_job()
-            self.assertIsNone(schedule.next_run())
-
-            assertEqual = self.assertEqual
-            assertEqual(every().minute.do(mock_job).next_run.minute, 16)
-            assertEqual(every(5).minutes.do(mock_job).next_run.minute, 20)
-            assertEqual(every().hour.do(mock_job).next_run.hour, 13)
-            assertEqual(every().day.do(mock_job).next_run.day, 7)
-            assertEqual(every().day.at('09:00').do(mock_job).next_run.day, 7)
-            assertEqual(every().day.at('12:30').do(mock_job).next_run.day, 6)
-            assertEqual(every().week.do(mock_job).next_run.day, 13)
-            assertEqual(every().monday.do(mock_job).next_run.day, 11)
-            assertEqual(every().tuesday.do(mock_job).next_run.day, 12)
-            assertEqual(every().wednesday.do(mock_job).next_run.day, 13)
-            assertEqual(every().thursday.do(mock_job).next_run.day, 7)
-            assertEqual(every().friday.do(mock_job).next_run.day, 8)
-            assertEqual(every().saturday.do(mock_job).next_run.day, 9)
-            assertEqual(every().sunday.do(mock_job).next_run.day, 10)
             assert schedule.next_run() is None
+
             assert every().minute.do(mock_job).next_run.minute == 16
             assert every(5).minutes.do(mock_job).next_run.minute == 20
             assert every().hour.do(mock_job).next_run.hour == 13
@@ -439,9 +411,8 @@ class SchedulerTests(unittest.TestCase):
             every().hour.do(hourly_job)
             assert len(schedule.jobs) == 2
             # Make sure the hourly job is first
-            self.assertEqual(schedule.next_run(),
-                             original_datetime(2010, 1, 6, 14, 16))
-            self.assertEqual(schedule.idle_seconds(), 60 * 60)
+            assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
+            assert schedule.idle_seconds() == 60 * 60
             assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
             assert schedule.idle_seconds() == 60 * 60
 
