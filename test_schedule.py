@@ -144,8 +144,9 @@ class SchedulerTests(unittest.TestCase):
         mock_job = make_mock_job()
         assertEqual = self.assertEqual
         assertEqual(every().day.at('10:30').do(mock_job).next_run.hour, 10)
-        assertEqual(every().day.at('10:30').do(mock_job).next_run.minute,30)
-        assertEqual(every().day.at('10:30:50').do(mock_job).next_run.second, 50)
+        assertEqual(every().day.at('10:30').do(mock_job).next_run.minute, 30)
+        assertEqual(every().day.at('10:30:50').do(mock_job).next_run.second,
+                    50)
 
         self.assertRaises(ScheduleValueError, every().day.at, '2:30:000001')
         self.assertRaises(ScheduleValueError, every().day.at, '::2')
