@@ -9,7 +9,7 @@ import unittest
 # pylint: disable-msg=R0201,C0111,E0102,R0904,R0901
 
 import schedule
-from schedule import every, ScheduleValueError
+from schedule import every, ScheduleValueError, IntervalError
 
 
 def make_mock_job(name=None):
@@ -101,6 +101,20 @@ class SchedulerTests(unittest.TestCase):
         self.assertRaises(ScheduleValueError, every().day.at, ':2')
         self.assertRaises(ScheduleValueError, every().day.at, ' 2:30:00')
         self.assertRaises(TypeError, every().day.at, 2)
+
+        with self.assertRaises(IntervalError):
+            every(interval=2).second
+            every(interval=2).minute
+            every(interval=2).hour
+            every(interval=2).day
+            every(interval=2).week
+            every(interval=2).monday
+            every(interval=2).tuesday
+            every(interval=2).wednesday
+            every(interval=2).thursday
+            every(interval=2).friday
+            every(interval=2).saturday
+            every(interval=2).sunday
 
     def test_at_time_hour(self):
         with mock_datetime(2010, 1, 6, 12, 20):
