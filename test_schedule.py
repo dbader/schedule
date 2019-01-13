@@ -84,9 +84,32 @@ class SchedulerTests(unittest.TestCase):
         with self.assertRaises(IntervalError):
             job_instance.sunday
 
+        # test an invalid unit
         job_instance.unit = "foo"
-        with self.assertRaises(ScheduleValueError):
-            job_instance.at("1:0:0")
+        self.assertRaises(ScheduleValueError, job_instance.at, "1:0:0")
+        self.assertRaises(ScheduleValueError, job_instance._schedule_next_run)
+
+        # test start day exists but unit is not 'weeks'
+        job_instance.unit = "days"
+        job_instance.start_day = 1
+        self.assertRaises(ScheduleValueError, job_instance._schedule_next_run)
+
+        # test weeks with an invalid start day
+        job_instance.unit = "weeks"
+        job_instance.start_day = "bar"
+        self.assertRaises(ScheduleValueError, job_instance._schedule_next_run)
+
+        # test a valid unit with invalid hours/minutes/seconds
+        job_instance.unit = "days"
+        self.assertRaises(ScheduleValueError, job_instance.at, "25:0:0")
+        self.assertRaises(ScheduleValueError, job_instance.at, "0:0:0")
+        self.assertRaises(ScheduleValueError, job_instance.at, "0:61:0")
+        self.assertRaises(ScheduleValueError, job_instance.at, "0:0:61")
+
+        job_instance.unit = "foo"
+        job_instance.at_time = "bar"
+        job_instance.start_day = None
+        self.assertRaises(ScheduleValueError, job_instance._schedule_next_run)
 
     def test_singular_time_units_match_plural_units(self):
         self.assertEqual(every().second.unit, every().seconds.unit)
