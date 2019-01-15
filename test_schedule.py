@@ -163,10 +163,6 @@ class SchedulerTests(unittest.TestCase):
         self.assertRaises(ScheduleValueError, every().day.at, ':2')
         self.assertRaises(ScheduleValueError, every().day.at, ' 2:30:00')
         self.assertRaises(ScheduleValueError, every().do, lambda: 0)
-        assert every().day.at('10:30').do(mock_job).next_run.hour == 10
-        assert every().day.at('10:30').do(mock_job).next_run.minute == 30
-        assert every().day.at('10:30:50').do(mock_job).next_run.second == 50
-
         self.assertRaises(TypeError, every().day.at, 2)
 
         # without a context manager, it incorrectly raises an error because
@@ -217,16 +213,6 @@ class SchedulerTests(unittest.TestCase):
             self.assertRaises(ScheduleValueError, every().hour.at, "61:00")
             self.assertRaises(ScheduleValueError, every().hour.at, "00:61")
             self.assertRaises(ScheduleValueError, every().hour.at, "01:61")
-            assert every().hour.at(':30').do(mock_job).next_run.hour == 12
-            assert every().hour.at(':30').do(mock_job).next_run.minute == 30
-            assert every().hour.at(':30').do(mock_job).next_run.second == 0
-            assert every().hour.at(':10').do(mock_job).next_run.hour == 13
-            assert every().hour.at(':10').do(mock_job).next_run.minute == 10
-            assert every().hour.at(':10').do(mock_job).next_run.second == 0
-            assert every().hour.at(':00').do(mock_job).next_run.hour == 13
-            assert every().hour.at(':00').do(mock_job).next_run.minute == 0
-            assert every().hour.at(':00').do(mock_job).next_run.second == 0
-
             self.assertRaises(TypeError, every().hour.at, 2)
 
     def test_at_time_minute(self):
@@ -258,7 +244,6 @@ class SchedulerTests(unittest.TestCase):
         with mock_datetime(2010, 1, 6, 12, 15):
             mock_job = make_mock_job()
             assert schedule.next_run() is None
-
             assert every().minute.do(mock_job).next_run.minute == 16
             assert every(5).minutes.do(mock_job).next_run.minute == 20
             assert every().hour.do(mock_job).next_run.hour == 13
@@ -411,8 +396,6 @@ class SchedulerTests(unittest.TestCase):
             every().hour.do(hourly_job)
             assert len(schedule.jobs) == 2
             # Make sure the hourly job is first
-            assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
-            assert schedule.idle_seconds() == 60 * 60
             assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
             assert schedule.idle_seconds() == 60 * 60
 
