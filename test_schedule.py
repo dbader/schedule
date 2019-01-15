@@ -9,7 +9,7 @@ import unittest
 # pylint: disable-msg=R0201,C0111,E0102,R0904,R0901
 
 import schedule
-from schedule import every, ScheduleValueError, IntervalError
+from schedule import every, ScheduleError, ScheduleValueError, IntervalError
 
 
 def make_mock_job(name=None):
@@ -117,8 +117,10 @@ class SchedulerTests(unittest.TestCase):
         self.assertRaises(ScheduleValueError, job_instance._schedule_next_run)
 
         # test self.latest >= self.interval
+        job_instance.latest = 1
+        self.assertRaises(ScheduleError, job_instance._schedule_next_run)
         job_instance.latest = 3
-        self.assertRaises(ScheduleValueError, job_instance._schedule_next_run)
+        self.assertRaises(ScheduleError, job_instance._schedule_next_run)
 
     def test_singular_time_units_match_plural_units(self):
         assert every().second.unit == every().seconds.unit
