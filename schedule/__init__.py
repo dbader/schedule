@@ -395,7 +395,7 @@ class Job(object):
             second = 0
         if self.unit == 'days' or self.start_day:
             hour = int(hour)
-            if 0 > hour or hour > 24:
+            if 0 > hour or hour > 23:
                 raise ScheduleValueError("Invalid number of hours.")
         elif self.unit == 'hours':
             hour = 0
@@ -473,7 +473,7 @@ class Job(object):
 
         if self.latest is not None:
             if not (self.latest >= self.interval):
-                raise ScheduleError
+                raise ScheduleError("`latest` is greater than `interval`.")
             interval = random.randint(self.interval, self.latest)
         else:
             interval = self.interval
