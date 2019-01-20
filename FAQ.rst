@@ -45,7 +45,7 @@ If you want tighter control on the number of threads use a shared jobqueue and o
 
 .. code-block:: python
 
-    import Queue
+    import queue
     import time
     import threading
     import schedule
@@ -61,7 +61,7 @@ If you want tighter control on the number of threads use a shared jobqueue and o
             job_func()
             jobqueue.task_done()
 
-    jobqueue = Queue.Queue()
+    jobqueue = queue.Queue()
 
     schedule.every(10).seconds.do(jobqueue.put, job)
     schedule.every(10).seconds.do(jobqueue.put, job)
