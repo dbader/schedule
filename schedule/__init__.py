@@ -399,7 +399,7 @@ class Job(object):
             second = 0
         if self.unit == 'days' or self.start_day:
             hour = int(hour)
-            if 0 > hour or hour > 23:
+            if not (0 <= hour <= 23):
                 raise ScheduleValueError('Invalid number of hours.')
         elif self.unit == 'hours':
             hour = 0
