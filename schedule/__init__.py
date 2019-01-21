@@ -229,7 +229,8 @@ class Job(object):
             job_func_name = self.job_func.__name__
         else:
             job_func_name = repr(self.job_func)
-        is_repr = lambda j: not isinstance(j, Job)
+        def is_repr(j):
+            return not isinstance(j, Job)
         args = [repr(x) if is_repr(x) else str(x) for x in self.job_func.args]
         kwargs = ['%s=%s' % (k, repr(v))
                   for k, v in self.job_func.keywords.items()]
