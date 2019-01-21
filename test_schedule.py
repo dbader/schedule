@@ -272,6 +272,12 @@ class SchedulerTests(unittest.TestCase):
         def job_fun():
             pass
         s = str(every().minute.do(job_fun, 'foo', bar=23))
+    def test_to_repr(self):
+        def job_fun():
+            pass
+        s = repr(every().minute.do(job_fun, 'foo', bar=23))
+        assert s.startswith("Every 1 minute do job_fun('foo', bar=23) "
+                            "(last run: [never], next run: ")
         assert 'job_fun' in s
         assert 'foo' in s
         assert 'bar=23' in s
