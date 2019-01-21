@@ -205,6 +205,19 @@ class Job(object):
         """
         return self.next_run < other.next_run
 
+    def __str__(self):
+        return (
+            "Job(interval={}, "
+            "unit={}, "
+            "do={}, "
+            "args={}, "
+            "kwargs={})"
+        ).format(self.interval,
+                 self.unit,
+                 self.job_func.__name__,
+                 self.job_func.args,
+                 self.job_func.keywords)
+
     def __repr__(self):
         def format_time(t):
             return t.strftime('%Y-%m-%d %H:%M:%S') if t else '[never]'
