@@ -375,18 +375,18 @@ class Job(object):
                 and not self.start_day):
             raise ScheduleValueError('Invalid unit.')
         if not isinstance(time_str, str):
-            raise TypeError("at() should be passed a string.")
+            raise TypeError('at() should be passed a string.')
         if self.unit == 'days' or self.start_day:
             if not re.match(r'^([0-2]\d:)?[0-5]\d:[0-5]\d$', time_str):
-                raise ScheduleValueError("Invalid time format.")
+                raise ScheduleValueError('Invalid time format.')
         if self.unit == 'hours':
             if not re.match(r'^([0-5]\d)?:[0-5]\d$', time_str):
-                raise ScheduleValueError(("Invalid time format for"
-                                          " an hourly job."))
+                raise ScheduleValueError(('Invalid time format for'
+                                          ' an hourly job.'))
         if self.unit == 'minutes':
             if not re.match(r'^:[0-5]\d$', time_str):
-                raise ScheduleValueError(("Invalid time format for"
-                                          " a minutely job."))
+                raise ScheduleValueError(('Invalid time format for'
+                                          ' a minutely job.'))
         time_values = time_str.split(':')
         if len(time_values) == 3:
             hour, minute, second = time_values
@@ -400,7 +400,7 @@ class Job(object):
         if self.unit == 'days' or self.start_day:
             hour = int(hour)
             if 0 > hour or hour > 23:
-                raise ScheduleValueError("Invalid number of hours.")
+                raise ScheduleValueError('Invalid number of hours.')
         elif self.unit == 'hours':
             hour = 0
         elif self.unit == 'minutes':
@@ -473,11 +473,11 @@ class Job(object):
         Compute the instant when this job should run next.
         """
         if self.unit not in ('seconds', 'minutes', 'hours', 'days', 'weeks'):
-            raise ScheduleValueError("Invalid unit.")
+            raise ScheduleValueError('Invalid unit.')
 
         if self.latest is not None:
             if not (self.latest >= self.interval):
-                raise ScheduleError("`latest` is greater than `interval`.")
+                raise ScheduleError('`latest` is greater than `interval`.')
             interval = random.randint(self.interval, self.latest)
         else:
             interval = self.interval
@@ -486,7 +486,7 @@ class Job(object):
         self.next_run = datetime.datetime.now() + self.period
         if self.start_day is not None:
             if self.unit != 'weeks':
-                raise ScheduleValueError("`unit` should be 'weeks'")
+                raise ScheduleValueError('`unit` should be \'weeks\'')
             weekdays = (
                 'monday',
                 'tuesday',
