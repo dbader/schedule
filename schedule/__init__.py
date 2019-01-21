@@ -497,7 +497,7 @@ class Job(object):
                 'sunday'
             )
             if self.start_day not in weekdays:
-                raise ScheduleValueError("Invalid start day.")
+                raise ScheduleValueError('Invalid start day.')
             weekday = weekdays.index(self.start_day)
             days_ahead = weekday - self.next_run.weekday()
             if days_ahead <= 0:  # Target day already happened this week
@@ -506,8 +506,8 @@ class Job(object):
         if self.at_time is not None:
             if (self.unit not in ('days', 'hours', 'minutes')
                     and self.start_day is None):
-                raise ScheduleValueError(("Invalid unit without"
-                                          " specifying start day."))
+                raise ScheduleValueError(('Invalid unit without'
+                                          ' specifying start day.'))
             kwargs = {
                 'second': self.at_time.second,
                 'microsecond': 0
