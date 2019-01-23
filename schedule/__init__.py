@@ -205,9 +205,25 @@ class Job(object):
         """
         return self.next_run < other.next_run
 
+    def __str__(self):
+        return (
+            "Job(interval={}, "
+            "unit={}, "
+            "do={}, "
+            "args={}, "
+            "kwargs={})"
+        ).format(self.interval,
+                 self.unit,
+                 self.job_func.__name__,
+                 self.job_func.args,
+                 self.job_func.keywords)
+
     def __repr__(self):
         def format_time(t):
             return t.strftime('%Y-%m-%d %H:%M:%S') if t else '[never]'
+
+        def is_repr(j):
+            return not isinstance(j, Job)
 
         timestats = '(last run: %s, next run: %s)' % (
                     format_time(self.last_run), format_time(self.next_run))
@@ -216,7 +232,7 @@ class Job(object):
             job_func_name = self.job_func.__name__
         else:
             job_func_name = repr(self.job_func)
-        args = [repr(x) for x in self.job_func.args]
+        args = [repr(x) if is_repr(x) else str(x) for x in self.job_func.args]
         kwargs = ['%s=%s' % (k, repr(v))
                   for k, v in self.job_func.keywords.items()]
         call_repr = job_func_name + '(' + ', '.join(args + kwargs) + ')'

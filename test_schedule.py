@@ -272,9 +272,26 @@ class SchedulerTests(unittest.TestCase):
         def job_fun():
             pass
         s = str(every().minute.do(job_fun, 'foo', bar=23))
+        assert s == ("Job(interval=1, unit=minutes, do=job_fun, "
+                     "args=('foo',), kwargs={'bar': 23})")
+        assert 'job_fun' in s
+        assert 'foo' in s
+        assert '{\'bar\': 23}' in s
+
+    def test_to_repr(self):
+        def job_fun():
+            pass
+        s = repr(every().minute.do(job_fun, 'foo', bar=23))
+        assert s.startswith("Every 1 minute do job_fun('foo', bar=23) "
+                            "(last run: [never], next run: ")
         assert 'job_fun' in s
         assert 'foo' in s
         assert 'bar=23' in s
+
+        # test repr when at_time is not None
+        s2 = repr(every().day.at("00:00").do(job_fun, 'foo', bar=23))
+        assert s2.startswith(("Every 1 day at 00:00:00 do job_fun('foo', "
+                              "bar=23) (last run: [never], next run: "))
 
     def test_to_string_lambda_job_func(self):
         assert len(str(every().minute.do(lambda: 1))) > 1
