@@ -399,12 +399,14 @@ class Job(object):
                                           '(valid format is (H?H:)?MM:SS)'))
         if self.unit == 'hours':
             if not re.match(r'^([0-5]\d)?:[0-5]\d$', time_str):
-                raise ScheduleValueError(('Invalid time format for'
-                                          ' an hourly job (valid format is MM:SS)'))
+                raise ScheduleValueError(('Invalid time format for '
+                                          'an hourly job (valid format '
+                                          'is (MM)?:SS)'))
         if self.unit == 'minutes':
             if not re.match(r'^:[0-5]\d$', time_str):
-                raise ScheduleValueError(('Invalid time format for'
-                                          ' a minutely job (valid format is :SS)'))
+                raise ScheduleValueError(('Invalid time format for '
+                                          'a minutely job (valid '
+                                          'format is :SS)'))
         time_values = time_str.split(':')
         if len(time_values) == 3:
             hour, minute, second = time_values
