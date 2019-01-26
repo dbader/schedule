@@ -377,9 +377,10 @@ class Job(object):
         return self
 
     def increment_at_times_counter(self):
-        self.at_times_counter += 1
-        if self.at_times_counter >= len(self.at_times):
-            self.at_times_counter = 0
+        if self.at_times is not None:
+            self.at_times_counter += 1
+            if self.at_times_counter >= len(self.at_times):
+                self.at_times_counter = 0
 
     def at(self, *time_strings):
         """
