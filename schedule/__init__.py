@@ -193,9 +193,9 @@ class Job(object):
         self.at_times = None  # optional time at which this job runs
         self.last_run = None  # datetime of the last run
         self.next_run = None  # datetime of the next run
-        self.at_times_counter = 0
+        self.at_times_counter = 0  # index of self.at_times
         self.period = None  # timedelta between runs, only valid for
-        self.start_day = None  # Specific day of the week to start on
+        self.start_day = None  # specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
         self.scheduler = scheduler  # scheduler to register with
 
@@ -386,12 +386,13 @@ class Job(object):
         """
         Specify a particular time that the job should be run at.
 
-        :param time_str: A string in one of the following formats: `HH:MM:SS`,
-            `HH:MM`,`:MM`, `:SS`. The format must make sense given how often
-            the job is repeating; for example, a job that repeats every minute
-            should not be given a string in the form `HH:MM:SS`. The difference
-            between `:MM` and `:SS` is inferred from the selected time-unit
-            (e.g. `every().hour.at(':30')` vs. `every().minute.at(':30')`).
+        :param time_strings: Strings in one of the following formats:
+            `HH:MM:SS`, `HH:MM`,`:MM`, `:SS`. The format must make sense given
+            how often the job is repeating; for example, a job that repeats
+            every minute should not be given a string in the form `HH:MM:SS`.
+            The difference between `:MM` and `:SS` is inferred from the
+            selected time-unit (e.g. `every().hour.at(':30')` vs.
+            `every().minute.at(':30')`).
         :return: The invoked job instance
         """
         if (self.unit not in ('days', 'hours', 'minutes')
