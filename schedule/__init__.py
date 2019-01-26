@@ -193,6 +193,7 @@ class Job(object):
         self.at_times = None  # optional time at which this job runs
         self.last_run = None  # datetime of the last run
         self.next_run = None  # datetime of the next run
+        self.at_times_counter = 0
         self.period = None  # timedelta between runs, only valid for
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
@@ -375,6 +376,11 @@ class Job(object):
         self.tags.update(tags)
         return self
 
+    def increment_at_times_counter(self):
+        self.at_times_counter += 1
+        if self.at_times_counter >= len(self.at_times):
+            self.at_times_counter = 0
+
     def at(self, *time_strings):
         """
         Specify a particular time that the job should be run at.
@@ -509,8 +515,13 @@ class Job(object):
         else:
             interval = self.interval
 
-        self.period = datetime.timedelta(**{self.unit: interval})
-        self.next_run = datetime.datetime.now() + self.period
+        if self.at_times is not None:
+            self.at_time = self.at_times[self.at_times_counter]
+
+        if self.at_times_counter == 0:
+            self.period = datetime.timedelta(**{self.unit: interval})
+            self.next_run = datetime.datetime.now() + self.period
+
         if self.start_day is not None:
             if self.unit != 'weeks':
                 raise ScheduleValueError('`unit` should be \'weeks\'')
@@ -537,7 +548,6 @@ class Job(object):
                 raise ScheduleValueError(('Invalid unit without'
                                           ' specifying start day'))
 
-            self.at_time = self.at_times[self.counter]
             kwargs = {
                 'second': self.at_time.second,
                 'microsecond': 0
@@ -569,6 +579,7 @@ class Job(object):
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:
                 self.next_run -= self.period
+        self.increment_at_times_counter()
 
 
 # The following methods are shortcuts for not having to
