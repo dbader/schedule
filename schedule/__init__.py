@@ -519,7 +519,7 @@ class Job(object):
         else:
             interval = self.interval
 
-        if self.at_times: # can be None or []
+        if self.at_times:  # can be None or []
             this_time = self.at_times[self.at_times_counter]
 
         if self.at_times_counter == 0:
@@ -562,7 +562,6 @@ class Job(object):
                 kwargs['minute'] = this_time.minute
 
             self.next_run = self.next_run.replace(**kwargs)
-            # print(self.at_times)
             # If we are running for the first time, make sure we run
             # at the specified time *today* (or *this hour*) as well
             if not self.last_run:
