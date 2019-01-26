@@ -190,7 +190,7 @@ class Job(object):
         self.latest = None  # upper limit to the interval
         self.job_func = None  # the job job_func to run
         self.unit = None  # time units, e.g. 'minutes', 'hours', ...
-        self.at_times = None  # optional time at which this job runs
+        self.at_times = None  # optional time(s) at which this job runs
         self.last_run = None  # datetime of the last run
         self.next_run = None  # datetime of the next run
         self.at_times_counter = 0  # index of self.at_times
