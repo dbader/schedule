@@ -537,33 +537,34 @@ class Job(object):
                 raise ScheduleValueError(('Invalid unit without'
                                           ' specifying start day'))
 
-            for at_time in self.at_times:
-                self.at_time = at_time
-                kwargs = {
-                    'second': self.at_time.second,
-                    'microsecond': 0
-                }
-                if self.unit == 'days' or self.start_day is not None:
-                    kwargs['hour'] = self.at_time.hour
-                if self.unit in ['days', 'hours'] or self.start_day is not None:
-                    kwargs['minute'] = self.at_time.minute
-                self.next_run = self.next_run.replace(**kwargs)
-                # If we are running for the first time, make sure we run
-                # at the specified time *today* (or *this hour*) as well
-                if not self.last_run:
-                    now = datetime.datetime.now()
-                    if (self.unit == 'days' and self.at_time > now.time() and
-                            self.interval == 1):
-                        self.next_run = self.next_run - datetime.timedelta(days=1)
-                    elif self.unit == 'hours' \
-                            and self.at_time.minute > now.minute \
-                            or (self.at_time.minute == now.minute
-                                and self.at_time.second > now.second):
-                        self.next_run = self.next_run - datetime.timedelta(hours=1)
-                    elif self.unit == 'minutes' \
-                            and self.at_time.second > now.second:
-                        self.next_run = self.next_run - \
-                                        datetime.timedelta(minutes=1)
+            self.at_time = self.at_times[self.counter]
+            kwargs = {
+                'second': self.at_time.second,
+                'microsecond': 0
+            }
+            if self.unit == 'days' or self.start_day is not None:
+                kwargs['hour'] = self.at_time.hour
+            if self.unit in ['days', 'hours'] or self.start_day is not None:
+                kwargs['minute'] = self.at_time.minute
+
+            self.next_run = self.next_run.replace(**kwargs)
+            # print(self.at_times)
+            # If we are running for the first time, make sure we run
+            # at the specified time *today* (or *this hour*) as well
+            if not self.last_run:
+                now = datetime.datetime.now()
+                if (self.unit == 'days' and self.at_time > now.time() and
+                        self.interval == 1):
+                    self.next_run = self.next_run - datetime.timedelta(days=1)
+                elif self.unit == 'hours' \
+                        and self.at_time.minute > now.minute \
+                        or (self.at_time.minute == now.minute
+                            and self.at_time.second > now.second):
+                    self.next_run = self.next_run - datetime.timedelta(hours=1)
+                elif self.unit == 'minutes' \
+                        and self.at_time.second > now.second:
+                    self.next_run = self.next_run - \
+                                    datetime.timedelta(minutes=1)
         if self.start_day is not None and self.at_times is not None:
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:
