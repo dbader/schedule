@@ -519,7 +519,7 @@ class Job(object):
         else:
             interval = self.interval
 
-        if self.at_times is not None:
+        if self.at_times: # can be None or []
             this_time = self.at_times[self.at_times_counter]
 
         if self.at_times_counter == 0:
