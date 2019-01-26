@@ -303,7 +303,7 @@ class SchedulerTests(unittest.TestCase):
         assert s2.startswith(('Every 1 day at [datetime.time(0, 0)] do '
                               'job_fun(\'foo\', bar=23) (last run: '
                               '[never], next run: '))
-                              
+
         # test repr with multiple `at()` times
         s3 = repr(every().day.at("00:00", "00:05").do(job_fun, 'foo', bar=23))
         assert s3.startswith(('Every 1 day at [datetime.time(0, 0), '
