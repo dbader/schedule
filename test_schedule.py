@@ -253,6 +253,8 @@ class SchedulerTests(unittest.TestCase):
             assert every().day.do(mock_job).next_run.day == 7
             assert every().day.at('09:00').do(mock_job).next_run.day == 7
             assert every().day.at('12:30').do(mock_job).next_run.day == 6
+            run_times = ('09:00', '12:30')
+            assert every().day.at(*run_times).do(mock_job).next_run.hour == 9
             assert every().week.do(mock_job).next_run.day == 13
             assert every().monday.do(mock_job).next_run.day == 11
             assert every().tuesday.do(mock_job).next_run.day == 12
@@ -299,6 +301,13 @@ class SchedulerTests(unittest.TestCase):
         # test repr when at_time is not None
         s2 = repr(every().day.at("00:00").do(job_fun, 'foo', bar=23))
         assert s2.startswith(('Every 1 day at [datetime.time(0, 0)] do '
+                              'job_fun(\'foo\', bar=23) (last run: '
+                              '[never], next run: '))
+                              
+        # test repr with multiple `at()` times
+        s3 = repr(every().day.at("00:00", "00:05").do(job_fun, 'foo', bar=23))
+        assert s3.startswith(('Every 1 day at [datetime.time(0, 0), '
+                              'datetime.time(0, 5)] do '
                               'job_fun(\'foo\', bar=23) (last run: '
                               '[never], next run: '))
 
