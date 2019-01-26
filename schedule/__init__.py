@@ -517,7 +517,7 @@ class Job(object):
             interval = self.interval
 
         if self.at_times is not None:
-            self.at_time = self.at_times[self.at_times_counter]
+            this_time = self.at_times[self.at_times_counter]
 
         if self.at_times_counter == 0:
             self.period = datetime.timedelta(**{self.unit: interval})
@@ -550,13 +550,13 @@ class Job(object):
                                           ' specifying start day'))
 
             kwargs = {
-                'second': self.at_time.second,
+                'second': this_time.second,
                 'microsecond': 0
             }
             if self.unit == 'days' or self.start_day is not None:
-                kwargs['hour'] = self.at_time.hour
+                kwargs['hour'] = this_time.hour
             if self.unit in ['days', 'hours'] or self.start_day is not None:
-                kwargs['minute'] = self.at_time.minute
+                kwargs['minute'] = this_time.minute
 
             self.next_run = self.next_run.replace(**kwargs)
             # print(self.at_times)
@@ -564,16 +564,16 @@ class Job(object):
             # at the specified time *today* (or *this hour*) as well
             if not self.last_run:
                 now = datetime.datetime.now()
-                if (self.unit == 'days' and self.at_time > now.time() and
+                if (self.unit == 'days' and this_time > now.time() and
                         self.interval == 1):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
                 elif self.unit == 'hours' \
-                        and self.at_time.minute > now.minute \
-                        or (self.at_time.minute == now.minute
-                            and self.at_time.second > now.second):
+                        and this_time.minute > now.minute \
+                        or (this_time.minute == now.minute
+                            and this_time.second > now.second):
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
                 elif self.unit == 'minutes' \
-                        and self.at_time.second > now.second:
+                        and this_time.second > now.second:
                     self.next_run = self.next_run - \
                                     datetime.timedelta(minutes=1)
         if self.start_day is not None and self.at_times is not None:
