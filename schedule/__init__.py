@@ -375,7 +375,7 @@ class Job(object):
         self.tags.update(tags)
         return self
 
-    def at(self, time_str):
+    def at(self, *time_strings):
         """
         Specify a particular time that the job should be run at.
 
@@ -391,45 +391,49 @@ class Job(object):
                 and not self.start_day):
             raise ScheduleValueError(('Invalid unit (valid units are `days`, '
                                       '`hours`, and `minutes`)'))
-        if not isinstance(time_str, str):
-            raise TypeError('at() should be passed a string')
-        if self.unit == 'days' or self.start_day:
-            if not re.match(r'^[0-2]?\d:[0-5]\d(:[0-5]\d)?$', time_str):
-                raise ScheduleValueError(('Invalid time format '
-                                          '(valid format is H?H:MM(:SS)?)'))
-        if self.unit == 'hours':
-            if not re.match(r'^([0-5]\d)?:[0-5]\d$', time_str):
-                raise ScheduleValueError(('Invalid time format for '
-                                          'an hourly job (valid format '
-                                          'is (MM)?:SS)'))
-        if self.unit == 'minutes':
-            if not re.match(r'^:[0-5]\d$', time_str):
-                raise ScheduleValueError(('Invalid time format for '
-                                          'a minutely job (valid '
-                                          'format is :SS)'))
-        time_values = time_str.split(':')
-        if len(time_values) == 3:
-            hour, minute, second = time_values
-        elif len(time_values) == 2 and self.unit == 'minutes':
-            hour = 0
-            minute = 0
-            _, second = time_values
-        else:
-            hour, minute = time_values
-            second = 0
-        if self.unit == 'days' or self.start_day:
-            hour = int(hour)
-            if not (0 <= hour <= 23):
-                raise ScheduleValueError(('Invalid number of hours ({} is not '
-                                          'between 0 and 23)').format(hour))
-        elif self.unit == 'hours':
-            hour = 0
-        elif self.unit == 'minutes':
-            hour = 0
-            minute = 0
-        minute = int(minute)
-        second = int(second)
-        self.at_time = datetime.time(hour, minute, second)
+
+        self.at_time = []
+        for time_str in time_strings:
+            if not isinstance(time_str, str):
+                raise TypeError('at() should be passed a string')
+
+            if self.unit == 'days' or self.start_day:
+                if not re.match(r'^[0-2]?\d:[0-5]\d(:[0-5]\d)?$', time_str):
+                    raise ScheduleValueError(('Invalid time format '
+                                              '(valid format is H?H:MM(:SS)?)'))
+            if self.unit == 'hours':
+                if not re.match(r'^([0-5]\d)?:[0-5]\d$', time_str):
+                    raise ScheduleValueError(('Invalid time format for '
+                                              'an hourly job (valid format '
+                                              'is (MM)?:SS)'))
+            if self.unit == 'minutes':
+                if not re.match(r'^:[0-5]\d$', time_str):
+                    raise ScheduleValueError(('Invalid time format for '
+                                              'a minutely job (valid '
+                                              'format is :SS)'))
+            time_values = time_str.split(':')
+            if len(time_values) == 3:
+                hour, minute, second = time_values
+            elif len(time_values) == 2 and self.unit == 'minutes':
+                hour = 0
+                minute = 0
+                _, second = time_values
+            else:
+                hour, minute = time_values
+                second = 0
+            if self.unit == 'days' or self.start_day:
+                hour = int(hour)
+                if not (0 <= hour <= 23):
+                    raise ScheduleValueError(('Invalid number of hours ({} is not '
+                                              'between 0 and 23)').format(hour))
+            elif self.unit == 'hours':
+                hour = 0
+            elif self.unit == 'minutes':
+                hour = 0
+                minute = 0
+            minute = int(minute)
+            second = int(second)
+            self.at_time.append(datetime.time(hour, minute, second))
         return self
 
     def to(self, latest):
