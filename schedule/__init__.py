@@ -440,6 +440,7 @@ class Job(object):
             minute = int(minute)
             second = int(second)
             self.at_times.append(datetime.time(hour, minute, second))
+        self.at_times = sorted(self.at_times)
         return self
 
     def to(self, latest):
