@@ -407,7 +407,8 @@ class Job(object):
             if self.unit == 'days' or self.start_day:
                 if not re.match(r'^[0-2]?\d:[0-5]\d(:[0-5]\d)?$', time_str):
                     raise ScheduleValueError(('Invalid time format '
-                                              '(valid format is H?H:MM(:SS)?)'))
+                                              '(valid format is H?H'
+                                              ':MM(:SS)?)'))
             if self.unit == 'hours':
                 if not re.match(r'^([0-5]\d)?:[0-5]\d$', time_str):
                     raise ScheduleValueError(('Invalid time format for '
@@ -431,8 +432,9 @@ class Job(object):
             if self.unit == 'days' or self.start_day:
                 hour = int(hour)
                 if not (0 <= hour <= 23):
-                    raise ScheduleValueError(('Invalid number of hours ({} is not '
-                                              'between 0 and 23)').format(hour))
+                    raise ScheduleValueError(('Invalid number of hours '
+                                              '({} is not between 0 and'
+                                              ' 23)').format(hour))
             elif self.unit == 'hours':
                 hour = 0
             elif self.unit == 'minutes':
