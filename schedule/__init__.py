@@ -190,7 +190,7 @@ class Job(object):
         self.latest = None  # upper limit to the interval
         self.job_func = None  # the job job_func to run
         self.unit = None  # time units, e.g. 'minutes', 'hours', ...
-        self.at_time = None  # optional time at which this job runs
+        self.at_times = None  # optional time at which this job runs
         self.last_run = None  # datetime of the last run
         self.next_run = None  # datetime of the next run
         self.period = None  # timedelta between runs, only valid for
@@ -237,11 +237,11 @@ class Job(object):
                   for k, v in self.job_func.keywords.items()]
         call_repr = job_func_name + '(' + ', '.join(args + kwargs) + ')'
 
-        if self.at_time is not None:
+        if self.at_times is not None:
             return 'Every %s %s at %s do %s %s' % (
                    self.interval,
                    self.unit[:-1] if self.interval == 1 else self.unit,
-                   self.at_time, call_repr, timestats)
+                   self.at_times, call_repr, timestats)
         else:
             fmt = (
                 'Every %(interval)s ' +
@@ -392,7 +392,7 @@ class Job(object):
             raise ScheduleValueError(('Invalid unit (valid units are `days`, '
                                       '`hours`, and `minutes`)'))
 
-        self.at_time = []
+        self.at_times = []
         for time_str in time_strings:
             if not isinstance(time_str, str):
                 raise TypeError('at() should be passed a string')
@@ -433,7 +433,7 @@ class Job(object):
                 minute = 0
             minute = int(minute)
             second = int(second)
-            self.at_time.append(datetime.time(hour, minute, second))
+            self.at_times.append(datetime.time(hour, minute, second))
         return self
 
     def to(self, latest):
@@ -531,7 +531,7 @@ class Job(object):
             if days_ahead <= 0:  # Target day already happened this week
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
-        if self.at_time is not None:
+        if self.at_times is not None:
             if (self.unit not in ('days', 'hours', 'minutes')
                     and self.start_day is None):
                 raise ScheduleValueError(('Invalid unit without'
@@ -562,6 +562,7 @@ class Job(object):
                     self.next_run = self.next_run - \
                                     datetime.timedelta(minutes=1)
         if self.start_day is not None and self.at_time is not None:
+        if self.start_day is not None and self.at_times is not None:
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:
                 self.next_run -= self.period
