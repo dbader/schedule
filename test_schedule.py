@@ -298,7 +298,7 @@ class SchedulerTests(unittest.TestCase):
 
         # test repr when at_time is not None
         s2 = repr(every().day.at("00:00").do(job_fun, 'foo', bar=23))
-        assert s2.startswith(("Every 1 day at 00:00:00 do job_fun('foo', "
+        assert s2.startswith(("Every 1 day at [datetime.time(0, 0)] do job_fun('foo', "
                               "bar=23) (last run: [never], next run: "))
 
     def test_to_string_lambda_job_func(self):
