@@ -169,7 +169,8 @@ class Scheduler(object):
         :return: Number of seconds until
                  :meth:`next_run <Scheduler.next_run>`.
         """
-        return (self.next_run - datetime.datetime.now()).total_seconds()
+        seconds = (self.next_run - datetime.datetime.now()).total_seconds()
+        return seconds if seconds > 0 else 0
 
 
 class Job(object):
@@ -483,8 +484,10 @@ class Job(object):
         :return: The return value returned by the `job_func`
         """
         logger.debug('Running job %s', self)
+        self.last_run = (
+            self.next_run if self.should_run else datetime.datetime.now()
+        )
         ret = self.job_func()
-        self.last_run = datetime.datetime.now()
         self._schedule_next_run()
         return ret
 
@@ -503,7 +506,13 @@ class Job(object):
             interval = self.interval
 
         self.period = datetime.timedelta(**{self.unit: interval})
-        self.next_run = datetime.datetime.now() + self.period
+        self.next_run = (
+            (self.last_run or datetime.datetime.now()) + self.period
+        )
+        # Move the next run to now if it already should have run, in order to
+        # skip missed jobs.
+        if self.should_run:
+            self.next_run = datetime.datetime.now()
         if self.start_day is not None:
             if self.unit != 'weeks':
                 raise ScheduleValueError('`unit` should be \'weeks\'')
