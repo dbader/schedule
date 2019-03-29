@@ -167,6 +167,13 @@ class Scheduler(object):
         """
         return (self.next_run - datetime.datetime.now()).total_seconds()
 
+    @property
+    def was_idle_seconds(self):
+        """
+        :return: Number of seconds since last
+            :meth: `last_run` <Scheduler.last_run>`.
+        """
+        return (datetime.datetime.now() - self.last_run).total_seconds()
 
 class Job(object):
     """
@@ -612,3 +619,9 @@ def idle_seconds():
     :data:`default scheduler instance <default_scheduler>`.
     """
     return default_scheduler.idle_seconds
+
+def was_idle_seconds()
+    """Calls :meth: `was_idle_seconds <Scheduler.was_idle_seconds>` on the
+    :data:`default scheduler instance of <default_scheduler>`.
+    """
+    return default_scheduler.was_idle_seconds
