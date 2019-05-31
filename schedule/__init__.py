@@ -433,6 +433,8 @@ class Job(object):
             raise ScheduleValueError('Invalid unit')
         if callable(time_str):
             self.at_time_fn = time_str
+        elif isinstance(time_str, datetime.time):
+            self.at_time = time_str
         else:
             if not isinstance(time_str, str):
                 raise TypeError('at() should be passed a string')
