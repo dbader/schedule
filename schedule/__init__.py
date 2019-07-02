@@ -479,9 +479,9 @@ class Job(object):
         :return: The return value returned by the `job_func`
         """
         logger.info('Running job %s', self)
-        ret = self.job_func()
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
+        ret = self.job_func()
         return ret
 
     def _schedule_next_run(self):
