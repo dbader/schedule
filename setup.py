@@ -9,8 +9,6 @@ $ python setup.py sdist bdist_wheel --universal
 $ twine upload dist/*
 """
 import codecs
-import os
-import sys
 from setuptools import setup
 
 
@@ -54,4 +52,5 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Natural Language :: English',
     ],
+    python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
 )
