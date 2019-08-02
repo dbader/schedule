@@ -244,6 +244,85 @@ class SchedulerTests(unittest.TestCase):
             self.assertRaises(ScheduleValueError, every().minute.at, ' :30')
             self.assertRaises(TypeError, every().minute.at, 2)
 
+    def test_at_daytime_month(self):
+        # Test that the monthly schedulers creates the starting date correctly
+        with mock_datetime(2010, 1, 6, 12, 20, 30):
+            mock_job = make_mock_job()
+            assert every().month.at('06-12:40:30').do(mock_job).next_run.month == 1
+            assert every().month.at('06-12:40:30').do(mock_job).next_run.day == 6
+            assert every().month.at('06-12:40:30').do(mock_job).next_run.hour == 12
+            assert every().month.at('06-12:40:30').do(mock_job).next_run.minute == 40
+            assert every().month.at('06-12:40:30').do(mock_job).next_run.second == 30
+            assert every().month.at('06-10:40:30').do(mock_job).next_run.month == 2
+            assert every().month.at('04-12:40:30').do(mock_job).next_run.day == 4
+            assert every().month.at('04-12:40:30').do(mock_job).next_run.month == 2
+            assert every().month.at('19-12:40:30').do(mock_job).next_run.day == 19
+            assert every().month.at('19-12:40:30').do(mock_job).next_run.month == 1
+
+        # Test that the monthly scheduler creates correct next_run dates
+        with mock_datetime(2010, 1, 6, 12, 20, 30):
+            mock_job = make_mock_job()
+            scheduler = schedule.Scheduler()
+            scheduler.every().month.at('04-12:40:30').do(mock_job)
+        with mock_datetime(2010, 2, 4, 12, 40, 30):
+            scheduler.run_pending()
+            assert scheduler.jobs[0].next_run.month == 3
+        with mock_datetime(2010, 3, 4, 12, 40, 30):
+            scheduler.run_pending()
+            assert scheduler.jobs[0].next_run.month == 4
+
+        # test invalid time format
+        with mock_datetime(2010, 1, 6, 12, 20, 30):
+            self.assertRaises(ScheduleValueError, every().month.at, '32-10:00:00')
+            self.assertRaises(ScheduleValueError, every().month.at, '05-24:00:00')
+            self.assertRaises(ScheduleValueError, every().month.at, '05-20:60:00')
+            self.assertRaises(ScheduleValueError, every().month.at, '05-20:00:65')
+            self.assertRaises(ScheduleValueError, every().month.at, '32-10:00')
+            self.assertRaises(ScheduleValueError, every().month.at, '05-24:00')
+            self.assertRaises(ScheduleValueError, every().month.at, '05-20:60')
+            self.assertRaises(ScheduleValueError, every().month.at, '15-1:00:00')
+            self.assertRaises(ScheduleValueError, every().month.at, '15-10:0:00')
+            self.assertRaises(ScheduleValueError, every().month.at, '15-10:00:0')
+            self.assertRaises(ScheduleValueError, every().month.at, '5-23:00:00')
+            self.assertRaises(ScheduleValueError, every().month.at, '15-1:00')
+            self.assertRaises(ScheduleValueError, every().month.at, '15-10:0')
+            self.assertRaises(ScheduleValueError, every().month.at, '5-23:00')
+
+    def test_at_daytime_months(self):
+        # Test that the monthly scheduler creates correct next_run dates
+        with mock_datetime(2010, 1, 6, 12, 20, 30):
+            mock_job = make_mock_job()
+            scheduler = schedule.Scheduler()
+            scheduler.every(5).months.at('04-12:40:30').do(mock_job)
+            assert scheduler.jobs[0].next_run.month == 2
+        with mock_datetime(2010, 2, 4, 12, 40, 30):
+            scheduler.run_pending()
+            assert scheduler.jobs[0].next_run.month == 7
+        with mock_datetime(2010, 7, 4, 12, 40, 30):
+            scheduler.run_pending()
+            assert scheduler.jobs[0].next_run.month == 12
+        with mock_datetime(2010, 12, 4, 12, 40, 30):
+            scheduler.run_pending()
+            assert scheduler.jobs[0].next_run.month == 5
+            assert scheduler.jobs[0].next_run.year == 2011
+
+        # test invalid time format
+        with mock_datetime(2010, 1, 6, 12, 20, 30):
+            self.assertRaises(ScheduleValueError, every(2).months.at, '32-10:00:00')
+            self.assertRaises(ScheduleValueError, every(2).months.at, '05-24:00:00')
+            self.assertRaises(ScheduleValueError, every(2).months.at, '05-20:60:00')
+            self.assertRaises(ScheduleValueError, every(2).months.at, '05-20:00:65')
+            self.assertRaises(ScheduleValueError, every(2).months.at, '32-10:00')
+            self.assertRaises(ScheduleValueError, every(2).months.at, '05-24:00')
+            self.assertRaises(ScheduleValueError, every(2).months.at, '05-20:60')
+            self.assertRaises(ScheduleValueError, every(2).months.at, '15-1:00:00')
+            self.assertRaises(ScheduleValueError, every(2).months.at, '15-10:0:00')
+            self.assertRaises(ScheduleValueError, every(2).months.at, '15-10:00:0')
+            self.assertRaises(ScheduleValueError, every(2).months.at, '5-23:00:00')
+            self.assertRaises(ScheduleValueError, every(2).months.at, '15-1:00')
+            self.assertRaises(ScheduleValueError, every(2).months.at, '15-10:0')
+            self.assertRaises(ScheduleValueError, every(2).months.at, '5-23:00')
+
     def test_next_run_time(self):
         with mock_datetime(2010, 1, 6, 12, 15):
             mock_job = make_mock_job()
