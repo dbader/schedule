@@ -34,7 +34,9 @@ class mock_datetime(object):
         class MockDate(datetime.datetime):
             @classmethod
             def today(cls):
-                return cls(self.year, self.month, self.day)
+                return cls(self.year,
+                           self.month,
+                           self.day)
 
             @classmethod
             def now(cls):
@@ -253,14 +255,17 @@ class SchedulerTests(unittest.TestCase):
             assert every().friday.do(mock_job).next_run.day == 8
             assert every().saturday.do(mock_job).next_run.day == 9
             assert every().sunday.do(mock_job).next_run.day == 10
+            assert every(2, 10).minutes.do(mock_job).till == 10
+            assert every(2, 0).minutes.do(mock_job).till == 0
 
     def test_run_all(self):
         mock_job = make_mock_job()
         every().minute.do(mock_job)
         every().hour.do(mock_job)
         every().day.at('11:00').do(mock_job)
+        every(1, 2).seconds.do(mock_job)
         schedule.run_all()
-        assert mock_job.call_count == 3
+        assert mock_job.call_count == 4
 
     def test_job_func_args_are_passed_on(self):
         mock_job = make_mock_job()
@@ -269,8 +274,7 @@ class SchedulerTests(unittest.TestCase):
         mock_job.assert_called_once_with(1, 2, 'three', foo=23, bar={})
 
     def test_to_string(self):
-        def job_fun():
-            pass
+        def job_fun(): pass
         s = str(every().minute.do(job_fun, 'foo', bar=23))
         assert s == ("Job(interval=1, unit=minutes, do=job_fun, "
                      "args=('foo',), kwargs={'bar': 23})")
@@ -298,8 +302,7 @@ class SchedulerTests(unittest.TestCase):
         assert len(str(every().day.at('10:30').do(lambda: 1))) > 1
 
     def test_to_string_functools_partial_job_func(self):
-        def job_fun(arg):
-            pass
+        def job_fun(arg): pass
         job_fun = functools.partial(job_fun, 'foo')
         job_repr = repr(every().minute.do(job_fun, bar=True, somekey=23))
         assert 'functools.partial' in job_repr
@@ -432,10 +435,16 @@ class SchedulerTests(unittest.TestCase):
         schedule.cancel_job(mj)
         assert len(schedule.jobs) == 0
 
+    # def test_terminate_job(self):
+    #     mock_job = make_mock_job()
+    #
+    #     every(1,5).second.do(mock_job)
+    #     schedule.run_pending()
+    #     print schedule.
+
     def test_cancel_jobs(self):
         def stop_job():
             return schedule.CancelJob
-
         every().second.do(stop_job)
         every().second.do(stop_job)
         every().second.do(stop_job)
@@ -477,4 +486,6 @@ class SchedulerTests(unittest.TestCase):
         scheduler = schedule.Scheduler()
         scheduler.every()
         scheduler.every(10).seconds
+        scheduler.every(10).seconds
+        schedule.every(10, 1).seconds
         scheduler.run_pending()
