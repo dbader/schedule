@@ -258,6 +258,10 @@ class SchedulerTests(unittest.TestCase):
             assert every().month.at('04-12:40:30').do(mock_job).next_run.month == 2
             assert every().month.at('19-12:40:30').do(mock_job).next_run.day == 19
             assert every().month.at('19-12:40:30').do(mock_job).next_run.month == 1
+        with mock_datetime(2010, 2, 6, 12, 20, 30):
+            mock_job = make_mock_job()
+            assert every().month.at('31-12:40:30').do(mock_job).next_run.day == 28
+            assert every().month.at('31-12:40:30').do(mock_job).next_run.month == 2
 
         # Test that the monthly scheduler creates correct next_run dates
         with mock_datetime(2010, 1, 6, 12, 20, 30):
@@ -270,6 +274,25 @@ class SchedulerTests(unittest.TestCase):
         with mock_datetime(2010, 3, 4, 12, 40, 30):
             scheduler.run_pending()
             assert scheduler.jobs[0].next_run.month == 4
+
+        # Test the correct treatment of End of Month dates
+        with mock_datetime(2010, 1, 1, 12, 20, 30):
+            mock_job = make_mock_job()
+            scheduler = schedule.Scheduler()
+            scheduler.every().month.at('31-12:40:30').do(mock_job)
+        with mock_datetime(2010, 1, 31, 12, 40, 30):
+            scheduler.run_pending()
+            assert scheduler.jobs[0].next_run.month == 2
+            assert scheduler.jobs[0].next_run.day == 28
+        with mock_datetime(2010, 2, 28, 12, 40, 30):
+            scheduler.run_pending()
+            assert scheduler.jobs[0].next_run.month == 3
+            assert scheduler.jobs[0].next_run.day == 31
+        with mock_datetime(2010, 3, 31, 12, 40, 30):
+            scheduler.run_pending()
+            assert scheduler.jobs[0].next_run.month == 4
+            assert scheduler.jobs[0].next_run.day == 30
+
 
         # test invalid time format
         with mock_datetime(2010, 1, 6, 12, 20, 30):
@@ -305,6 +328,20 @@ class SchedulerTests(unittest.TestCase):
             scheduler.run_pending()
             assert scheduler.jobs[0].next_run.month == 5
             assert scheduler.jobs[0].next_run.year == 2011
+
+        # Test the correct treatment of End of Month dates
+        with mock_datetime(2010, 1, 1, 12, 20, 30):
+            mock_job = make_mock_job()
+            scheduler = schedule.Scheduler()
+            scheduler.every(3).months.at('30-12:40:30').do(mock_job)
+        with mock_datetime(2010, 1, 30, 12, 40, 30):
+            scheduler.run_pending()
+            assert scheduler.jobs[0].next_run.month == 4
+            assert scheduler.jobs[0].next_run.day == 30
+        with mock_datetime(2010, 4, 30, 12, 40, 30):
+            scheduler.run_pending()
+            assert scheduler.jobs[0].next_run.month == 7
+            assert scheduler.jobs[0].next_run.day == 30
 
         # test invalid time format
         with mock_datetime(2010, 1, 6, 12, 20, 30):

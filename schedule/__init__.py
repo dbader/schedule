@@ -412,10 +412,12 @@ class Job(object):
             day_str, time_str = time_str.split('-')
             if not re.match(r'^(2[0-3]|[01][0-9]):([0-5][0-9])(:[0-5][0-9])?$',
                             time_str):
-                raise ScheduleValueError('Invalid time format')
+                raise ScheduleValueError('Invalid time format for monthly job.'
+                ' Format should be: "DD-HH:MM:SS" or "DD-HH:MM"')
             if not re.match(r'^([0-2][0-9]|[3][01])$',
                             day_str):
-                raise ScheduleValueError('Invalid time format')    
+                raise ScheduleValueError('Invalid time format for monthly job.'
+                ' Format should be: "DD-HH:MM:SS" or "DD-HH:MM"')  
         if self.unit == 'days' or self.start_day:
             if not re.match(r'^(2[0-3]|[01][0-9]):([0-5][0-9])(:[0-5][0-9])?$',
                             time_str):
@@ -511,6 +513,17 @@ class Job(object):
         self._schedule_next_run()
         return ret
 
+    def addmonth(self,date,interval):
+        targetmonth=interval+date.month
+        try:
+            date = date.replace(year=date.year+int(targetmonth/12),month=(targetmonth%12))
+        except:
+            # There is an exception if the day of the month we're in does not exist in the target month
+            # Go to the FIRST of the month AFTER, then go back one day.
+            date = date.replace(year=date.year+int((targetmonth+1)/12),month=((targetmonth+1)%12),day=1)
+            date += datetime.timedelta(days=-1)
+        return date
+
     def _schedule_next_run(self):
         """
         Compute the instant when this job should run next.
@@ -527,10 +540,12 @@ class Job(object):
             interval = self.interval
 
         if self.unit == 'months':
-            self.period = datetime.timedelta(**{'days': interval*31})
+            self.next_run = self.addmonth(datetime.datetime.now(),
+                                          self.interval)
         else:
             self.period = datetime.timedelta(**{self.unit: interval})
-        self.next_run = datetime.datetime.now() + self.period
+            self.next_run = datetime.datetime.now() + self.period
+        
         if self.start_day is not None:
             if self.unit != 'weeks':
                 raise ScheduleValueError('`unit` should be \'weeks\'')
@@ -564,9 +579,16 @@ class Job(object):
             if self.unit in ['months', 'days', 'hours'] \
                 or self.start_day is not None:
                 kwargs['minute'] = self.at_time.minute
-            if self.unit == 'months':
-                kwargs['day'] = self.at_day
             self.next_run = self.next_run.replace(**kwargs)
+            
+            if self.unit == 'months':
+                try:
+                    self.next_run = self.next_run.replace(day=self.at_day)
+                except ValueError:
+                    temp_date = self.next_run.replace(
+                                    month = self.next_run.month+1, day = 1)
+                    self.next_run = temp_date + \
+                                            datetime.timedelta(days=-1)
             # If we are running for the first time, make sure we run
             # at the specified time *today* (or *this hour*) as well
             if not self.last_run:
@@ -584,21 +606,33 @@ class Job(object):
                     self.next_run = self.next_run - \
                                     datetime.timedelta(minutes=1)
                 elif self.unit == 'months':
-                    if now.day <= self.at_day and now.time() < self.at_time:
+                    if now.day < self.at_day:
+                        self.next_run = now.replace(**kwargs)
+                        try:
+                            self.next_run = now.replace(day=self.at_day)
+                        except ValueError:
+                            temp_date = self.next_run.replace(
+                                                 month = now.month+1, day = 1)
+                            self.next_run = temp_date + \
+                                                   datetime.timedelta(days=-1)
+                    elif (now.day==self.at_day and now.time()<self.at_time):
                         self.next_run = now.replace(**kwargs)
                     else:
-                        next_month = now.month + 1
-                        kwargs['month'] = next_month
-                        if next_month > 12:
-                            kwargs['year'] = now.year + 1
-                            kwargs['month'] = 1
-                        self.next_run = now.replace(**kwargs)
+                        self.next_run = self.addmonth(now,1)
+                        self.next_run = self.next_run.replace(**kwargs)
+                        try:
+                            self.next_run = \
+                                         self.next_run.replace(day=self.at_day)
+                        except ValueError:
+                            temp_date=now.replace(month=self.next_run.month+1,
+                                                  day=1)
+                            self.next_run=temp_date+datetime.timedelta(days=-1)
+                        
+
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:
                 self.next_run -= self.period
-        if self.unit == 'months': 
-                self.next_run = self.next_run.replace(**{'day' : self.at_day})
 
 
 # The following methods are shortcuts for not having to
