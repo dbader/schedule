@@ -311,6 +311,10 @@ class SchedulerTests(unittest.TestCase):
             self.assertRaises(ScheduleValueError, every().month.at, '15-10:0')
             self.assertRaises(ScheduleValueError, every().month.at, '5-23:00')
 
+        # test monthly job asks for "at()"
+        with mock_datetime(2010, 1, 6, 12, 20, 30):
+            self.assertRaises(ScheduleError, every().month.do, mock_job)
+
     def test_at_daytime_months(self):
         # Test that the monthly scheduler creates correct next_run dates
         with mock_datetime(2010, 1, 6, 12, 20, 30):

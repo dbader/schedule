@@ -540,6 +540,8 @@ class Job(object):
             interval = self.interval
 
         if self.unit == 'months':
+            if self.at_time==None or self.at_day==None:
+                raise ScheduleError('Monthly jobs shoud have "at()" defined')
             self.next_run = self.addmonth(datetime.datetime.now(),
                                           self.interval)
         else:
