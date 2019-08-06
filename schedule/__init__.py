@@ -193,7 +193,7 @@ class Job(object):
         self.latest = None  # upper limit to the interval
         self.job_func = None  # the job job_func to run
         self.unit = None  # time units, e.g. 'minutes', 'hours', ...
-        self.at_day = None  # optional time at which this job runs
+        self.at_day = None  # optional day at which this job runs
         self.at_time = None  # optional time at which this job runs
         self.last_run = None  # datetime of the last run
         self.next_run = None  # datetime of the next run
