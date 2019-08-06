@@ -595,7 +595,7 @@ class Job(object):
                     temp_date = self.next_run.replace(
                                     month=self.next_run.month + 1, day=1)
                     self.next_run = temp_date + \
-                                    datetime.timedelta(days=-1)
+                        datetime.timedelta(days=-1)
             # If we are running for the first time, make sure we run
             # at the specified time *today* (or *this hour*) as well
             if not self.last_run:
@@ -621,8 +621,8 @@ class Job(object):
                             temp_date = self.next_run.replace(
                                                  month=now.month + 1, day=1)
                             self.next_run = temp_date + \
-                                            datetime.timedelta(days=-1)
-                    elif (now.day == self.at_day and \
+                                datetime.timedelta(days=-1)
+                    elif (now.day == self.at_day and
                           now.time() < self.at_time):
                         self.next_run = now.replace(**kwargs)
                     else:
@@ -636,7 +636,7 @@ class Job(object):
                                             month=self.next_run.month + 1,
                                             day=1)
                             self.next_run = temp_date + \
-                                            datetime.timedelta(days=-1)
+                                datetime.timedelta(days=-1)
 
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today

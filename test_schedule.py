@@ -249,31 +249,31 @@ class SchedulerTests(unittest.TestCase):
         with mock_datetime(2010, 1, 6, 12, 20, 30):
             mock_job = make_mock_job()
             assert every().month.at('06-12:40:30').do(mock_job).\
-                   next_run.month == 1
+                next_run.month == 1
             assert every().month.at('06-12:40:30').do(mock_job).\
-                   next_run.day == 6
+                next_run.day == 6
             assert every().month.at('06-12:40:30').do(mock_job).\
-                   next_run.hour == 12
+                next_run.hour == 12
             assert every().month.at('06-12:40:30').do(mock_job).\
-                   next_run.minute == 40
+                next_run.minute == 40
             assert every().month.at('06-12:40:30').do(mock_job).\
-                   next_run.second == 30
+                next_run.second == 30
             assert every().month.at('06-10:40:30').do(mock_job).\
-                   next_run.month == 2
+                next_run.month == 2
             assert every().month.at('04-12:40:30').do(mock_job).\
-                   next_run.day == 4
+                next_run.day == 4
             assert every().month.at('04-12:40:30').do(mock_job).\
-                   next_run.month == 2
+                next_run.month == 2
             assert every().month.at('19-12:40:30').do(mock_job).\
-                   next_run.day == 19
+                next_run.day == 19
             assert every().month.at('19-12:40:30').do(mock_job).\
-                   next_run.month == 1
+                next_run.month == 1
         with mock_datetime(2010, 2, 6, 12, 20, 30):
             mock_job = make_mock_job()
             assert every().month.at('31-12:40:30').do(mock_job).\
-                   next_run.day == 28
+                next_run.day == 28
             assert every().month.at('31-12:40:30').do(mock_job).\
-                   next_run.month == 2
+                next_run.month == 2
 
         # Test that the monthly scheduler creates correct next_run dates
         with mock_datetime(2010, 1, 6, 12, 20, 30):
@@ -304,7 +304,6 @@ class SchedulerTests(unittest.TestCase):
             scheduler.run_pending()
             assert scheduler.jobs[0].next_run.month == 4
             assert scheduler.jobs[0].next_run.day == 30
-
 
         # test invalid time format
         with mock_datetime(2010, 1, 6, 12, 20, 30):
