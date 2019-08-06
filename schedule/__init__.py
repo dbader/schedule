@@ -516,11 +516,14 @@ class Job(object):
     def addmonth(self,date,interval):
         targetmonth=interval+date.month
         try:
-            date = date.replace(year=date.year+int(targetmonth/12),month=(targetmonth%12))
+            date = date.replace(year=date.year+int(targetmonth/12),
+                                month=(targetmonth%12))
         except:
-            # There is an exception if the day of the month we're in does not exist in the target month
+            # There is an exception if the day of the month we're in does not
+            # exist in the target month.
             # Go to the FIRST of the month AFTER, then go back one day.
-            date = date.replace(year=date.year+int((targetmonth+1)/12),month=((targetmonth+1)%12),day=1)
+            date = date.replace(year=date.year+int((targetmonth+1)/12),
+                                month=((targetmonth+1)%12),day=1)
             date += datetime.timedelta(days=-1)
         return date
 
@@ -541,7 +544,7 @@ class Job(object):
 
         if self.unit == 'months':
             if self.at_time==None or self.at_day==None:
-                raise ScheduleError('Monthly jobs shoud have "at()" defined')
+                raise ScheduleError('Monthly jobs expect "at()" to be defined')
             self.next_run = self.addmonth(datetime.datetime.now(),
                                           self.interval)
         else:
