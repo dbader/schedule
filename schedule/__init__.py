@@ -394,12 +394,12 @@ class Job(object):
         """
         Specify a particular time that the job should be run at.
 
-        :param time_str: A string in one of the following formats: 
+        :param time_str: A string in one of the following formats:
             `DD-HH:MM:SS`, `DD-HH:MM`, `HH:MM:SS`, `HH:MM`,`:MM`, `:SS`. The
             format must make sense given how often the job is repeating; for
             example, a job that repeats every minute should not be given a
             string in the form `HH:MM:SS`. The difference between `:MM` and
-            `:SS` is inferred from the selected time-unit (e.g. 
+            `:SS` is inferred from the selected time-unit (e.g.
             `every().hour.at(':30')` vs. `every().minute.at(':30')`).
         :return: The invoked job instance
         """
@@ -413,11 +413,13 @@ class Job(object):
             if not re.match(r'^(2[0-3]|[01][0-9]):([0-5][0-9])(:[0-5][0-9])?$',
                             time_str):
                 raise ScheduleValueError('Invalid time format for monthly job.'
-                ' Format should be: "DD-HH:MM:SS" or "DD-HH:MM"')
+                                         ' Format should be: "DD-HH:MM:SS" or'
+                                         ' "DD-HH:MM"')
             if not re.match(r'^([0-2][0-9]|[3][01])$',
                             day_str):
                 raise ScheduleValueError('Invalid time format for monthly job.'
-                ' Format should be: "DD-HH:MM:SS" or "DD-HH:MM"')  
+                                         ' Format should be: "DD-HH:MM:SS" or'
+                                         ' "DD-HH:MM"')
         if self.unit == 'days' or self.start_day:
             if not re.match(r'^(2[0-3]|[01][0-9]):([0-5][0-9])(:[0-5][0-9])?$',
                             time_str):
@@ -513,17 +515,17 @@ class Job(object):
         self._schedule_next_run()
         return ret
 
-    def addmonth(self,date,interval):
-        targetmonth=interval+date.month
+    def addmonth(self, date, interval):
+        targetmonth = interval + date.month
         try:
             date = date.replace(year=date.year+int(targetmonth/12),
-                                month=(targetmonth%12))
-        except:
+                                month=(targetmonth % 12))
+        except ValueError:
             # There is an exception if the day of the month we're in does not
             # exist in the target month.
             # Go to the FIRST of the month AFTER, then go back one day.
             date = date.replace(year=date.year+int((targetmonth+1)/12),
-                                month=((targetmonth+1)%12),day=1)
+                                month=((targetmonth+1) % 12), day=1)
             date += datetime.timedelta(days=-1)
         return date
 
@@ -531,8 +533,8 @@ class Job(object):
         """
         Compute the instant when this job should run next.
         """
-        if self.unit not in ('seconds', 'minutes', 'hours', 'days', 'weeks',\
-            'months'):
+        if self.unit not in ('seconds', 'minutes', 'hours', 'days', 'weeks',
+                             'months'):
             raise ScheduleValueError('Invalid unit')
 
         if self.latest is not None:
@@ -543,14 +545,14 @@ class Job(object):
             interval = self.interval
 
         if self.unit == 'months':
-            if self.at_time==None or self.at_day==None:
+            if self.at_time is None or self.at_day is None:
                 raise ScheduleError('Monthly jobs expect "at()" to be defined')
             self.next_run = self.addmonth(datetime.datetime.now(),
                                           self.interval)
         else:
             self.period = datetime.timedelta(**{self.unit: interval})
             self.next_run = datetime.datetime.now() + self.period
-        
+
         if self.start_day is not None:
             if self.unit != 'weeks':
                 raise ScheduleValueError('`unit` should be \'weeks\'')
@@ -581,19 +583,19 @@ class Job(object):
             }
             if self.unit in ['months', 'days'] or self.start_day is not None:
                 kwargs['hour'] = self.at_time.hour
-            if self.unit in ['months', 'days', 'hours'] \
-                or self.start_day is not None:
+            if self.unit in ['months', 'days', 'hours'] or \
+               self.start_day is not None:
                 kwargs['minute'] = self.at_time.minute
             self.next_run = self.next_run.replace(**kwargs)
-            
+
             if self.unit == 'months':
                 try:
                     self.next_run = self.next_run.replace(day=self.at_day)
                 except ValueError:
                     temp_date = self.next_run.replace(
-                                    month = self.next_run.month+1, day = 1)
+                                    month=self.next_run.month + 1, day=1)
                     self.next_run = temp_date + \
-                                            datetime.timedelta(days=-1)
+                                    datetime.timedelta(days=-1)
             # If we are running for the first time, make sure we run
             # at the specified time *today* (or *this hour*) as well
             if not self.last_run:
@@ -617,22 +619,24 @@ class Job(object):
                             self.next_run = now.replace(day=self.at_day)
                         except ValueError:
                             temp_date = self.next_run.replace(
-                                                 month = now.month+1, day = 1)
+                                                 month=now.month + 1, day=1)
                             self.next_run = temp_date + \
-                                                   datetime.timedelta(days=-1)
-                    elif (now.day==self.at_day and now.time()<self.at_time):
+                                            datetime.timedelta(days=-1)
+                    elif (now.day == self.at_day and \
+                          now.time() < self.at_time):
                         self.next_run = now.replace(**kwargs)
                     else:
-                        self.next_run = self.addmonth(now,1)
+                        self.next_run = self.addmonth(now, 1)
                         self.next_run = self.next_run.replace(**kwargs)
                         try:
                             self.next_run = \
                                          self.next_run.replace(day=self.at_day)
                         except ValueError:
-                            temp_date=now.replace(month=self.next_run.month+1,
-                                                  day=1)
-                            self.next_run=temp_date+datetime.timedelta(days=-1)
-                        
+                            temp_date = now.replace(
+                                            month=self.next_run.month + 1,
+                                            day=1)
+                            self.next_run = temp_date + \
+                                            datetime.timedelta(days=-1)
 
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
