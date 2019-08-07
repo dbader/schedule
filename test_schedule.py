@@ -403,6 +403,10 @@ class SchedulerTests(unittest.TestCase):
             self.assertRaises(ScheduleValueError,
                               every(2).months.at, '5-23:00')
 
+        # test invalid month/months
+        with mock_datetime(2010, 1, 6, 12, 20, 30):
+            self.assertRaises(IntervalError, every(2).month.at, '31-10:00')
+
     def test_next_run_time(self):
         with mock_datetime(2010, 1, 6, 12, 15):
             mock_job = make_mock_job()

@@ -629,12 +629,11 @@ class Job(object):
                         self.next_run = self.addmonth(now, 1)
                         self.next_run = self.next_run.replace(**kwargs)
                         try:
-                            self.next_run = \
-                                         self.next_run.replace(day=self.at_day)
+                            self.next_run = self.next_run.replace(
+                                                day=self.at_day)
                         except ValueError:
                             temp_date = now.replace(
-                                            month=self.next_run.month + 1,
-                                            day=1)
+                                        month=self.next_run.month + 1, day=1)
                             self.next_run = temp_date + \
                                 datetime.timedelta(days=-1)
 
