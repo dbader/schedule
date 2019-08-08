@@ -268,6 +268,12 @@ class SchedulerTests(unittest.TestCase):
                 next_run.day == 19
             assert every().month.at('19-12:40:30').do(mock_job).\
                 next_run.month == 1
+        with mock_datetime(2010, 1, 31, 12, 20, 30):
+            mock_job = make_mock_job()
+            assert every().month.at('31-06:00:00').do(mock_job).\
+                next_run.month == 2
+            assert every().month.at('31-06:00:00').do(mock_job).\
+                next_run.day == 28
         with mock_datetime(2010, 2, 6, 12, 20, 30):
             mock_job = make_mock_job()
             assert every().month.at('31-12:40:30').do(mock_job).\
