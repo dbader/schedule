@@ -1,10 +1,18 @@
-sudo: false
+dist: xenial
 language: python
 python:
-    - "2.7.11"
+    - "2.7"
     - "3.5"
     - "3.6"
+    - "3.7"
+    - "3.8-dev"
+    - "nightly"
 install: pip install tox-travis coveralls
 script:
     - tox
-    - if [ $TRAVIS_TEST_RESULT -eq 0 ]; then coveralls; fi
+after_success:
+    - coveralls
+matrix:
+  allow_failures:
+    - python: "3.8-dev"
+    - python: "nightly"

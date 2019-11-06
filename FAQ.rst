@@ -100,17 +100,19 @@ in a decorator like this:
 
     import functools
 
-    def catch_exceptions(job_func, cancel_on_failure=False):
-        @functools.wraps(job_func)
-        def wrapper(*args, **kwargs):
-            try:
-                return job_func(*args, **kwargs)
-            except:
-                import traceback
-                print(traceback.format_exc())
-                if cancel_on_failure:
-                    return schedule.CancelJob
-        return wrapper
+    def catch_exceptions(cancel_on_failure=False):
+        def catch_exceptions_decorator(job_func):
+            @functools.wraps(job_func)
+            def wrapper(*args, **kwargs):
+                try:
+                    return job_func(*args, **kwargs)
+                except:
+                    import traceback
+                    print(traceback.format_exc())
+                    if cancel_on_failure:
+                        return schedule.CancelJob
+            return wrapper
+        return catch_exceptions_decorator
 
     @catch_exceptions(cancel_on_failure=True)
     def bad_task():
@@ -211,3 +213,22 @@ How to run a job at random intervals?
         print('Foo')
 
     schedule.every(5).to(10).seconds.do(my_job)
+
+How can I pass arguments to the job function?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``do()`` passes extra arguments to the job function:
+
+.. code-block:: python
+
+    def greet(name):
+        print('Hello', name)
+
+    schedule.every(2).seconds.do(greet, name='Alice')
+    schedule.every(4).seconds.do(greet, name='Bob')    
+
+How can I make sure long-running jobs are always executed on time?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Schedule does not account for the time it takes the job function to execute. To guarantee a stable execution schedule you need to move long-running jobs off the main-thread (where the scheduler runs). See "How to execute jobs in parallel?" in the FAQ for a sample implementation. 
+

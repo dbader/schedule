@@ -3,6 +3,14 @@
 History
 -------
 
+
+0.6.0 (2019-01-20)
+++++++++++++++++++
+
+- Make at() accept timestamps with 1 second precision (#267). Thanks @NathanWailes!
+- Introduce proper exception hierarchy (#271). Thanks @ConnorSkees!
+
+
 0.5.0 (2017-11-16)
 ++++++++++++++++++
 
