@@ -9,15 +9,14 @@ $ python setup.py sdist bdist_wheel --universal
 $ twine upload dist/*
 """
 import codecs
-import os
-import sys
 from setuptools import setup
 
 
-SCHEDULE_VERSION = '0.5.0'
+SCHEDULE_VERSION = '0.6.0'
 SCHEDULE_DOWNLOAD_URL = (
     'https://github.com/dbader/schedule/tarball/' + SCHEDULE_VERSION
 )
+
 
 def read_file(filename):
     """
@@ -25,6 +24,7 @@ def read_file(filename):
     """
     with codecs.open(filename, 'r', 'utf8') as f:
         return f.read()
+
 
 setup(
     name='schedule',
@@ -49,6 +49,8 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Natural Language :: English',
     ],
+    python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
 )

@@ -15,3 +15,5 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - schnepp <https://github.com/schnepp> <https://bitbucket.org/saschaschnepp>
 - grampajoe <https://github.com/grampajoe>
 - gilbsgilbs <https://github.com/gilbsgilbs>
+- Nathan Wailes <https://github.com/NathanWailes>
+- Connor Skees <https://github.com/ConnorSkees>
