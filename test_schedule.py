@@ -143,11 +143,7 @@ class SchedulerTests(unittest.TestCase):
         self.assertIsInstance(fo, datetime.tzinfo)
         dt = datetime.datetime.now(utc)
         self.assertEqual(fo.utcoffset(dt), datetime.timedelta(0))
-        if sys.version_info > (3, 0, 0):
-            utc_arg = "UTC+00:00"
-        else:
-            utc_arg = "UTC"
-        self.assertEqual(fo.tzname(dt), utc_arg)
+        assert "UTC" in fo.tzname(dt)
 
     def test_utc_dst_is_dt(self):
         fo = utc
