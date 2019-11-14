@@ -1,8 +1,12 @@
 """Unit tests for schedule.py"""
+
+import sys
 import datetime
+import logging
 import functools
 import mock
 import unittest
+# from test import support
 
 # Silence "missing docstring", "method could be a function",
 # "class already defined", and "too many public methods" messages:
@@ -10,6 +14,14 @@ import unittest
 
 import schedule
 from schedule import every, ScheduleError, ScheduleValueError, IntervalError
+from schedule.parent_logger import setup_logging
+
+try:
+    from datetime import timezone
+    utc = timezone.utc
+except ImportError:
+    from schedule.timezone import UTC
+    utc = UTC()
 
 
 def make_mock_job(name=None):
@@ -37,9 +49,10 @@ class mock_datetime(object):
                 return cls(self.year, self.month, self.day)
 
             @classmethod
-            def now(cls):
+            def now(cls, tz=None):
                 return cls(self.year, self.month, self.day,
-                           self.hour, self.minute, self.second)
+                           self.hour, self.minute, self.second).replace(tzinfo=tz)
+
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
@@ -262,6 +275,23 @@ class SchedulerTests(unittest.TestCase):
         schedule.run_all()
         assert mock_job.call_count == 3
 
+    def test_run_tag(self):
+        with mock_datetime(2010, 1, 6, 12, 15):
+            mock_job = make_mock_job()
+            assert schedule.last_run() is None
+            job1 = every().hour.do(mock_job(name='job1')).tag('tag1')
+            job2 = every().hour.do(mock_job(name='job2')).tag('tag1', 'tag2')
+            job3 = every().hour.do(mock_job(name='job3')).tag('tag3', 'tag3',
+                                                              'tag3', 'tag2')
+            assert len(schedule.jobs) == 3
+            schedule.run_all(0, 'tag1')
+            assert 'tag1' in str(job1.tags)
+            assert 'tag1' not in str(job3.tags)
+            assert 'tag1' in str(job2.tags)
+            assert job1.last_run.minute == 15
+            assert job2.last_run.hour == 12
+            assert job3.last_run is None
+
     def test_job_func_args_are_passed_on(self):
         mock_job = make_mock_job()
         every().second.do(mock_job, 1, 2, 'three', foo=23, bar={})
@@ -408,8 +438,39 @@ class SchedulerTests(unittest.TestCase):
             every().hour.do(hourly_job)
             assert len(schedule.jobs) == 2
             # Make sure the hourly job is first
-            assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
+            assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16,
+                                                            tzinfo=utc)
             assert schedule.idle_seconds() == 60 * 60
+
+    def test_last_run_property(self):
+        original_datetime = datetime.datetime
+        with mock_datetime(2010, 1, 6, 13, 16):
+            hourly_job = make_mock_job('hourly')
+            daily_job = make_mock_job('daily')
+            every().day.do(daily_job)
+            every().hour.do(hourly_job)
+            assert schedule.idle_seconds_since() is None
+            schedule.run_all()
+            assert schedule.last_run() == original_datetime(2010, 1, 6, 13, 16,
+                                                            tzinfo=utc)
+            assert schedule.idle_seconds_since() == 0
+            schedule.clear()
+            assert schedule.last_run() is None
+
+    def test_job_info(self):
+        with mock_datetime(2010, 1, 6, 14, 16):
+            mock_job = make_mock_job(name='info_job')
+            info_job = every().minute.do(mock_job, 1, 7, 'three')
+            schedule.run_all()
+            assert len(schedule.jobs) == 1
+            assert schedule.jobs[0] == info_job
+            assert repr(info_job)
+            assert info_job.job_name is not None
+            s = info_job.info
+            assert 'info_job' in s
+            assert 'three' in s
+            assert '2010' in s
+            assert '14:16' in s
 
     def test_cancel_job(self):
         def stop_job():
@@ -478,3 +539,74 @@ class SchedulerTests(unittest.TestCase):
         scheduler.every()
         scheduler.every(10).seconds
         scheduler.run_pending()
+
+
+class TimezoneTests(unittest.TestCase):
+    if sys.version_info > (3, 0, 0):
+        from schedule.timezone import UTC
+        utc = UTC()
+
+    def test_utc_is_normal(self):
+        fo = utc
+        self.assertIsInstance(fo, datetime.tzinfo)
+        dt = datetime.datetime.now()
+        self.assertEqual(fo.utcoffset(dt), datetime.timedelta(0))
+        assert "UTC" in fo.tzname(dt)
+
+    def test_utc_dst_is_dt(self):
+        fo = utc
+        dt = datetime.datetime.now()
+        if sys.version_info > (3, 0, 0):
+            dst_arg = None
+        else:
+            dst_arg = datetime.timedelta(0)
+        self.assertEqual(fo.dst(dt), dst_arg)
+
+
+class BasicConfigTest(unittest.TestCase):
+
+    """Tests for logging.basicConfig."""
+
+    def setUp(self):
+        super(BasicConfigTest, self).setUp()
+        self.handlers = logging.root.handlers
+        self.saved_handlers = logging._handlers.copy()
+        self.saved_handler_list = logging._handlerList[:]
+        self.original_logging_level = logging.root.level
+        self.addCleanup(self.cleanup)
+        logging.root.handlers = []
+
+    def tearDown(self):
+        for h in logging.root.handlers[:]:
+            logging.root.removeHandler(h)
+            h.close()
+        super(BasicConfigTest, self).tearDown()
+
+    def cleanup(self):
+        setattr(logging.root, 'handlers', self.handlers)
+        logging._handlers.clear()
+        logging._handlers.update(self.saved_handlers)
+        logging._handlerList[:] = self.saved_handler_list
+        logging.root.level = self.original_logging_level
+
+    def test_debug_level(self):
+        old_level = logging.root.level
+        self.addCleanup(logging.root.setLevel, old_level)
+
+        debug = True
+        setup_logging(debug, '/dev/null')
+        self.assertEqual(logging.root.level, logging.DEBUG)
+        # Test that second call has no effect
+        logging.basicConfig(level=58)
+        self.assertEqual(logging.root.level, logging.DEBUG)
+
+    def test_info_level(self):
+        old_level = logging.root.level
+        self.addCleanup(logging.root.setLevel, old_level)
+
+        debug = False
+        setup_logging(debug, '/dev/null')
+        self.assertEqual(logging.root.level, logging.INFO)
+        # Test that second call has no effect
+        logging.basicConfig(level=58)
+        self.assertEqual(logging.root.level, logging.INFO)
