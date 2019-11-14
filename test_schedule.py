@@ -142,25 +142,6 @@ class SchedulerTests(unittest.TestCase):
         assert every().day.unit == every().days.unit
         assert every().week.unit == every().weeks.unit
 
-<<<<<<< HEAD
-    def test_utc_is_normal(self):
-        fo = utc
-        self.assertIsInstance(fo, datetime.tzinfo)
-        dt = datetime.datetime.now(utc)
-        self.assertEqual(fo.utcoffset(dt), datetime.timedelta(0))
-        assert "UTC" in fo.tzname(dt)
-
-    def test_utc_dst_is_dt(self):
-        fo = utc
-        dt = datetime.datetime.now()
-        if sys.version_info > (3, 0, 0):
-            dst_arg = None
-        else:
-            dst_arg = datetime.timedelta(0)
-        self.assertEqual(fo.dst(dt), dst_arg)
-
-=======
->>>>>>> 61adaaa... hacky test updates, make logfile path an argument for setup_logging()
     def test_time_range(self):
         with mock_datetime(2014, 6, 28, 12, 0):
             mock_job = make_mock_job()
