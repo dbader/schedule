@@ -570,7 +570,7 @@ class TimezoneTests(unittest.TestCase):
         self.assertIsInstance(fo, datetime.tzinfo)
         dt = datetime.datetime.now()
         self.assertEqual(fo.utcoffset(dt), datetime.timedelta(0))
-        self.assertEqual(fo.tzname(dt), "UTC")
+        assert "UTC" in fo.tzname(dt)
 
     def test_utc_dst_is_dt(self):
         fo = utc
