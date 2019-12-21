@@ -544,9 +544,11 @@ class Job(object):
                         self.interval == 1):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
                 elif self.unit == 'hours' \
-                        and (self.at_time.minute > now.minute \
-                        or (self.at_time.minute == now.minute
-                            and self.at_time.second > now.second)):
+                        and (
+                            self.at_time.minute > now.minute
+                            or (self.at_time.minute == now.minute
+                                and self.at_time.second > now.second)
+                        ):
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
                 elif self.unit == 'minutes' \
                         and self.at_time.second > now.second:
