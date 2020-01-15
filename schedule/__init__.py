@@ -168,7 +168,10 @@ class Scheduler(object):
         :return: Number of seconds until
                  :meth:`next_run <Scheduler.next_run>`.
         """
-        return (self.next_run - datetime.datetime.now()).total_seconds()
+        if self.next_run:
+            return (self.next_run - datetime.datetime.now()).total_seconds()
+        else:
+            return 999999999
 
 
 class Job(object):
