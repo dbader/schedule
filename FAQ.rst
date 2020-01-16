@@ -28,7 +28,7 @@ You can work around this restriction by running each of the jobs in its own thre
     def run_threaded(job_func):
         job_thread = threading.Thread(target=job_func)
         job_thread.start()
-
+        return schedule.CancelJob # Otherwise this is a thread ...
 
     schedule.every(10).seconds.do(run_threaded, job)
     schedule.every(10).seconds.do(run_threaded, job)
@@ -38,8 +38,13 @@ You can work around this restriction by running each of the jobs in its own thre
 
 
     while 1:
-        schedule.run_pending()
-        time.sleep(1)
+        if schedule.next_run():
+            n = schedule.idle_seconds()
+            n = n if n > 0 else 1 # n is negative if no more job to run
+            time.sleep(n) # Sleep until the next run
+            schedule.run_pending()
+        else:
+            break
 
 If you want tighter control on the number of threads use a shared jobqueue and one or more worker threads:
 
@@ -73,8 +78,13 @@ If you want tighter control on the number of threads use a shared jobqueue and o
     worker_thread.start()
 
     while 1:
-        schedule.run_pending()
-        time.sleep(1)
+        if schedule.next_run():
+            n = schedule.idle_seconds()
+            n = n if n > 0 else 1 # n is negative if no more job to run
+            time.sleep(n) # Sleep until the next run
+            schedule.run_pending()
+        else:
+            break
 
 This model also makes sense for a distributed application where the workers are separate processes that receive jobs from a distributed work queue. I like using beanstalkd with the beanstalkc Python library.
 
@@ -192,7 +202,7 @@ in a reusable way:
 
     while 1:
         schedule.run_pending()
-        time.sleep(1)
+        time.sleep(schedule.idle_seconds())
 
 How to run a job at random intervals?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
