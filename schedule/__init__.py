@@ -82,9 +82,15 @@ class Scheduler(object):
     def __init__(self):
         self.jobs = []
 
-    def run_pending(self):
+    def run_pending(self, passthrough=False):
         """
         Run all jobs that are scheduled to run.
+        
+        :param passthrough: 
+            bool, set it to True if value returned from job should 
+            be added to a dict with outputs from jobs, where key
+            is the name of the original job function and value is
+            the returned output from the original job function.
 
         Please note that it is *intended behavior that run_pending()
         does not run missed jobs*. For example, if you've registered a job
@@ -92,9 +98,16 @@ class Scheduler(object):
         in one hour increments then your job won't be run 60 times in
         between but only once.
         """
+        output = {}
         runnable_jobs = (job for job in self.jobs if job.should_run)
+        
         for job in sorted(runnable_jobs):
-            self._run_job(job)
+            if passthrough:
+                output[job.job_func] = self._run_job(job, passthrough)
+            else:
+                self._run_job(job)
+
+        if passthrough: return output
 
     def run_all(self, delay_seconds=0):
         """
@@ -575,11 +588,12 @@ def every(interval=1):
     return default_scheduler.every(interval)
 
 
-def run_pending():
+def run_pending(passthrough=False):
     """Calls :meth:`run_pending <Scheduler.run_pending>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
-    default_scheduler.run_pending()
+    res = default_scheduler.run_pending(passthrough)
+    if passthrough: return res
 
 
 def run_all(delay_seconds=0):
