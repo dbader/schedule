@@ -13,7 +13,7 @@ class AsyncScheduler(Scheduler):
         await asyncio.gather(*[self._run_job(job) for job in runnable_jobs])
 
     async def run_all(self, delay_seconds=0):
-        logger.info('Running *all* %i jobs with %is delay inbetween', len(self.jobs), delay_seconds)
+        logger.info(f'Running *all* {len(self.jobs)} jobs with {delay_seconds}s delay in between')
         for job in self.jobs[:]:
             await self._run_job(job)
             await asyncio.sleep(delay_seconds)
