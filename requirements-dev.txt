@@ -1,4 +1,4 @@
-aiounittest
+aiounittest; python_version >= '3.5'
 docutils
 mock
 Pygments

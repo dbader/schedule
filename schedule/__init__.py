@@ -42,8 +42,12 @@ try:
 except ImportError:
     from collections import Hashable
 
-from schedule.async_job import AsyncJob
-from schedule.async_scheduler import AsyncScheduler
+import sys
+
+if sys.version_info >= (3, 5, 0):
+    from schedule.async_job import AsyncJob
+    from schedule.async_scheduler import AsyncScheduler
+
 from schedule.job import *
 from schedule.scheduler import *
 

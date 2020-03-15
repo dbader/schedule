@@ -2,7 +2,6 @@
 import datetime
 import sys
 import unittest
-
 import mock
 
 if sys.version_info < (3, 5, 0):
