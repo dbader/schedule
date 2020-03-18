@@ -163,6 +163,7 @@ class Scheduler(object):
         ret = job.run()
         if isinstance(ret, CancelJob) or ret is CancelJob:
             self.cancel_job(job)
+        if passthrough: return ret
 
     @property
     def next_run(self):
