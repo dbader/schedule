@@ -31,13 +31,17 @@ class IntervalError(ScheduleValueError):
 class Job(object):
     """
     A periodic job as used by :class:`Scheduler`.
+
     :param interval: A quantity of a certain time unit
     :param scheduler: The :class:`Scheduler <Scheduler>` instance that
                       this job will register itself with once it has
                       been fully configured in :meth:`Job.do()`.
+
     Every job runs at a given fixed time interval that is defined by:
+
     * a :meth:`time unit <Job.second>`
     * a quantity of `time units` defined by `interval`
+
     A job is usually created and returned by :meth:`Scheduler.every`
     method, which also defines its `interval`.
     """
@@ -220,7 +224,9 @@ class Job(object):
     def tag(self, *tags):
         """
         Tags the job with one or more unique indentifiers.
+
         Tags must be hashable. Duplicate tags are discarded.
+
         :param tags: A unique list of ``Hashable`` tags.
         :return: The invoked job instance
         """
@@ -232,6 +238,7 @@ class Job(object):
     def at(self, time_str):
         """
         Specify a particular time that the job should be run at.
+
         :param time_str: A string in one of the following formats: `HH:MM:SS`,
             `HH:MM`,`:MM`, `:SS`. The format must make sense given how often
             the job is repeating; for example, a job that repeats every minute
@@ -283,10 +290,12 @@ class Job(object):
     def to(self, latest):
         """
         Schedule the job to run at an irregular (randomized) interval.
+
         The job's interval will randomly vary from the value given
         to  `every` to `latest`. The range defined is inclusive on
         both ends. For example, `every(A).to(B).seconds` executes
         the job function every N seconds such that A <= N <= B.
+
         :param latest: Maximum interval between randomized job runs
         :return: The invoked job instance
         """
@@ -297,8 +306,10 @@ class Job(object):
         """
         Specifies the job_func that should be called every time the
         job runs.
+
         Any additional arguments are passed on to job_func when
         the job runs.
+
         :param job_func: The function to be scheduled
         :return: The invoked job instance
         """
@@ -324,6 +335,7 @@ class Job(object):
     def run(self):
         """
         Run the job and immediately reschedule it.
+
         :return: The return value returned by the `job_func`
         """
         logger.info('Running job %s', self)

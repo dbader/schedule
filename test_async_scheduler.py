@@ -1,17 +1,17 @@
 """Unit tests for async_scheduler.py"""
+from test_schedule import mock_datetime
 import datetime
 import sys
 import unittest
 import mock
 
-if sys.version_info < (3, 5, 0):
-    raise unittest.SkipTest("Coroutines declared with the async/await syntax are supported since version 3.5")
-
-import asyncio
-import aiounittest
-
-from schedule import AsyncScheduler, CancelJob
-from test_schedule import mock_datetime
+if sys.version_info >= (3, 5, 0):
+    from schedule import AsyncScheduler, CancelJob
+    import aiounittest
+    import asyncio
+else:
+    raise unittest.SkipTest("Coroutines declared with the async/await \
+         syntax are supported since version 3.5")
 
 async_scheduler = AsyncScheduler()
 
@@ -40,7 +40,9 @@ class AsyncSchedulerTest(aiounittest.AsyncTestCase):
         test_array = [0] * duration
 
         for index, value in enumerate(test_array):
-            async_scheduler.every(index + 1).seconds.do(AsyncSchedulerTest.increment, test_array, index)
+            async_scheduler.every(
+                index + 1).seconds.do(AsyncSchedulerTest.increment,
+                                      test_array, index)
 
         start = datetime.datetime.now()
         current = start
@@ -53,9 +55,11 @@ class AsyncSchedulerTest(aiounittest.AsyncTestCase):
         for index, value in enumerate(test_array):
             position = index + 1
             expected = duration / position
-            expected = int(expected) if expected != int(expected) else expected - 1
+            expected = int(expected) if expected != int(
+                expected) else expected - 1
 
-            self.assertEqual(value, expected, msg=f'unexpected value for {position}th')
+            self.assertEqual(
+                value, expected, msg=f'unexpected value for {position}th')
 
     async def test_async_run_pending(self):
         mock_job = make_async_mock_job()
@@ -97,7 +101,8 @@ class AsyncSchedulerTest(aiounittest.AsyncTestCase):
 
     async def test_async_job_func_args_are_passed_on(self):
         mock_job = make_async_mock_job()
-        async_scheduler.every().second.do(mock_job, 1, 2, 'three', foo=23, bar={})
+        async_scheduler.every().second.do(mock_job, 1, 2,
+                                          'three', foo=23, bar={})
         await async_scheduler.run_all()
         mock_job.assert_called_once_with(1, 2, 'three', foo=23, bar={})
 

@@ -5,6 +5,7 @@ python:
     - "3.5"
     - "3.6"
     - "3.7"
+    - "3.8"
     - "3.8-dev"
     - "nightly"
 install: pip install tox-travis coveralls
