@@ -1,3 +1,5 @@
+# module: schedule
+# file: scheduler.py
 try:
     from collections.abc import Hashable
 except ImportError:
