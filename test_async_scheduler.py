@@ -57,9 +57,10 @@ class AsyncSchedulerTest(aiounittest.AsyncTestCase):
             expected = duration / position
             expected = int(expected) if expected != int(
                 expected) else expected - 1
+            error_msg = "unexpected value for {}th".format(position)
 
             self.assertEqual(
-                value, expected, msg=f'unexpected value for {position}th')
+                value, expected, msg=error_msg)
 
     async def test_async_run_pending(self):
         mock_job = make_async_mock_job()
