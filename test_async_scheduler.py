@@ -5,13 +5,12 @@ import sys
 import unittest
 import mock
 
-if sys.version_info >= (3, 5, 0):
+if sys.version_info >= (3, 6, 0):
     from schedule import AsyncScheduler, CancelJob
     import aiounittest
     import asyncio
 else:
-    raise unittest.SkipTest("Coroutines declared with the async/await \
-         syntax are supported since version 3.5")
+    raise unittest.SkipTest("AsyncMock is supported since version 3.6")
 
 async_scheduler = AsyncScheduler()
 
