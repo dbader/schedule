@@ -33,7 +33,11 @@ logger = logging.getLogger('async_schedule')
 
 
 def _inherit_doc(doc):
-    return doc.replace('Scheduler', 'AsyncScheduler').replace('job', 'async job')
+    return doc.replace(
+        'Scheduler',
+        'AsyncScheduler').replace(
+        'job',
+        'async job')
 
 
 class AsyncScheduler(Scheduler):
@@ -46,7 +50,8 @@ class AsyncScheduler(Scheduler):
     run_pending.__doc__ = _inherit_doc(Scheduler.run_pending.__doc__)
 
     async def run_all(self, delay_seconds=0):
-        logger.info(f'Running *all* {len(self.jobs)} async jobs with {delay_seconds}s delay in between')
+        logger.info('Running *all* %i async jobs with %is delay in between',
+                    len(self.jobs), delay_seconds)
         for job in self.jobs[:]:
             await self._run_job(job)
             await asyncio.sleep(delay_seconds)

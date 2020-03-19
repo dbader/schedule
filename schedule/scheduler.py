@@ -1,9 +1,5 @@
 # module: schedule
 # file: scheduler.py
-try:
-    from collections.abc import Hashable
-except ImportError:
-    from collections import Hashable
 import datetime
 import logging
 import time
@@ -54,7 +50,8 @@ class Scheduler(object):
 
         :param delay_seconds: A delay added between every executed job
         """
-        logger.info('Running *all* %i jobs with %is delay inbetween', len(self.jobs), delay_seconds)
+        logger.info('Running *all* %i jobs with %is delay inbetween',
+                    len(self.jobs), delay_seconds)
         for job in self.jobs[:]:
             self._run_job(job)
             time.sleep(delay_seconds)

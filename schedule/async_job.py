@@ -6,7 +6,13 @@ from schedule.job import Job
 
 
 def _inherit_doc(doc):
-    return doc.replace('Scheduler', 'AsyncScheduler').replace('job', 'async job').replace('Job', 'AsyncJob')
+    return doc.replace(
+        'Scheduler',
+        'AsyncScheduler').replace(
+        'job',
+        'async job').replace(
+        'Job',
+        'AsyncJob')
 
 
 class AsyncJob(Job):

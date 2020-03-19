@@ -37,19 +37,24 @@ Usage:
 [2] https://github.com/Rykian/clockwork
 [3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
-try:
-    from collections.abc import Hashable
-except ImportError:
-    from collections import Hashable
-
 import sys
+
+from schedule.job import IntervalError, Job, ScheduleError, ScheduleValueError
+from schedule.scheduler import CancelJob, Scheduler
+
+__all__ = [
+    'IntervalError',
+    'Job',
+    'ScheduleError',
+    'ScheduleValueError',
+    'CancelJob',
+    'Scheduler']
 
 if sys.version_info >= (3, 5, 0):
     from schedule.async_job import AsyncJob
     from schedule.async_scheduler import AsyncScheduler
 
-from schedule.job import *
-from schedule.scheduler import *
+    __all__ += ['AsyncJob', 'AsyncScheduler']
 
 # The following methods are shortcuts for not having to
 # create a Scheduler instance:
