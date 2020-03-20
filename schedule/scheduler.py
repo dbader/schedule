@@ -90,10 +90,13 @@ class Scheduler(object):
         job = Job(interval, self)
         return job
 
-    def _run_job(self, job):
-        ret = job.run()
+    def _check_returned_value(self, job, ret):
         if isinstance(ret, CancelJob) or ret is CancelJob:
             self.cancel_job(job)
+
+    def _run_job(self, job):
+        ret = job.run()
+        self._check_returned_value(job, ret)
 
     @property
     def next_run(self):

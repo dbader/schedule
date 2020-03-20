@@ -25,9 +25,10 @@ Usage:
     >>>     await asyncio.sleep(1)
 """
 import asyncio
+import inspect
 import logging
 
-from schedule.scheduler import CancelJob, Scheduler
+from schedule.scheduler import Scheduler
 
 logger = logging.getLogger('async_schedule')
 
@@ -59,6 +60,8 @@ class AsyncScheduler(Scheduler):
     run_all.__doc__ = _inherit_doc(Scheduler.run_all.__doc__)
 
     async def _run_job(self, job):
-        ret = await job.run()
-        if isinstance(ret, CancelJob) or ret is CancelJob:
-            self.cancel_job(job)
+        ret = job.run()
+        if inspect.isawaitable(ret):
+            ret = await ret
+
+        super()._check_returned_value(job, ret)

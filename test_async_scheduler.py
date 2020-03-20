@@ -1,18 +1,20 @@
 """Unit tests for async_scheduler.py"""
-from test_schedule import mock_datetime
 import datetime
 import sys
 import unittest
+
 import mock
 
+from test_schedule import make_mock_job, mock_datetime
+
 if sys.version_info >= (3, 6, 0):
-    from schedule import AsyncScheduler, CancelJob
+    import schedule
     import aiounittest
     import asyncio
 else:
     raise unittest.SkipTest("AsyncMock is supported since version 3.6")
 
-async_scheduler = AsyncScheduler()
+async_scheduler = schedule.AsyncScheduler()
 
 
 def make_async_mock_job(name='async_job'):
@@ -22,7 +24,7 @@ def make_async_mock_job(name='async_job'):
 
 
 async def stop_job():
-    return CancelJob
+    return schedule.CancelJob
 
 
 class AsyncSchedulerTest(aiounittest.AsyncTestCase):
@@ -58,8 +60,7 @@ class AsyncSchedulerTest(aiounittest.AsyncTestCase):
                 expected) else expected - 1
             error_msg = "unexpected value for {}th".format(position)
 
-            self.assertEqual(
-                value, expected, msg=error_msg)
+            self.assertEqual(value, expected, msg=error_msg)
 
     async def test_async_run_pending(self):
         mock_job = make_async_mock_job()
@@ -101,8 +102,8 @@ class AsyncSchedulerTest(aiounittest.AsyncTestCase):
 
     async def test_async_job_func_args_are_passed_on(self):
         mock_job = make_async_mock_job()
-        async_scheduler.every().second.do(mock_job, 1, 2,
-                                          'three', foo=23, bar={})
+        async_scheduler.every().second.do(mock_job, 1, 2, 'three',
+                                          foo=23, bar={})
         await async_scheduler.run_all()
         mock_job.assert_called_once_with(1, 2, 'three', foo=23, bar={})
 
@@ -131,3 +132,16 @@ class AsyncSchedulerTest(aiounittest.AsyncTestCase):
 
         await async_scheduler.run_all()
         assert len(async_scheduler.jobs) == 0
+
+    async def test_mixed_sync_async_tasks(self):
+        async_func = make_async_mock_job()
+        sync_func = make_mock_job()
+
+        async_scheduler.every().second.do(async_func)
+        async_scheduler.every().second.do(sync_func)
+        assert async_func.call_count == 0
+        assert sync_func.call_count == 0
+
+        await async_scheduler.run_all()
+        assert async_func.call_count == 1
+        assert sync_func.call_count == 1

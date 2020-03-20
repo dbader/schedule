@@ -51,10 +51,9 @@ __all__ = [
     'Scheduler']
 
 if sys.version_info >= (3, 5, 0):
-    from schedule.async_job import AsyncJob
     from schedule.async_scheduler import AsyncScheduler
 
-    __all__ += ['AsyncJob', 'AsyncScheduler']
+    __all__ += ['AsyncScheduler']
 
 # The following methods are shortcuts for not having to
 # create a Scheduler instance:
