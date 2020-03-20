@@ -25,4 +25,4 @@ class AsyncJob(Job):
 
         return ret
 
-    run.__doc__ = _inherit_doc(Job.__doc__)
+    run.__doc__ = _inherit_doc(Job.run.__doc__)
