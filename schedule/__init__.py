@@ -159,7 +159,7 @@ class Scheduler(object):
         job = Job(interval, self)
         return job
 
-    def _run_job(self, job):
+    def _run_job(self, job, passthrough=False):
         ret = job.run()
         if isinstance(ret, CancelJob) or ret is CancelJob:
             self.cancel_job(job)
