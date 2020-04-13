@@ -106,8 +106,8 @@ class Scheduler(object):
 
         :param delay_seconds: A delay added between every executed job
         """
-        logger.info('Running *all* %i jobs with %is delay inbetween',
-                    len(self.jobs), delay_seconds)
+        logger.debug('Running *all* %i jobs with %is delay inbetween',
+                     len(self.jobs), delay_seconds)
         for job in self.jobs[:]:
             self._run_job(job)
             time.sleep(delay_seconds)
@@ -481,7 +481,7 @@ class Job(object):
 
         :return: The return value returned by the `job_func`
         """
-        logger.info('Running job %s', self)
+        logger.debug('Running job %s', self)
         ret = self.job_func()
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
