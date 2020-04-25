@@ -323,11 +323,21 @@ class Job(object):
         return self.weeks
 
     @property
+    def mondays(self):
+        self.start_day = 'monday'
+        return self.weeks
+
+    @property
     def tuesday(self):
         if self.interval != 1:
             raise IntervalError('Use tuesdays instead of tuesday')
         self.start_day = 'tuesday'
         return self.weeks
+
+    @property
+    def tuesdays(self):
+        self.start_day = 'tuesday'
+        return self
 
     @property
     def wednesday(self):
@@ -337,11 +347,21 @@ class Job(object):
         return self.weeks
 
     @property
+    def wednesdays(self):
+        self.start_day = 'wednesday'
+        return self
+
+    @property
     def thursday(self):
         if self.interval != 1:
             raise IntervalError('Use thursdays instead of thursday')
         self.start_day = 'thursday'
         return self.weeks
+
+    @property
+    def thursdays(self):
+        self.start_day = 'thursday'
+        return self
 
     @property
     def friday(self):
@@ -351,6 +371,11 @@ class Job(object):
         return self.weeks
 
     @property
+    def fridays(self):
+        self.start_day = 'friday'
+        return self
+
+    @property
     def saturday(self):
         if self.interval != 1:
             raise IntervalError('Use saturdays instead of saturday')
@@ -358,11 +383,21 @@ class Job(object):
         return self.weeks
 
     @property
+    def saturdays(self):
+        self.start_day = 'saturday'
+        return self
+
+    @property
     def sunday(self):
         if self.interval != 1:
             raise IntervalError('Use sundays instead of sunday')
         self.start_day = 'sunday'
-        return self.weeks
+        return self
+
+    @property
+    def sundays(self):
+        self.start_day = 'sunday'
+        return self
 
     def tag(self, *tags):
         """
