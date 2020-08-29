@@ -26,6 +26,7 @@ Features
 - Very lightweight and no external dependencies.
 - Excellent test coverage.
 - Tested on Python 2.7, 3.5, and 3.6
+- Timezone support.
 
 Usage
 -----
@@ -49,6 +50,7 @@ Usage
     schedule.every().monday.do(job)
     schedule.every().wednesday.at("13:15").do(job)
     schedule.every().minute.at(":17").do(job)
+    schedule.timezone("+0800").every().day.at("00:00").do(job)
 
     while True:
         schedule.run_pending()

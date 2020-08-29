@@ -2,6 +2,7 @@
 import datetime
 import functools
 import mock
+import time
 import unittest
 
 # Silence "missing docstring", "method could be a function",
@@ -9,7 +10,7 @@ import unittest
 # pylint: disable-msg=R0201,C0111,E0102,R0904,R0901
 
 import schedule
-from schedule import every, ScheduleError, ScheduleValueError, IntervalError
+from schedule import every, timezone, ScheduleError, ScheduleValueError, IntervalError
 
 
 def make_mock_job(name=None):
@@ -22,24 +23,32 @@ class mock_datetime(object):
     """
     Monkey-patch datetime for predictable results
     """
-    def __init__(self, year, month, day, hour, minute, second=0):
+    def __init__(self, year, month, day, hour, minute, second=0, tzinfo=None):
         self.year = year
         self.month = month
         self.day = day
         self.hour = hour
         self.minute = minute
         self.second = second
+        self.tzinfo = tzinfo
 
     def __enter__(self):
         class MockDate(datetime.datetime):
             @classmethod
-            def today(cls):
-                return cls(self.year, self.month, self.day)
+            def today(cls, tz=None):
+                if tz is None:
+                    return cls(self.year, self.month, self.day)
+                return cls(self.year, self.month, self.day,
+                           tzinfo=self.tzinfo).astimezone(tz)
 
             @classmethod
-            def now(cls):
+            def now(cls, tz=None):
+                if tz is None:
+                    return cls(self.year, self.month, self.day,
+                               self.hour, self.minute, self.second)
                 return cls(self.year, self.month, self.day,
-                           self.hour, self.minute, self.second)
+                           self.hour, self.minute, self.second,
+                           tzinfo=self.tzinfo).astimezone(tz)
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
@@ -50,6 +59,30 @@ class mock_datetime(object):
 class SchedulerTests(unittest.TestCase):
     def setUp(self):
         schedule.clear()
+
+    def test_parse_timezone(self):
+        s = schedule.default_scheduler
+        assert s._parse_timezone("+0800") == 8 * 60
+        assert s._parse_timezone("-0800") == -8 * 60
+        assert s._parse_timezone("+0630") == 6 * 60 + 30
+        assert s._parse_timezone("-0630") == -(6 * 60 + 30)
+        assert s._parse_timezone("+08:00") == 8 * 60
+
+    def test_timezone(self):
+        with self.assertRaises(ScheduleValueError):
+            timezone("0800")
+        with self.assertRaises(TypeError):
+            timezone(800)
+        with self.assertRaises(TypeError):
+            timezone(-800)
+        with self.assertRaises(ScheduleValueError):
+            timezone("")
+        with self.assertRaises(ScheduleValueError):
+            timezone("+2300")
+        with self.assertRaises(ScheduleValueError):
+            timezone("-0820")
+        with self.assertRaises(ScheduleValueError):
+            timezone("+0850")
 
     def test_time_units(self):
         assert every().seconds.unit == 'seconds'
@@ -253,6 +286,28 @@ class SchedulerTests(unittest.TestCase):
             assert every().friday.do(mock_job).next_run.day == 8
             assert every().saturday.do(mock_job).next_run.day == 9
             assert every().sunday.do(mock_job).next_run.day == 10
+
+    def test_timezoned_next_run_time(self):
+        with mock_datetime(2010, 1, 6, 12, 15, tzinfo=datetime.timezone.utc):
+            mock_job = make_mock_job()
+            assert schedule.next_run() is None
+            tz = timezone
+            # 2010-1-6 12:15 +0000 is 2010-1-6 20:15 +8000
+            assert tz("+0800").every().minute.do(mock_job).next_run.minute == 16
+            assert tz("+0800").every(5).minutes.do(mock_job).next_run.minute == 20
+            assert tz("+0800").every().hour.do(mock_job).next_run.hour == 21
+            assert tz("+0800").every().day.do(mock_job).next_run.day == 7
+            assert tz("+0800").every().day.at('09:00').do(mock_job).next_run.day == 7
+            assert tz("+0800").every().day.at('12:30').do(mock_job).next_run.day == 7
+            assert tz("+0800").every().day.at('20:30').do(mock_job).next_run.day == 6
+            assert tz("+0800").every().week.do(mock_job).next_run.day == 13
+            assert tz("+0800").every().monday.do(mock_job).next_run.day == 11
+            assert tz("+0800").every().tuesday.do(mock_job).next_run.day == 12
+            assert tz("+0800").every().wednesday.do(mock_job).next_run.day == 13
+            assert tz("+0800").every().thursday.do(mock_job).next_run.day == 7
+            assert tz("+0800").every().friday.do(mock_job).next_run.day == 8
+            assert tz("+0800").every().saturday.do(mock_job).next_run.day == 9
+            assert tz("+0800").every().sunday.do(mock_job).next_run.day == 10
 
     def test_run_all(self):
         mock_job = make_mock_job()

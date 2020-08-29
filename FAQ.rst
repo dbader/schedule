@@ -86,7 +86,12 @@ Run the scheduler in a separate thread. Mrwhick wrote up a nice solution in to t
 Does schedule support timezones?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Vanilla schedule doesn't support timezones at the moment. If you need this functionality please check out @imiric's work `here <https://github.com/dbader/schedule/pull/16>`__. He added timezone support to schedule using python-dateutil.
+Yes. Use the `timezone` method to set what timezone you would like to use.
+
+.. code-block:: python
+
+    # set job to run at midnight of GMT+8
+    schedule.timezone("+0800").every().day.at("00:00").do(job)
 
 What if my task throws an exception?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

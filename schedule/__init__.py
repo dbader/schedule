@@ -81,6 +81,7 @@ class Scheduler(object):
     """
     def __init__(self):
         self.jobs = []
+        self._timezone = None  # by default, we are not even timezone-aware
 
     def run_pending(self):
         """
@@ -143,8 +144,28 @@ class Scheduler(object):
         :param interval: A quantity of a certain time unit
         :return: An unconfigured :class:`Job <Job>`
         """
-        job = Job(interval, self)
+        job = Job(interval, self._timezone, self)
         return job
+
+    def timezone(self, timezone_str):
+        """
+        Set the timezone that the scheduler should be run in
+        """
+        if not isinstance(timezone_str, str):
+            raise TypeError('timezone() should be passed a string')
+        if not re.match(r"^[+-][01]\d:?(00|30|45)$", timezone_str):
+            raise ScheduleValueError('Invalid timezone format')
+        timezone_offset = self._parse_timezone(timezone_str)
+        self._timezone = datetime.timezone(datetime.timedelta(minutes=timezone_offset))
+        return self
+
+    def _parse_timezone(self, timezone_str):
+        m = re.match(r"([+-])(\d{2}):?(\d{2})", timezone_str)
+        timezone_sign = 1 if m.group(1) == "+" else -1
+        timezone_hours = int(m.group(2))
+        timezone_minutes = int(m.group(3))
+        timezone_offset = timezone_sign * (timezone_hours * 60 + timezone_minutes)
+        return timezone_offset
 
     def _run_job(self, job):
         ret = job.run()
@@ -168,7 +189,7 @@ class Scheduler(object):
         :return: Number of seconds until
                  :meth:`next_run <Scheduler.next_run>`.
         """
-        return (self.next_run - datetime.datetime.now()).total_seconds()
+        return (self.next_run - datetime.datetime.now(self._timezone)).total_seconds()
 
 
 class Job(object):
@@ -188,7 +209,7 @@ class Job(object):
     A job is usually created and returned by :meth:`Scheduler.every`
     method, which also defines its `interval`.
     """
-    def __init__(self, interval, scheduler=None):
+    def __init__(self, interval, timezone=None, scheduler=None):
         self.interval = interval  # pause interval * unit between runs
         self.latest = None  # upper limit to the interval
         self.job_func = None  # the job job_func to run
@@ -200,6 +221,7 @@ class Job(object):
         self.start_day = None  # Specific day of the week to start on
         self.tags = set()  # unique set of tags for the job
         self.scheduler = scheduler  # scheduler to register with
+        self.timezone = timezone
 
     def __lt__(self, other):
         """
@@ -473,7 +495,7 @@ class Job(object):
         """
         :return: ``True`` if the job should be run now.
         """
-        return datetime.datetime.now() >= self.next_run
+        return datetime.datetime.now(self.timezone) >= self.next_run
 
     def run(self):
         """
@@ -483,7 +505,7 @@ class Job(object):
         """
         logger.info('Running job %s', self)
         ret = self.job_func()
-        self.last_run = datetime.datetime.now()
+        self.last_run = datetime.datetime.now(self.timezone)
         self._schedule_next_run()
         return ret
 
@@ -502,7 +524,7 @@ class Job(object):
             interval = self.interval
 
         self.period = datetime.timedelta(**{self.unit: interval})
-        self.next_run = datetime.datetime.now() + self.period
+        self.next_run = datetime.datetime.now(self.timezone) + self.period
         if self.start_day is not None:
             if self.unit != 'weeks':
                 raise ScheduleValueError('`unit` should be \'weeks\'')
@@ -539,7 +561,7 @@ class Job(object):
             # If we are running for the first time, make sure we run
             # at the specified time *today* (or *this hour*) as well
             if not self.last_run:
-                now = datetime.datetime.now()
+                now = datetime.datetime.now(self.timezone)
                 if (self.unit == 'days' and self.at_time > now.time() and
                         self.interval == 1):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
@@ -554,7 +576,7 @@ class Job(object):
                                     datetime.timedelta(minutes=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
-            if (self.next_run - datetime.datetime.now()).days >= 7:
+            if (self.next_run - datetime.datetime.now(self.timezone)).days >= 7:
                 self.next_run -= self.period
 
 
@@ -566,6 +588,13 @@ default_scheduler = Scheduler()
 
 #: Default :class:`Jobs <Job>` list
 jobs = default_scheduler.jobs  # todo: should this be a copy, e.g. jobs()?
+
+
+def timezone(timezone_str):
+    """Calls :meth:`timezone <Scheduler.timezone>` on the
+    :data:`default scheduler instance <default_scheduler>`.
+    """
+    return default_scheduler.timezone(timezone_str)
 
 
 def every(interval=1):
