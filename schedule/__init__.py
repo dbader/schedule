@@ -136,6 +136,54 @@ class Scheduler(object):
         except ValueError:
             pass
 
+    def when(self, expr):
+        """
+        Schedule a new job via expression
+
+        :param expr: A expression like `every 1 day at 00:00`
+        :return: An configured :class:`Job <Job>`
+        """
+        interval, to_time, unit, start_day, at_time = self._parse_expr(expr)
+        job = Job(interval, self)
+        if to_time:
+            job.to(to_time)
+        job.unit = unit
+        if at_time:
+            job.at(at_time)
+        return job
+
+    def _parse_expr(self, expr):
+        scheme = r"".join([
+            r"every(?:\s+(?P<interval>\d+))?",  # interval
+            r"(?:\s+to\s+(?P<to_time>\d+))?",  # to time
+            r"\s+(?P<unit>monday|tuesday|wednesday|thursday|friday|saturday|sunday" + \
+            r"|second|minute|hour|day|week)s?"  # unit
+            r"(?:\s+at\s+(?P<at_time>[:\d]+))?",  # at_time
+        ])
+        m = re.match(scheme, expr)
+        if not m:
+            raise ScheduleValueError("`when` expression is not valid")
+        interval = m.group("interval")
+        if interval:
+            interval = int(interval)
+        else:
+            interval = 1
+        to_time = m.group("to_time")
+        if to_time:
+            to_time = int(to_time)
+        else:
+            to_time = None
+        unit = m.group("unit")
+        if unit in ("monday", "tuesday", "wednesday", "thursday",
+                "friday", "saturday", "sunday"):
+            start_day = unit
+            unit = "weeks"
+        else:
+            start_day = None
+            unit += "s"
+        at_time = m.group("at_time")
+        return interval, to_time, unit, start_day, at_time
+
     def every(self, interval=1):
         """
         Schedule a new periodic job.
@@ -259,6 +307,10 @@ class Job(object):
                 call_repr=call_repr,
                 timestats=timestats
             )
+
+    def __call__(self, job_func):
+        self.do(job_func)
+        return job_func
 
     @property
     def second(self):
@@ -573,6 +625,13 @@ def every(interval=1):
     :data:`default scheduler instance <default_scheduler>`.
     """
     return default_scheduler.every(interval)
+
+
+def when(expr):
+    """Calls :meth:`when <Scheduler.when>` on the
+    :data:`default scheduler instance <default_scheduler>`.
+    """
+    return default_scheduler.when(expr)
 
 
 def run_pending():

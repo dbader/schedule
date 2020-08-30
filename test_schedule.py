@@ -9,7 +9,7 @@ import unittest
 # pylint: disable-msg=R0201,C0111,E0102,R0904,R0901
 
 import schedule
-from schedule import every, ScheduleError, ScheduleValueError, IntervalError
+from schedule import every, when, ScheduleError, ScheduleValueError, IntervalError
 
 
 def make_mock_job(name=None):
@@ -234,6 +234,46 @@ class SchedulerTests(unittest.TestCase):
             self.assertRaises(ScheduleValueError, every().minute.at, '2:30')
             self.assertRaises(ScheduleValueError, every().minute.at, ' :30')
             self.assertRaises(TypeError, every().minute.at, 2)
+
+    def test_parse_when_expr(self):
+        p = schedule.default_scheduler._parse_expr
+        interval, to_time, unit, start_day, at_time = p("every day")
+        assert interval == 1 and not to_time and unit == "days" and not at_time
+        interval, to_time, unit, start_day, at_time = p("every day at 10:00")
+        assert interval == 1 and not to_time and unit == "days" and at_time == "10:00"
+        interval, to_time, unit, start_day, at_time = p("every day at 10:00:50")
+        assert interval == 1 and not to_time and unit == "days" and at_time == "10:00:50"
+        interval, to_time, unit, start_day, at_time = p("every 2 days")
+        assert interval == 2 and not to_time and unit == "days" and not at_time
+        interval, to_time, unit, start_day, at_time = p("every 10 to 20 minutes")
+        assert interval == 10 and to_time == 20 and unit == "minutes" and not at_time
+        interval, to_time, unit, start_day, at_time = p("every 10 to 20 minutes at :50")
+        assert interval == 10 and to_time == 20 and unit == "minutes" and at_time == ":50"
+
+        self.assertRaises(ScheduleValueError, p, "every")
+        self.assertRaises(ScheduleValueError, p, "")
+        self.assertRaises(ScheduleValueError, p, "every 2 good")
+        self.assertRaises(ScheduleValueError, p, "every one day")
+
+    def test_when(self):
+        job = when("every day")
+        assert job.interval == 1 and not job.latest and \
+                job.unit == "days" and not job.at_time
+        job = when("every day at 10:00")
+        assert job.interval == 1 and not job.latest and \
+                job.unit == "days" and job.at_time == datetime.time(10, 0)
+        job = when("every 10 to 20 minutes at :50")
+        assert job.interval == 10 and job.latest == 20 and \
+                job.unit == "minutes" and job.at_time == datetime.time(0, 0, 50)
+
+    def test_when_decorator(self):
+        s = schedule.Scheduler()
+
+        @s.when("every day")
+        def foo():
+            pass
+
+        assert s.jobs[0].job_func.func == foo
 
     def test_next_run_time(self):
         with mock_datetime(2010, 1, 6, 12, 15):

@@ -50,6 +50,20 @@ Usage
     schedule.every().wednesday.at("13:15").do(job)
     schedule.every().minute.at(":17").do(job)
 
+    # or use schedule expression
+    schedule.when("every 10 minutes").do(job)
+    schedule.when("every hour").do(job)
+    schedule.when("every day at 10:30").do(job)
+    schedule.when("every 5 to 10 minutes").do(job)
+    schedule.when("every monday").do(job)
+    schedule.when("every wednesday at 13:15").do(job)
+    schedule.when("every minute at :17").do(job)
+
+    # or use decorator to register job(without arguments)
+    @schedule.when("every 10 minutes")
+    def another_job():
+        print("I'm working on another job...")
+
     while True:
         schedule.run_pending()
         time.sleep(1)
