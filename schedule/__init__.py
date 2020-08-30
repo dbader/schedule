@@ -46,6 +46,7 @@ import functools
 import logging
 import random
 import re
+import subprocess
 import time
 
 logger = logging.getLogger('schedule')
@@ -519,6 +520,9 @@ class Job(object):
         self._schedule_next_run()
         self.scheduler.jobs.append(self)
         return self
+
+    def run_command(self, command, shell=False):
+        return self.do(subprocess.run, command, shell=shell)
 
     @property
     def should_run(self):

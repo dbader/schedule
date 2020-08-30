@@ -35,6 +35,7 @@ setup(
     license='MIT',
     author='Daniel Bader',
     author_email='mail@dbader.org',
+    scripts=['bin/schedule'],
     url='https://github.com/dbader/schedule',
     download_url=SCHEDULE_DOWNLOAD_URL,
     keywords=[

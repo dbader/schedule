@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+# vi:ft=python
+
+
+"""
+This is a simple command like `cron`.
+
+The default configuration file is /etc/schedule, syntax goes like:
+
+    # line starts with # is comment
+    every 60 minutes, echo "wubba lubba dub dub"
+    # backup database every day at midnight
+    every day at 00:00, mysqldump -u backup
+    # redirect logs so you can see them
+    every minute, do_some_magic >> /some/output/file 2>&1
+"""
+
+import argparse
+import time
+import sys
+
+import schedule
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-f", "--file", default="/etc/schedule",
+                    help="configuration file to use")
+parser.add_argument("-t", "--test", action="store_true",
+                    help="test configuration and exit")
+args = parser.parse_args()
+
+with open(args.file) as f:
+    schedule_lines = f.read()
+
+for line in schedule_lines.split("\n"):
+    # ignore comments
+    if line.startswith("#"):
+        continue
+    # ignore empty lines
+    if not line.strip():
+        continue
+    try:
+        expr, command = line.split(",", 1)
+    except ValueError:
+        print("line '%s' is not valid" % line)
+        sys.exit(-1)
+
+    if not args.test:
+        schedule.when(expr).run_command(command, shell=True)
+
+while True:
+    try:
+        schedule.run_pending()
+        time.sleep(1)
+    except KeyboardInterrupt:
+        break
