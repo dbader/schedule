@@ -59,8 +59,6 @@ Documentation
 
 Schedule's documentation lives at `schedule.readthedocs.io <https://schedule.readthedocs.io/>`_.
 
-Please also check the FAQ there with common questions.
-
 
 Meta
 ----
