@@ -36,13 +36,18 @@ Check out the :doc:`examples </examples>` or go to the :doc:`the documentation o
 
 Option 2: Linux package manager
 *******************************
-Some people have submitted this project to linux package managers.
-Although not supported by the maintainers of this project.
-We cannot guarantee that these packages are up-to-date (and will stay up-to-date) with the latest released version.
-But it is something you can use.
+Schedule is available through some linux package managers.
+These packages are not maintained by the maintainers of this project.
+It cannot be guarantee that these packages are up-to-date (and will stay up-to-date) with the latest released version.
+If you don't mind having an old version, you can use it.
 
 Ubuntu
 -------
+
+**OUTDATED!**
+
+At the time of writing, the packages for 20.04LTS and below use version 0.3.2 (2015).
+
 .. code-block:: bash
 
     $ apt-get install python3-schedule
@@ -51,6 +56,12 @@ See `package page <https://packages.ubuntu.com/search?keywords=python3-schedule>
 
 Debian
 ------
+
+**OUTDATED!**
+
+At the time of writing, the packages for buster and below use version 0.3.2 (2015).
+
+
 .. code-block:: bash
 
     $ apt-get install python3 schedule

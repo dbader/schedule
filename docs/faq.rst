@@ -21,8 +21,12 @@ ModuleNotFoundError: No module named 'schedule'
 
 It seems python can't find the schedule package. Let's check some common causes.
 
-Did you install schedule? If not, follow :doc:`installation`.
-If you installed using pip, validate the installation by running ``pip3 list | grep schedule``.
+Did you install schedule? If not, follow :doc:`installation`. Validate installation:
+
+* Did you install using pip? Run ``pip3 list | grep schedule``.
+* Did you install using apt? Run ``dpkg -l | grep python3-schedule``
+
+These should return
 
 Are you using the same Python version to install Schedule and execute your code?
 For example, if you installed schedule using a version of pip that uses Python 2, and your code runs in Python 3, the package won't be found.

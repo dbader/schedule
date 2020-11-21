@@ -140,10 +140,12 @@ Run a job at random intervals
 .. code-block:: python
 
     def my_job():
-        # This job will execute every 5 to 10 seconds.
         print('Foo')
 
+    # Run every 5 to 10 seconds.
     schedule.every(5).to(10).seconds.do(my_job)
+
+```every(A).to(B).seconds``` executes the job function every N seconds such that A <= N <= B.
 
 
 Run all jobs now regardless of their scheduling

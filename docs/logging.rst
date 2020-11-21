@@ -1,14 +1,16 @@
 Logging
 =======
 
-To receive logs from Schedule, set the root logging level to at least ``INFO``.
+Schedule logs messages to the Python logger named ``schedule`` at ``DEBUG`` level.
+To receive logs from Schedule, set the logging level to ``DEBUG``.
 
 .. code-block:: python
 
     import schedule
     import logging
 
-    logging.basicConfig(level=logging.INFO)
+    schedule_logger = logging.getLogger('schedule')
+    schedule_logger.setLevel(level=logging.DEBUG)
 
     def job():
         print("Hello, Logs")
@@ -21,20 +23,9 @@ This will result in the following log messages:
 
 .. code-block:: text
 
-    INFO:schedule:Running *all* 1 jobs with 0s delay inbetween
-    INFO:schedule:Running job Job(interval=1, unit=seconds, do=job, args=(), kwargs={})
+    DEBUG:schedule:Running *all* 1 jobs with 0s delay inbetween
+    DEBUG:schedule:Running job Job(interval=1, unit=seconds, do=job, args=(), kwargs={})
     Hello, Logs
-
-
-If you want to disable the schedule logs, while still receiving logs from other loggers, configure the ``schedule`` logger:
-
-.. code-block:: python
-
-    import logging
-
-    # Only show ERROR logs of the scheduler
-    schedule_logger = logging.getLogger('schedule')
-    schedule_logger.setLevel(level=logging.ERROR)
 
 
 Customize logging
