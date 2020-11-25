@@ -49,7 +49,19 @@ Python job scheduling for humans. Run Python functions (or any other callable) p
 
 More :doc:`examples`
 
-**Schedule does not account for the time it takes the job function to execute.**
+When **not** to use Schedule
+-------------------------
+Let's be honest, Schedule is not a 'one size fits all' scheduling library.
+This library is designed to be a simple solution for simple scheduling problems.
+You should probably look somewhere else if you need:
+
+* Job persistence (remember schedule between restarts)
+* Exact timing (sub-second precision execution)
+* Concurrent execution (multiple threads)
+* Localization (timezones, workdays or holidays)
+
+
+**Schedule does not account for the time it takes for the job function to execute.**
 To guarantee a stable execution schedule you need to move long-running jobs off the main-thread (where the scheduler runs).
 See :doc:`parallel-execution` for a sample implementation.
 
