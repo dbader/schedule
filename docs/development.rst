@@ -15,11 +15,11 @@ All required tooling and libraries can be installed using the ``requirements-dev
 Running tests
 -------------
 
-Tests can be ran using ``pytest``. To run all tests with coverage do:
+``pytest`` is used to run tests. Run all tests with coverage and formatting checks:
 
 .. code-block:: bash
 
-    pytest --cov-report term-missing --cov=schedule
+    py.test test_schedule.py --flake8 schedule -v --cov schedule --cov-report term-missing
 
 
 Compiling documentation
