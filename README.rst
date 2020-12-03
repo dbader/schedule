@@ -1,5 +1,5 @@
-`schedule <https://schedule.readthedocs.io/>`_
-==============================================
+`schedule <https://schedule.readthedocs.io/>`__
+===============================================
 
 
 .. image:: https://api.travis-ci.org/dbader/schedule.svg?branch=master
