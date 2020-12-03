@@ -50,7 +50,7 @@ Python job scheduling for humans. Run Python functions (or any other callable) p
 More :doc:`examples`
 
 When **not** to use Schedule
--------------------------
+----------------------------
 Let's be honest, Schedule is not a 'one size fits all' scheduling library.
 This library is designed to be a simple solution for simple scheduling problems.
 You should probably look somewhere else if you need:

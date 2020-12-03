@@ -5,7 +5,7 @@ Parallel execution
 
 By default, schedule executes all jobs serially. The reasoning behind this is that it would be difficult to find a model for parallel execution that makes everyone happy.
 
-You can work around this restriction by running each of the jobs in its own thread:
+You can work around this limitation by running each of the jobs in its own thread:
 
 .. code-block:: python
 
@@ -13,15 +13,12 @@ You can work around this restriction by running each of the jobs in its own thre
     import time
     import schedule
 
-
     def job():
         print("I'm running on thread %s" % threading.current_thread())
-
 
     def run_threaded(job_func):
         job_thread = threading.Thread(target=job_func)
         job_thread.start()
-
 
     schedule.every(10).seconds.do(run_threaded, job)
     schedule.every(10).seconds.do(run_threaded, job)

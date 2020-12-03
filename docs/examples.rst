@@ -1,5 +1,5 @@
 Examples
-==========
+========
 
 Eager to get started? This page gives a good introduction to Schedule.
 It assumes you already have Schedule installed. If you do not, head over to :doc:`installation`.
@@ -33,9 +33,11 @@ Run a job every x minute
     # If current time is 02:00, first execution is at 06:20:30
     schedule.every(5).hours.at("20:30").do(job)
 
+    # Run job every day at specific timestamp
     schedule.every().day.at("10:30").do(job)
     schedule.every().day.at("10:30").do(job)
 
+    # Run job on a specific day of the week
     schedule.every().monday.do(job)
     schedule.every().wednesday.at("13:15").do(job)
     schedule.every().minute.at(":17").do(job)
@@ -48,7 +50,7 @@ Run a job every x minute
 Pass arguments to a job
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-``do()`` passes extra arguments to the job function:
+``do()`` passes extra arguments to the job function
 
 .. code-block:: python
 
@@ -63,7 +65,7 @@ Pass arguments to a job
 
 Cancel a job
 ~~~~~~~~~~~~
-To remove a job from the scheduler, use the `schedule.cancel_job(job)` method
+To remove a job from the scheduler, use the ``schedule.cancel_job(job)`` method
 
 .. code-block:: python
 
@@ -79,7 +81,7 @@ To remove a job from the scheduler, use the `schedule.cancel_job(job)` method
 Run a job once
 ~~~~~~~~~~~~~~
 
-Return `schedule.CancelJob` from a job to remove it from the scheduler.
+Return ``schedule.CancelJob`` from a job to remove it from the scheduler.
 
 .. code-block:: python
 
@@ -99,7 +101,7 @@ Return `schedule.CancelJob` from a job to remove it from the scheduler.
 
 Cancel all jobs
 ~~~~~~~~~~~~~~~
-To remove all jobs from the scheduler, use `schedule.clear()`
+To remove all jobs from the scheduler, use ``schedule.clear()``
 
 .. code-block:: python
 
@@ -145,12 +147,12 @@ Run a job at random intervals
     # Run every 5 to 10 seconds.
     schedule.every(5).to(10).seconds.do(my_job)
 
-```every(A).to(B).seconds``` executes the job function every N seconds such that A <= N <= B.
+``every(A).to(B).seconds`` executes the job function every N seconds such that A <= N <= B.
 
 
-Run all jobs now regardless of their scheduling
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-To run all jobs regardless if they are scheduled to run or not, use `schedule.run_all()`
+Run all jobs now, regardless of their scheduling
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To run all jobs regardless if they are scheduled to run or not, use ``schedule.run_all()``
 
 .. code-block:: python
 

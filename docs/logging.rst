@@ -39,8 +39,7 @@ As an example, below code adds the ``print_elapsed_time`` decorator:
     import time
     import schedule
 
-    # This decorator can be applied to any job function to
-    # log the elapsed time of each job
+    # This decorator can be applied to any job function to log the elapsed time of each job
     def print_elapsed_time(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
