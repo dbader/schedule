@@ -17,3 +17,7 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - gilbsgilbs <https://github.com/gilbsgilbs>
 - Nathan Wailes <https://github.com/NathanWailes>
 - Connor Skees <https://github.com/ConnorSkees>
+- qmorek <https://github.com/qmorek>
+- aisk <https://github.com/aisk>
+- MichaelCorleoneLi <https://github.com/MichaelCorleoneLi>
+- SijmenHuizenga <https://github.com/SijmenHuizenga>
