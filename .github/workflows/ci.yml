@@ -22,15 +22,24 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install tox tox-gh-actions coveralls
+        run: pip install tox tox-gh-actions
       - name: Tests
         run: tox
+      - name: Set up Python 3.9
+        # A recent version of coveralls is required for Github
+        # Actions support, which is only available for python3
+        if: matrix.python-version == '2.7'
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
       - name: Coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: python-${{ matrix.python-version }}
           COVERALLS_PARALLEL: true
-        run: coveralls
+        run: |
+          pip3 install coveralls
+          coveralls
   coveralls:
     name: Finish Coveralls
     needs: test
