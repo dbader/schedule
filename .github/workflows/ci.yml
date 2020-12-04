@@ -22,17 +22,28 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install tox tox-gh-actions
+        run: pip install tox tox-gh-actions coveralls
       - name: Tests
         run: tox
       - name: Coveralls
-        # Store coverage only once to prevent duplication
-        if: matrix.python-version == '3.9'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: python-${{ matrix.python-version }}
+          COVERALLS_PARALLEL: true
+        run: coveralls
+  coveralls:
+    name: Finish Coveralls
+    needs: test
+    runs-on: ubuntu-latest
+    container: python:3-slim
+    steps:
+      - name: Finished
         run: |
-          pip install coveralls
-          coveralls
+          pip3 install coveralls
+          coveralls --finish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   docs:
     # Build docs separately to make visualise documentation
     # problems separably in the PR overview
