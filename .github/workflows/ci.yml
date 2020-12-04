@@ -15,7 +15,6 @@ jobs:
       max-parallel: 6
       matrix:
         python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9]
-
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -26,12 +25,17 @@ jobs:
         run: pip install tox tox-gh-actions
       - name: Tests
         run: tox
-      - name: Coveralls Parallel
-        uses: AndreMiras/coveralls-python-action@develop
-        with:
-          flag-name: python-${{ secrets.github_token }}
-          parallel: true
+      - name: Coveralls
+        # Store coverage only once to prevent duplication
+        if: matrix.python-version == '3.9'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pip install coveralls
+          coveralls
   docs:
+    # Build docs separately to make visualise documentation
+    # problems separably in the PR overview
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -43,12 +47,3 @@ jobs:
         run: pip install tox
       - name: Check docs
         run: tox -e docs
-  finish:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Coveralls Finished
-        uses: AndreMiras/coveralls-python-action@develop
-        with:
-          github-token: ${{ secrets.github_token }}
-          parallel-finished: true
