@@ -2,8 +2,8 @@ schedule
 ========
 
 
-.. image:: https://api.travis-ci.org/dbader/schedule.svg?branch=master
-        :target: https://travis-ci.org/dbader/schedule
+.. image:: https://github.com/dbader/schedule/workflows/Tests/badge.svg
+        :target: https://github.com/dbader/schedule/actions?query=workflow%3ATests+branch%3Amaster
 
 .. image:: https://coveralls.io/repos/dbader/schedule/badge.svg?branch=master
         :target: https://coveralls.io/r/dbader/schedule
