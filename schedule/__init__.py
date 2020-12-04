@@ -15,7 +15,7 @@ Features:
     - A simple to use API for scheduling jobs.
     - Very lightweight and no external dependencies.
     - Excellent test coverage.
-    - Works with Python 2.7 and 3.3
+    - Tested on Python 2.7, 3.5 and 3.6
 
 Usage:
     >>> import schedule
@@ -37,17 +37,36 @@ Usage:
 [2] https://github.com/Rykian/clockwork
 [3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
-import collections
+try:
+    from collections.abc import Hashable
+except ImportError:
+    from collections import Hashable
 import datetime
 import functools
 import logging
 import random
+import re
 import time
 
 logging.basicConfig(
     format='%(asctime)-15s - %(levelname)s (%(name)s) - %(message)s'
 )
 logger = logging.getLogger('schedule')
+
+
+class ScheduleError(Exception):
+    """Base schedule exception"""
+    pass
+
+
+class ScheduleValueError(ScheduleError):
+    """Base schedule value error"""
+    pass
+
+
+class IntervalError(ScheduleValueError):
+    """An improper interval was used"""
+    pass
 
 
 class CancelJob(object):
@@ -90,7 +109,7 @@ class Scheduler(object):
 
         :param delay_seconds: A delay added between every executed job
         """
-        logger.info('Running *all* %i jobs with %is delay in between',
+        logger.debug('Running *all* %i jobs with %is delay in between',
                     len(self.jobs), delay_seconds)
         for job in self.jobs[:]:
             self._run_job(job)
@@ -195,9 +214,25 @@ class Job(object):
         """
         return self.next_run < other.next_run
 
+    def __str__(self):
+        return (
+            "Job(interval={}, "
+            "unit={}, "
+            "do={}, "
+            "args={}, "
+            "kwargs={})"
+        ).format(self.interval,
+                 self.unit,
+                 self.job_func.__name__,
+                 self.job_func.args,
+                 self.job_func.keywords)
+
     def __repr__(self):
         def format_time(t):
             return t.strftime('%Y-%m-%d %H:%M:%S') if t else '[never]'
+
+        def is_repr(j):
+            return not isinstance(j, Job)
 
         timestats = '(last run: %s, next run: %s)' % (
                     format_time(self.last_run), format_time(self.next_run))
@@ -206,7 +241,7 @@ class Job(object):
             job_func_name = self.job_func.__name__
         else:
             job_func_name = repr(self.job_func)
-        args = [repr(x) for x in self.job_func.args]
+        args = [repr(x) if is_repr(x) else str(x) for x in self.job_func.args]
         kwargs = ['%s=%s' % (k, repr(v))
                   for k, v in self.job_func.keywords.items()]
         call_repr = job_func_name + '(' + ', '.join(args + kwargs) + ')'
@@ -233,7 +268,8 @@ class Job(object):
 
     @property
     def second(self):
-        assert self.interval == 1, 'Use seconds instead of second'
+        if self.interval != 1:
+            raise IntervalError('Use seconds instead of second')
         return self.seconds
 
     @property
@@ -243,7 +279,8 @@ class Job(object):
 
     @property
     def minute(self):
-        assert self.interval == 1, 'Use minutes instead of minute'
+        if self.interval != 1:
+            raise IntervalError('Use minutes instead of minute')
         return self.minutes
 
     @property
@@ -253,7 +290,8 @@ class Job(object):
 
     @property
     def hour(self):
-        assert self.interval == 1, 'Use hours instead of hour'
+        if self.interval != 1:
+            raise IntervalError('Use hours instead of hour')
         return self.hours
 
     @property
@@ -263,7 +301,8 @@ class Job(object):
 
     @property
     def day(self):
-        assert self.interval == 1, 'Use days instead of day'
+        if self.interval != 1:
+            raise IntervalError('Use days instead of day')
         return self.days
 
     @property
@@ -273,7 +312,8 @@ class Job(object):
 
     @property
     def week(self):
-        assert self.interval == 1, 'Use weeks instead of week'
+        if self.interval != 1:
+            raise IntervalError('Use weeks instead of week')
         return self.weeks
 
     @property
@@ -283,43 +323,50 @@ class Job(object):
 
     @property
     def monday(self):
-        assert self.interval == 1, 'Use mondays instead of monday'
+        if self.interval != 1:
+            raise IntervalError('Use mondays instead of monday')
         self.start_day = 'monday'
         return self.weeks
 
     @property
     def tuesday(self):
-        assert self.interval == 1, 'Use tuesdays instead of tuesday'
+        if self.interval != 1:
+            raise IntervalError('Use tuesdays instead of tuesday')
         self.start_day = 'tuesday'
         return self.weeks
 
     @property
     def wednesday(self):
-        assert self.interval == 1, 'Use wedesdays instead of wednesday'
+        if self.interval != 1:
+            raise IntervalError('Use wednesdays instead of wednesday')
         self.start_day = 'wednesday'
         return self.weeks
 
     @property
     def thursday(self):
-        assert self.interval == 1, 'Use thursday instead of thursday'
+        if self.interval != 1:
+            raise IntervalError('Use thursdays instead of thursday')
         self.start_day = 'thursday'
         return self.weeks
 
     @property
     def friday(self):
-        assert self.interval == 1, 'Use fridays instead of friday'
+        if self.interval != 1:
+            raise IntervalError('Use fridays instead of friday')
         self.start_day = 'friday'
         return self.weeks
 
     @property
     def saturday(self):
-        assert self.interval == 1, 'Use saturdays instead of saturday'
+        if self.interval != 1:
+            raise IntervalError('Use saturdays instead of saturday')
         self.start_day = 'saturday'
         return self.weeks
 
     @property
     def sunday(self):
-        assert self.interval == 1, 'Use sundays instead of sunday'
+        if self.interval != 1:
+            raise IntervalError('Use sundays instead of sunday')
         self.start_day = 'sunday'
         return self.weeks
 
@@ -332,31 +379,61 @@ class Job(object):
         :param tags: A unique list of ``Hashable`` tags.
         :return: The invoked job instance
         """
-        if not all(isinstance(tag, collections.Hashable) for tag in tags):
+        if not all(isinstance(tag, Hashable) for tag in tags):
             raise TypeError('Tags must be hashable')
         self.tags.update(tags)
         return self
 
     def at(self, time_str):
         """
-        Schedule the job every day at a specific time.
+        Specify a particular time that the job should be run at.
 
-        Calling this is only valid for jobs scheduled to run
-        every N day(s).
-
-        :param time_str: A string in `XX:YY` format.
+        :param time_str: A string in one of the following formats: `HH:MM:SS`,
+            `HH:MM`,`:MM`, `:SS`. The format must make sense given how often
+            the job is repeating; for example, a job that repeats every minute
+            should not be given a string in the form `HH:MM:SS`. The difference
+            between `:MM` and `:SS` is inferred from the selected time-unit
+            (e.g. `every().hour.at(':30')` vs. `every().minute.at(':30')`).
         :return: The invoked job instance
         """
-        assert self.unit in ('days', 'hours') or self.start_day
-        hour, minute = time_str.split(':')
-        minute = int(minute)
+        if (self.unit not in ('days', 'hours', 'minutes')
+                and not self.start_day):
+            raise ScheduleValueError('Invalid unit')
+        if not isinstance(time_str, str):
+            raise TypeError('at() should be passed a string')
+        if self.unit == 'days' or self.start_day:
+            if not re.match(r'^([0-2]\d:)?[0-5]\d:[0-5]\d$', time_str):
+                raise ScheduleValueError('Invalid time format')
+        if self.unit == 'hours':
+            if not re.match(r'^([0-5]\d)?:[0-5]\d$', time_str):
+                raise ScheduleValueError(('Invalid time format for'
+                                          ' an hourly job'))
+        if self.unit == 'minutes':
+            if not re.match(r'^:[0-5]\d$', time_str):
+                raise ScheduleValueError(('Invalid time format for'
+                                          ' a minutely job'))
+        time_values = time_str.split(':')
+        if len(time_values) == 3:
+            hour, minute, second = time_values
+        elif len(time_values) == 2 and self.unit == 'minutes':
+            hour = 0
+            minute = 0
+            _, second = time_values
+        else:
+            hour, minute = time_values
+            second = 0
         if self.unit == 'days' or self.start_day:
             hour = int(hour)
-            assert 0 <= hour <= 23
+            if not (0 <= hour <= 23):
+                raise ScheduleValueError('Invalid number of hours')
         elif self.unit == 'hours':
             hour = 0
-        assert 0 <= minute <= 59
-        self.at_time = datetime.time(hour, minute)
+        elif self.unit == 'minutes':
+            hour = 0
+            minute = 0
+        minute = int(minute)
+        second = int(second)
+        self.at_time = datetime.time(hour, minute, second)
         return self
 
     def to(self, latest):
@@ -410,7 +487,7 @@ class Job(object):
 
         :return: The return value returned by the `job_func`
         """
-        logger.info('Running job %s', self)
+        logger.debug('Running job %s', self)
         ret = self.job_func()
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
@@ -420,10 +497,12 @@ class Job(object):
         """
         Compute the instant when this job should run next.
         """
-        assert self.unit in ('seconds', 'minutes', 'hours', 'days', 'weeks')
+        if self.unit not in ('seconds', 'minutes', 'hours', 'days', 'weeks'):
+            raise ScheduleValueError('Invalid unit')
 
         if self.latest is not None:
-            assert self.latest >= self.interval
+            if not (self.latest >= self.interval):
+                raise ScheduleError('`latest` is greater than `interval`')
             interval = random.randint(self.interval, self.latest)
         else:
             interval = self.interval
@@ -431,7 +510,8 @@ class Job(object):
         self.period = datetime.timedelta(**{self.unit: interval})
         self.next_run = datetime.datetime.now() + self.period
         if self.start_day is not None:
-            assert self.unit == 'weeks'
+            if self.unit != 'weeks':
+                raise ScheduleValueError('`unit` should be \'weeks\'')
             weekdays = (
                 'monday',
                 'tuesday',
@@ -441,21 +521,26 @@ class Job(object):
                 'saturday',
                 'sunday'
             )
-            assert self.start_day in weekdays
+            if self.start_day not in weekdays:
+                raise ScheduleValueError('Invalid start day')
             weekday = weekdays.index(self.start_day)
             days_ahead = weekday - self.next_run.weekday()
             if days_ahead <= 0:  # Target day already happened this week
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
         if self.at_time is not None:
-            assert self.unit in ('days', 'hours') or self.start_day is not None
+            if (self.unit not in ('days', 'hours', 'minutes')
+                    and self.start_day is None):
+                raise ScheduleValueError(('Invalid unit without'
+                                          ' specifying start day'))
             kwargs = {
-                'minute': self.at_time.minute,
                 'second': self.at_time.second,
                 'microsecond': 0
             }
             if self.unit == 'days' or self.start_day is not None:
                 kwargs['hour'] = self.at_time.hour
+            if self.unit in ['days', 'hours'] or self.start_day is not None:
+                kwargs['minute'] = self.at_time.minute
             self.next_run = self.next_run.replace(**kwargs)
             # If we are running for the first time, make sure we run
             # at the specified time *today* (or *this hour*) as well
@@ -464,8 +549,17 @@ class Job(object):
                 if (self.unit == 'days' and self.at_time > now.time() and
                         self.interval == 1):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
-                elif self.unit == 'hours' and self.at_time.minute > now.minute:
+                elif self.unit == 'hours' \
+                        and (
+                            self.at_time.minute > now.minute
+                            or (self.at_time.minute == now.minute
+                                and self.at_time.second > now.second)
+                        ):
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
+                elif self.unit == 'minutes' \
+                        and self.at_time.second > now.second:
+                    self.next_run = self.next_run - \
+                                    datetime.timedelta(minutes=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:

@@ -2,8 +2,8 @@ schedule
 ========
 
 
-.. image:: https://api.travis-ci.org/dbader/schedule.svg?branch=master
-        :target: https://travis-ci.org/dbader/schedule
+.. image:: https://github.com/dbader/schedule/workflows/Tests/badge.svg
+        :target: https://github.com/dbader/schedule/actions?query=workflow%3ATests+branch%3Amaster
 
 .. image:: https://coveralls.io/repos/dbader/schedule/badge.svg?branch=master
         :target: https://coveralls.io/r/dbader/schedule
@@ -47,6 +47,7 @@ Usage
     schedule.every().day.at("10:30").do(job)
     schedule.every().monday.do(job)
     schedule.every().wednesday.at("13:15").do(job)
+    schedule.every().minute.at(":17").do(job)
 
     while True:
         schedule.run_pending()

@@ -2,8 +2,8 @@ schedule
 ========
 
 
-.. image:: https://api.travis-ci.org/dbader/schedule.svg?branch=master
-        :target: https://travis-ci.org/dbader/schedule
+.. image:: https://github.com/dbader/schedule/workflows/Tests/badge.svg
+        :target: https://github.com/dbader/schedule/actions?query=workflow%3ATests+branch%3Amaster
 
 .. image:: https://coveralls.io/repos/dbader/schedule/badge.svg?branch=master
         :target: https://coveralls.io/r/dbader/schedule
@@ -42,12 +42,14 @@ Usage
     def job():
         print("I'm working...")
 
+    schedule.every(10).seconds.do(job)
     schedule.every(10).minutes.do(job)
     schedule.every().hour.do(job)
     schedule.every().day.at("10:30").do(job)
     schedule.every(5).to(10).minutes.do(job)
     schedule.every().monday.do(job)
     schedule.every().wednesday.at("13:15").do(job)
+    schedule.every().minute.at(":17").do(job)
 
     while True:
         schedule.run_pending()
@@ -66,6 +68,6 @@ Meta
 
 Daniel Bader - `@dbader_org <https://twitter.com/dbader_org>`_ - mail@dbader.org
 
-Distributed under the MIT license. See ``LICENSE.txt`` for more information.
+Distributed under the MIT license. See `LICENSE.txt <https://github.com/dbader/schedule/blob/master/LICENSE.txt>`_ for more information.
 
 https://github.com/dbader/schedule
