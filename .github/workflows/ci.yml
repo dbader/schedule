@@ -24,28 +24,19 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          pip install tox tox-gh-actions
+          pip install tox tox-gh-actions coveralls
       - name: Tests
         run: |
           tox
-  coverage:
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Install dependencies
-        run: |
-          pip install tox coveralls
-      - name: Tests + coverage
-        run: |
-          tox -e py39
-      - name: Store coverage
+      - name: Coverage
         run: |
           coveralls
+      - name: Coveralls Parallel
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
+          flag-name: python-${{ secrets.github_token }}
+          parallel: true
   docs:
     runs-on: ubuntu-latest
     steps:
@@ -56,7 +47,16 @@ jobs:
           python-version: 3.9
       - name: Install dependencies
         run: |
-          pip install tox coveralls
+          pip install tox
       - name: Check docs
         run: |
           tox -e docs
+  finish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Coveralls Finished
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
+          parallel-finished: true
