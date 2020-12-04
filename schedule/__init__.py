@@ -110,7 +110,7 @@ class Scheduler(object):
         :param delay_seconds: A delay added between every executed job
         """
         logger.debug('Running *all* %i jobs with %is delay in between',
-                    len(self.jobs), delay_seconds)
+                     len(self.jobs), delay_seconds)
         for job in self.jobs[:]:
             self._run_job(job)
             time.sleep(delay_seconds)
@@ -124,10 +124,10 @@ class Scheduler(object):
                     jobs to delete
         """
         if tag is None:
-            logger.info('Deleting *all* jobs')
+            logger.debug('Deleting *all* jobs')
             del self.jobs[:]
         else:
-            logger.info('Deleting all jobs tagged "%s"', tag)
+            logger.debug('Deleting all jobs tagged "%s"', tag)
             self.jobs[:] = (job for job in self.jobs if tag not in job.tags)
 
     def cancel_job(self, job):
@@ -137,10 +137,10 @@ class Scheduler(object):
         :param job: The job to be unscheduled
         """
         try:
-            logger.info('Cancelling job "%s"', str(job))
+            logger.debug('Cancelling job "%s"', str(job))
             self.jobs.remove(job)
         except ValueError:
-            logger.exception('Failed to cancel job "%s"', str(job))
+            logger.debug('Cancelling not-scheduled job "%s"', str(job))
 
     def every(self, interval=1):
         """
