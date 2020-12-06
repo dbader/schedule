@@ -152,7 +152,8 @@ Run a job at random intervals
 
 Run all jobs now, regardless of their scheduling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-To run all jobs regardless if they are scheduled to run or not, use ``schedule.run_all()``
+To run all jobs regardless if they are scheduled to run or not, use ``schedule.run_all()``.
+Jobs are re-scheduled after finishing, just like they would if they were executed using ``run_pending()``.
 
 .. code-block:: python
 

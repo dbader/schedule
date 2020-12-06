@@ -44,11 +44,11 @@ It might be that your IDE uses a different Python interpreter installation.
 
 Still having problems? Use Google and StackOverflow before submitting an issue.
 
-Does schedule support timezones?
+Does schedule support time zones?
 --------------------------------
-Vanilla schedule doesn’t support timezones at the moment.
+Vanilla schedule doesn’t support time zones at the moment.
 If you need this functionality please check out @imiric’s work `here <https://github.com/dbader/schedule/pull/16>`_.
-He added timezone support to schedule using python-dateutil.
+He added time zone support to schedule using python-dateutil.
 
 What if my task throws an exception?
 ------------------------------------
@@ -69,3 +69,8 @@ See :doc:`Parallel Execution <parallel-execution>`.
 How to continuously run the scheduler without blocking the main thread?
 -----------------------------------------------------------------------
 :doc:`Background Execution<background-execution>`.
+
+Another question?
+-----------------
+If you are left with an unanswered question, `browse the issue tracker <http://github.com/dbader/schedule/issues>`_ to see if your question has been asked before.
+Feel free to create a new issue if that's not the case. Thank you 😃

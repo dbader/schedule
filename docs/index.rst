@@ -58,7 +58,7 @@ You should probably look somewhere else if you need:
 * Job persistence (remember schedule between restarts)
 * Exact timing (sub-second precision execution)
 * Concurrent execution (multiple threads)
-* Localization (timezones, workdays or holidays)
+* Localization (time zones, workdays or holidays)
 
 
 **Schedule does not account for the time it takes for the job function to execute.**
