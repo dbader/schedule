@@ -45,7 +45,7 @@ It might be that your IDE uses a different Python interpreter installation.
 Still having problems? Use Google and StackOverflow before submitting an issue.
 
 Does schedule support time zones?
---------------------------------
+---------------------------------
 Vanilla schedule doesn’t support time zones at the moment.
 If you need this functionality please check out @imiric’s work `here <https://github.com/dbader/schedule/pull/16>`_.
 He added time zone support to schedule using python-dateutil.
