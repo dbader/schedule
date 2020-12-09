@@ -157,6 +157,7 @@ class Scheduler(object):
         Datetime when the next job should run.
 
         :return: A :class:`~datetime.datetime` object
+                 or None if no jobs scheduled
         """
         if not self.jobs:
             return None
