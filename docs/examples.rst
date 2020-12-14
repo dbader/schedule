@@ -154,6 +154,7 @@ Time until the next execution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Use ``schedule.idle_seconds()`` to get the number of seconds until the next job is scheduled to run.
 The returned value is negative if the next scheduled jobs was scheduled to run in the past.
+Returns ``None`` if no jobs are scheduled.
 
 .. code-block:: python
 
