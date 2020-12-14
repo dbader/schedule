@@ -150,6 +150,32 @@ Run a job at random intervals
 ``every(A).to(B).seconds`` executes the job function every N seconds such that A <= N <= B.
 
 
+Time until the next execution
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Use ``schedule.idle_seconds()`` to get the number of seconds until the next job is scheduled to run.
+The returned value is negative if the next scheduled jobs was scheduled to run in the past.
+
+.. code-block:: python
+
+    import schedule
+    import time
+
+    def job():
+        print('Hello')
+
+    schedule.every(5).seconds.do(job)
+
+    while 1:
+        n = schedule.idle_seconds()
+        if n is None:
+            # no more jobs
+            break
+        elif n > 0:
+            # sleep exactly the right amount of time
+            time.sleep(n)
+        schedule.run_pending()
+
+
 Run all jobs now, regardless of their scheduling
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To run all jobs regardless if they are scheduled to run or not, use ``schedule.run_all()``.
