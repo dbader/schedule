@@ -37,6 +37,8 @@ Usage:
 [2] https://github.com/Rykian/clockwork
 [3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
+from concurrent.futures.thread import ThreadPoolExecutor
+
 try:
     from collections.abc import Hashable
 except ImportError:
@@ -79,8 +81,15 @@ class Scheduler(object):
     factories to create jobs, keep record of scheduled jobs and
     handle their execution.
     """
-    def __init__(self):
+
+    def __init__(self, pool=None, max_worker=None):
         self.jobs = []
+        self.pool = pool
+        self.max_worker = max_worker  # Default len(self.jobs) * 2
+
+    def start_thread(self, max_worker):
+        self.max_worker = len(self.jobs) * 2 if not max_worker else max_worker
+        self.pool = ThreadPoolExecutor(max_workers=self.max_worker, thread_name_prefix="Scheduled task")
 
     def run_pending(self):
         """
@@ -92,9 +101,17 @@ class Scheduler(object):
         in one hour increments then your job won't be run 60 times in
         between but only once.
         """
-        runnable_jobs = (job for job in self.jobs if job.should_run)
-        for job in sorted(runnable_jobs):
-            self._run_job(job)
+
+        runnable_jobs = set(job for job in self.jobs if job.should_run)
+        if len(runnable_jobs) == 0:
+            return
+
+        # Run task async .
+        if self.pool:
+            self.pool.map(self._run_job, set(runnable_jobs))
+        else:
+            for job in sorted(runnable_jobs):
+                self._run_job(job=job)
 
     def run_all(self, delay_seconds=0):
         """
@@ -189,6 +206,7 @@ class Job(object):
     A job is usually created and returned by :meth:`Scheduler.every`
     method, which also defines its `interval`.
     """
+
     def __init__(self, interval, scheduler=None):
         self.interval = interval  # pause interval * unit between runs
         self.latest = None  # upper limit to the interval
@@ -230,7 +248,7 @@ class Job(object):
             return not isinstance(j, Job)
 
         timestats = '(last run: %s, next run: %s)' % (
-                    format_time(self.last_run), format_time(self.next_run))
+            format_time(self.last_run), format_time(self.next_run))
 
         if hasattr(self.job_func, '__name__'):
             job_func_name = self.job_func.__name__
@@ -243,14 +261,14 @@ class Job(object):
 
         if self.at_time is not None:
             return 'Every %s %s at %s do %s %s' % (
-                   self.interval,
-                   self.unit[:-1] if self.interval == 1 else self.unit,
-                   self.at_time, call_repr, timestats)
+                self.interval,
+                self.unit[:-1] if self.interval == 1 else self.unit,
+                self.at_time, call_repr, timestats)
         else:
             fmt = (
-                'Every %(interval)s ' +
-                ('to %(latest)s ' if self.latest is not None else '') +
-                '%(unit)s do %(call_repr)s %(timestats)s'
+                    'Every %(interval)s ' +
+                    ('to %(latest)s ' if self.latest is not None else '') +
+                    '%(unit)s do %(call_repr)s %(timestats)s'
             )
 
             return fmt % dict(
@@ -546,10 +564,10 @@ class Job(object):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
                 elif self.unit == 'hours' \
                         and (
-                            self.at_time.minute > now.minute
-                            or (self.at_time.minute == now.minute
-                                and self.at_time.second > now.second)
-                        ):
+                        self.at_time.minute > now.minute
+                        or (self.at_time.minute == now.minute
+                            and self.at_time.second > now.second)
+                ):
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
                 elif self.unit == 'minutes' \
                         and self.at_time.second > now.second:
@@ -578,10 +596,15 @@ def every(interval=1):
     return default_scheduler.every(interval)
 
 
-def run_pending():
+def run_pending(max_worker=0, thread_pool=False):
     """Calls :meth:`run_pending <Scheduler.run_pending>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
+    if not isinstance(max_worker, int):
+        raise ValueError("params <max_worker> must be <type:int>")
+
+    if thread_pool and default_scheduler.pool is None:
+        default_scheduler.start_thread(max_worker=max_worker)
     default_scheduler.run_pending()
 
 
