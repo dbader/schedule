@@ -275,6 +275,69 @@ class SchedulerTests(unittest.TestCase):
             assert every().saturday.do(mock_job).next_run.day == 9
             assert every().sunday.do(mock_job).next_run.day == 10
 
+    def test_next_run_time_day_end(self):
+        mock_job = make_mock_job()
+        # At day 1, schedule job to run at daily 23:30
+        with mock_datetime(2010, 12, 1, 23, 0, 0):
+            job = every().day.at('23:30').do(mock_job)
+            # first occurrence same day
+            assert job.next_run.day == 1
+            assert job.next_run.hour == 23
+
+        # Running the job 01:00 on day 2, afterwards the job should be
+        # scheduled at 23:30 the same day. This simulates a job that started
+        # on day 1 at 23:30 and took 1,5 hours to finish
+        with mock_datetime(2010, 12, 2, 1, 0, 0):
+            job.run()
+            assert job.next_run.day == 2
+            assert job.next_run.hour == 23
+
+        # Run the job at 23:30 on day 2, afterwards the job should be
+        # scheduled at 23:30 the next day
+        with mock_datetime(2010, 12, 2, 23, 30, 0):
+            job.run()
+            assert job.next_run.day == 3
+            assert job.next_run.hour == 23
+
+    def test_next_run_time_hour_end(self):
+        mock_job = make_mock_job()
+        with mock_datetime(2010, 10, 10, 12, 0, 0):
+            job = every().hour.at(':10').do(mock_job)
+            assert job.next_run.hour == 12
+            assert job.next_run.minute == 10
+
+        with mock_datetime(2010, 10, 10, 13, 0, 0):
+            job.run()
+            assert job.next_run.hour == 13
+            assert job.next_run.minute == 10
+
+        with mock_datetime(2010, 10, 10, 13, 15, 0):
+            job.run()
+            assert job.next_run.hour == 14
+            assert job.next_run.minute == 10
+
+    def test_next_run_time_minute_end(self):
+        mock_job = make_mock_job()
+        with mock_datetime(2010, 10, 10, 10, 10, 0):
+            job = every().minute.at(':15').do(mock_job)
+            assert job.next_run.minute == 10
+            assert job.next_run.second == 15
+
+        with mock_datetime(2010, 10, 10, 10, 10, 59):
+            job.run()
+            assert job.next_run.minute == 11
+            assert job.next_run.second == 15
+
+        with mock_datetime(2010, 10, 10, 10, 12, 14):
+            job.run()
+            assert job.next_run.minute == 12
+            assert job.next_run.second == 15
+
+        with mock_datetime(2010, 10, 10, 10, 12, 16):
+            job.run()
+            assert job.next_run.minute == 13
+            assert job.next_run.second == 15
+
     def test_run_all(self):
         mock_job = make_mock_job()
         every().minute.do(mock_job)
