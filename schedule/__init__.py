@@ -547,9 +547,11 @@ class Job(object):
             if self.unit in ['days', 'hours'] or self.start_day is not None:
                 kwargs['minute'] = self.at_time.minute
             self.next_run = self.next_run.replace(**kwargs)
-            # If we are running for the first time, make sure we run
-            # at the specified time *today* (or *this hour*) as well
-            if not self.last_run:
+            # Make sure we run at the specified time *today* (or *this hour*)
+            # as well. This accounts for when a job takes so long it finished
+            # in the next period.
+            if not self.last_run \
+                    or (self.next_run - self.last_run) > self.period:
                 now = datetime.datetime.now()
                 if (self.unit == 'days' and self.at_time > now.time() and
                         self.interval == 1):
