@@ -33,9 +33,9 @@ Run a job every x minute
     # If current time is 02:00, first execution is at 06:20:30
     schedule.every(5).hours.at("20:30").do(job)
 
-    # Run job every day at specific timestamp
+    # Run job every day at specific HH:MM and next HH:MM:SS
     schedule.every().day.at("10:30").do(job)
-    schedule.every().day.at("10:30").do(job)
+    schedule.every().day.at("10:30:42").do(job)
 
     # Run job on a specific day of the week
     schedule.every().monday.do(job)
