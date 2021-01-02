@@ -167,8 +167,11 @@ class Scheduler(object):
     def idle_seconds(self):
         """
         :return: Number of seconds until
-                 :meth:`next_run <Scheduler.next_run>`.
+                 :meth:`next_run <Scheduler.next_run>`
+                 or None if no jobs are scheduled
         """
+        if not self.next_run:
+            return None
         return (self.next_run - datetime.datetime.now()).total_seconds()
 
 

@@ -433,6 +433,7 @@ class SchedulerTests(unittest.TestCase):
 
     def test_idle_seconds(self):
         assert schedule.next_run() is None
+        assert schedule.idle_seconds() is None
 
         mock_job = make_mock_job()
         with mock_datetime(2020, 12, 9, 21, 46):
@@ -440,6 +441,7 @@ class SchedulerTests(unittest.TestCase):
             assert schedule.idle_seconds() == 60 * 60
             schedule.cancel_job(job)
             assert schedule.next_run() is None
+            assert schedule.idle_seconds() is None
 
     def test_cancel_job(self):
         def stop_job():
