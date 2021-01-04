@@ -194,6 +194,27 @@ class SchedulerTests(unittest.TestCase):
         with self.assertRaises(IntervalError):
             every(interval=2).sunday
 
+    def test_weekday_at_todady(self):
+        mock_job = make_mock_job()
+
+        # This date is a wednesday
+        with mock_datetime(2020, 11, 25, 22, 38, 5):
+            job = every().wednesday.at('22:38:10').do(mock_job)
+            assert job.next_run.hour == 22
+            assert job.next_run.minute == 38
+            assert job.next_run.second == 10
+            assert job.next_run.year == 2020
+            assert job.next_run.month == 11
+            assert job.next_run.day == 25
+
+            job = every().wednesday.at('22:39').do(mock_job)
+            assert job.next_run.hour == 22
+            assert job.next_run.minute == 39
+            assert job.next_run.second == 00
+            assert job.next_run.year == 2020
+            assert job.next_run.month == 11
+            assert job.next_run.day == 25
+
     def test_at_time_hour(self):
         with mock_datetime(2010, 1, 6, 12, 20):
             mock_job = make_mock_job()
@@ -409,7 +430,18 @@ class SchedulerTests(unittest.TestCase):
             assert len(schedule.jobs) == 2
             # Make sure the hourly job is first
             assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
+
+    def test_idle_seconds(self):
+        assert schedule.next_run() is None
+        assert schedule.idle_seconds() is None
+
+        mock_job = make_mock_job()
+        with mock_datetime(2020, 12, 9, 21, 46):
+            job = every().hour.do(mock_job)
             assert schedule.idle_seconds() == 60 * 60
+            schedule.cancel_job(job)
+            assert schedule.next_run() is None
+            assert schedule.idle_seconds() is None
 
     def test_cancel_job(self):
         def stop_job():
