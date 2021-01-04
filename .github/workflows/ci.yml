@@ -32,6 +32,15 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
+      - name: Coveralls for Python 2.7 or 3.5
+        if: matrix.python-version == '2.7' || matrix.python-version == '3.5'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: python-${{ matrix.python-version }}
+          COVERALLS_PARALLEL: true
+        run: |
+          pip3 install coveralls
+          coveralls --rcfile=.coveragerc2.7and3.5
       - name: Coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -46,14 +55,7 @@ jobs:
     name: coverage push
     needs: test
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 6
-      matrix:
-        python-version: [ 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 ]
     steps:
-      - name: Do not check asynchronous functions for Python 2.7 or 3.5
-        if: matrix.python-version == '2.7' || matrix.python-version == '3.5'
-        run: rm ./schedule/async_scheduler.py test_async_scheduler.py
       - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
