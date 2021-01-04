@@ -47,6 +47,9 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
+      - name: Do not check asynchronous functions for Python 2.7 and 3.5
+          if: matrix.python-version == '2.7' && matrix.python-version == '3.5'
+          run: rm ./schedule/async_scheduler.py test_async_scheduler.py
       - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
