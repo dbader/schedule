@@ -41,7 +41,8 @@ jobs:
         run: |
           pip3 install coveralls
           coveralls --rcfile=.coveragerc2.7and3.5
-      - name: Coveralls
+      - name: Coveralls for others
+        if: matrix.python-version != '2.7' || matrix.python-version != '3.5'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: python-${{ matrix.python-version }}
