@@ -51,8 +51,8 @@ class AsyncScheduler(Scheduler):
     run_pending.__doc__ = _inherit_doc(Scheduler.run_pending.__doc__)
 
     async def run_all(self, delay_seconds=0):
-        logger.info('Running *all* %i async jobs with %is delay in between',
-                    len(self.jobs), delay_seconds)
+        logger.debug('Running *all* %i jobs with %is delay in between',
+                     len(self.jobs), delay_seconds)
         for job in self.jobs[:]:
             await self._run_job(job)
             await asyncio.sleep(delay_seconds)
