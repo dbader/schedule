@@ -46,6 +46,10 @@ jobs:
     name: coverage push
     needs: test
     runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 6
+      matrix:
+        python-version: [ 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 ]
     steps:
       - name: Do not check asynchronous functions for Python 2.7 or 3.5
         if: matrix.python-version == '2.7' || matrix.python-version == '3.5'
