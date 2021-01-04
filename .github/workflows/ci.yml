@@ -14,7 +14,7 @@ jobs:
     strategy:
       max-parallel: 6
       matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -25,13 +25,13 @@ jobs:
         run: pip install tox tox-gh-actions
       - name: Tests
         run: tox
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         # A recent version of coveralls is required for Github
         # Actions support, which is only available for python3
         if: matrix.python-version == '2.7'
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
       - name: Coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -47,10 +47,10 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
       - name: Finished
         run: |
           pip3 install coveralls
@@ -64,10 +64,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
       - name: Install dependencies
         run: pip install tox
       - name: Check docs
