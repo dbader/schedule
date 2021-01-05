@@ -238,13 +238,16 @@ class Job(object):
     def at(self, time_str):
         """
         Specify a particular time that the job should be run at.
-
-        :param time_str: A string in one of the following formats: `HH:MM:SS`,
-            `HH:MM`,`:MM`, `:SS`. The format must make sense given how often
-            the job is repeating; for example, a job that repeats every minute
-            should not be given a string in the form `HH:MM:SS`. The difference
-            between `:MM` and `:SS` is inferred from the selected time-unit
-            (e.g. `every().hour.at(':30')` vs. `every().minute.at(':30')`).
+        :param time_str: A string in one of the following formats:
+            - For daily jobs -> `HH:MM:SS` or `HH:MM`
+            - For hourly jobs -> `MM:SS` or `:MM`
+            - For minute jobs -> `:SS`
+            The format must make sense given how often the job is
+            repeating; for example, a job that repeats every minute
+            should not be given a string in the form `HH:MM:SS`. The
+            difference between `:MM` and :SS` is inferred from the
+            selected time-unit (e.g. `every().hour.at(':30')` vs.
+            `every().minute.at(':30')`).
         :return: The invoked job instance
         """
         if (self.unit not in ('days', 'hours', 'minutes')
