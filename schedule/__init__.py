@@ -424,6 +424,10 @@ class Job(object):
             hour = 0
             minute = 0
             _, second = time_values
+        elif len(time_values) == 2 and self.unit == 'hours' and \
+                len(time_values[0]):
+            hour = 0
+            minute, second = time_values
         else:
             hour, minute = time_values
             second = 0

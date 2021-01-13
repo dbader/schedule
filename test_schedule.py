@@ -238,6 +238,17 @@ class SchedulerTests(unittest.TestCase):
             self.assertRaises(ScheduleValueError, every().hour.at, "01:61")
             self.assertRaises(TypeError, every().hour.at, 2)
 
+            # test the 'MM:SS' format
+            assert every().hour.at('30:05').do(mock_job).next_run.hour == 12
+            assert every().hour.at('30:05').do(mock_job).next_run.minute == 30
+            assert every().hour.at('30:05').do(mock_job).next_run.second == 5
+            assert every().hour.at('10:25').do(mock_job).next_run.hour == 13
+            assert every().hour.at('10:25').do(mock_job).next_run.minute == 10
+            assert every().hour.at('10:25').do(mock_job).next_run.second == 25
+            assert every().hour.at('00:40').do(mock_job).next_run.hour == 13
+            assert every().hour.at('00:40').do(mock_job).next_run.minute == 0
+            assert every().hour.at('00:40').do(mock_job).next_run.second == 40
+
     def test_at_time_minute(self):
         with mock_datetime(2010, 1, 6, 12, 20, 30):
             mock_job = make_mock_job()
