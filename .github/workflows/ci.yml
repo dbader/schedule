@@ -39,7 +39,7 @@ jobs:
           COVERALLS_PARALLEL: true
         run: |
           pip3 install coveralls
-          coveralls
+          coveralls --service=github
   coveralls:
     # Notify coveralls that the built has finished so they can
     # combine the results and post a comment with the summary.
@@ -54,7 +54,7 @@ jobs:
       - name: Finished
         run: |
           pip3 install coveralls
-          coveralls --finish
+          coveralls --finish --service=github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
