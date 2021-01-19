@@ -1,13 +1,3 @@
-"""
-Publish a new version:
-
-$ git tag X.Y.Z -m "Release X.Y.Z"
-$ git push --tags
-
-$ pip install --upgrade twine wheel
-$ python setup.py sdist bdist_wheel --universal
-$ twine upload dist/*
-"""
 import codecs
 from setuptools import setup
 

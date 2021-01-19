@@ -35,3 +35,19 @@ After installing the development requirements it is just a matter of running:
     make html
 
 The resulting html can be found in ``docs/_build/html``
+
+Publish a new version
+---------------------
+
+Update the ``HISTORY.rst`` and ``AUTHORS.rst`` files.
+Bump the version in ``setup.py``.
+Merge these changes into master. Finally:
+
+.. code-block:: bash
+
+    git tag X.Y.Z -m "Release X.Y.Z"
+    git push --tags
+
+    pip install --upgrade setuptools twine wheel
+    python setup.py sdist bdist_wheel --universal
+    twine upload --repository schedule dist/*
