@@ -51,3 +51,5 @@ Merge these changes into master. Finally:
     pip install --upgrade setuptools twine wheel
     python setup.py sdist bdist_wheel --universal
     twine upload --repository schedule dist/*
+
+This project follows `semantic versioning <https://semver.org/>`_.`
