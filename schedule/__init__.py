@@ -15,7 +15,7 @@ Features:
     - A simple to use API for scheduling jobs.
     - Very lightweight and no external dependencies.
     - Excellent test coverage.
-    - Tested on Python 2.7, 3.5 and 3.6
+    - Tested on Python 3.6, 3.7, 3.8, 3.9
 
 Usage:
     >>> import schedule
@@ -37,10 +37,7 @@ Usage:
 [2] https://github.com/Rykian/clockwork
 [3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
-try:
-    from collections.abc import Hashable
-except ImportError:
-    from collections import Hashable
+from collections.abc import Hashable
 import datetime
 import functools
 import logging
@@ -472,13 +469,7 @@ class Job(object):
         :return: The invoked job instance
         """
         self.job_func = functools.partial(job_func, *args, **kwargs)
-        try:
-            functools.update_wrapper(self.job_func, job_func)
-        except AttributeError:
-            # job_funcs already wrapped by functools.partial won't have
-            # __name__, __module__ or __doc__ and the update_wrapper()
-            # call will fail.
-            pass
+        functools.update_wrapper(self.job_func, job_func)
         self._schedule_next_run()
         self.scheduler.jobs.append(self)
         return self
