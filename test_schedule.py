@@ -557,6 +557,40 @@ class SchedulerTests(unittest.TestCase):
         job1.tag(0, 'a', True)
         assert len(job1.tags) == 3
 
+    def test_get_by_tag(self):
+        every().second.do(make_mock_job()).tag('job1', 'tag1')
+        every().second.do(make_mock_job()).tag('job2', 'tag2', 'tag4')
+        every().second.do(make_mock_job()).tag('job3', 'tag3', 'tag4')
+        # Test None input yields all 3
+        jobs = schedule.get_jobs()
+        assert len(jobs) == 3
+        all_tags = jobs[0].tags.copy()
+        all_tags.update(jobs[1].tags, jobs[2].tags)
+        jobs_names = [name for name in all_tags if 'job' in name]
+        assert set(jobs_names) == set(['job1', 'job2', 'job3'])
+        # Test each 1:1 tag:job
+        jobs = schedule.get_jobs('tag1')
+        assert len(jobs) == 1
+        assert 'job1' in jobs[0].tags
+        jobs = schedule.get_jobs('tag2')
+        assert len(jobs) == 1
+        assert 'job2' in jobs[0].tags
+        jobs = schedule.get_jobs('tag3')
+        assert len(jobs) == 1
+        assert 'job3' in jobs[0].tags
+        # Test multiple jobs found.
+        jobs = schedule.get_jobs('tag4')
+        assert len(jobs) == 2
+        all_tags = jobs[0].tags.copy()
+        all_tags.update(jobs[1].tags)
+        jobs_names = [name for name in all_tags if 'job' in name]
+        assert set(jobs_names) == set(['job2', 'job3'])
+        # Test no tag.
+        jobs = schedule.get_jobs('tag5')
+        assert len(jobs) == 0
+        schedule.clear()
+        assert len(schedule.jobs) == 0
+
     def test_clear_by_tag(self):
         every().second.do(make_mock_job(name='job1')).tag('tag1')
         every().second.do(make_mock_job(name='job2')).tag('tag1', 'tag2')
