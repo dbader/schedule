@@ -550,6 +550,19 @@ class SchedulerTests(unittest.TestCase):
         schedule.run_all()
         assert len(schedule.jobs) == 0
 
+    def test_get_tags(self):
+        every().second.do(make_mock_job()).tag('T1', 'isA')
+        every().second.do(make_mock_job()).tag('T2', 'isA')
+        every().second.do(make_mock_job()).tag('T3', 'isB')
+        # Test get all
+        assert schedule.get_tags() == set(['T1', 'T2', 'T3', 'isA', 'isB'])
+        # Test simple string
+        assert schedule.get_tags("T") == set(['T1', 'T2', 'T3'])
+        # Test regex token
+        assert schedule.get_tags("^is") == set(['isA', 'isB'])
+        # Test no return
+        assert schedule.get_tags("^Q") == set()
+
     def test_tag_type_enforcement(self):
         job1 = every().second.do(make_mock_job(name='job1'))
         self.assertRaises(TypeError, job1.tag, {})

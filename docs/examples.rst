@@ -75,7 +75,27 @@ To remove a job from the scheduler, use the ``schedule.cancel_job(job)`` method
         print('Hello world')
 
     job = schedule.every().day.at('22:30').do(some_task)
-    shcedule.cancel_job(job)
+    schedule.cancel_job(job)
+
+
+Get a set of tags by pattern matching
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To get a set of tags which match a regex pattern, use the ``schedule.get_tags(tag_regex)`` method
+
+.. code-block:: python
+
+    import schedule
+
+    def hello_world():
+        print('Hello world')
+
+    def greet(name):
+        print('Hello {}'.format(name))
+
+    job = schedule.every(10).seconds.do(hello_world).tag('job_1', 'task_hello', 'user_None')
+    job = schedule.every(10).seconds.do(greet, 'Jesse').tag('job_2', 'task_greet', 'user_Jesse')
+    job = schedule.every(10).seconds.do(greet, 'James').tag('job_2', 'task_greet', 'user_James')
+    schedule.get_tags("^task_")  # To get all tags that start with "task_"
 
 
 Run a job once

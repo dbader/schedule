@@ -133,6 +133,19 @@ class Scheduler(object):
         except ValueError:
             pass
 
+    def get_tags(self, tag_regex=None):
+        """
+        Deletes scheduled jobs marked with the given tag, or all jobs
+        if tag is omitted.
+
+        :param tag: An identifier used to identify a subset of
+                    jobs to delete
+        """
+        if tag_regex is None:
+            tag_regex = ""
+        return set([tag for job in self.jobs for tag in job.tags
+                    if re.search(tag_regex, str(tag)) is not None])
+
     def every(self, interval=1):
         """
         Schedule a new periodic job.
@@ -611,6 +624,13 @@ def cancel_job(job):
     :data:`default scheduler instance <default_scheduler>`.
     """
     default_scheduler.cancel_job(job)
+
+
+def get_tags(tag_regex=None):
+    """Calls :meth:`get_tags <Scheduler.get_tags>` on the
+    :data:`default scheduler instance <default_scheduler>`.
+    """
+    return default_scheduler.get_tags(tag_regex=tag_regex)
 
 
 def next_run():
