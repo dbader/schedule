@@ -25,3 +25,4 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - chankeypathak <https://github.com/chankeypathak>
 - vubon <https://github.com/vubon>
 - gaguirregabiria <https://github.com/gaguirregabiria>
+- rhagenaars <https://github.com/RHagenaars>
