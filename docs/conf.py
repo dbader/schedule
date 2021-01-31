@@ -57,7 +57,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'schedule'
-copyright = u'2016, <a href="https://dbader.org/">Daniel Bader</a>'
+copyright = u'2020, <a href="https://dbader.org/">Daniel Bader</a>'
 author = u'<a href="https://dbader.org/">Daniel Bader</a>'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -138,6 +138,7 @@ html_theme_options = {
     'github_user': 'dbader',
     'github_repo': 'schedule',
     'github_banner': True,
+    'github_button': True,
     'show_related': False
 }
 
@@ -189,7 +190,7 @@ html_use_smartypants = True
 # Custom sidebar templates, maps document names to template names.
 #
 html_sidebars = {
-    'index':    ['sidebarintro.html', 'sourcelink.html', 'searchbox.html'],
+    '**':    ["about.html", 'globaltoc.html', 'sidebarintro.html', 'relations.html', 'searchbox.html'],
 }
 
 # Additional templates that should be rendered to pages, maps page names to

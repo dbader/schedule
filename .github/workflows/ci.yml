@@ -1,0 +1,67 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 6
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install tox tox-gh-actions
+      - name: Tests
+        run: tox
+      - name: Coveralls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: python-${{ matrix.python-version }}
+          COVERALLS_PARALLEL: true
+        run: |
+          pip3 install coveralls
+          coveralls --service=github
+  coveralls:
+    # Notify coveralls that the built has finished so they can
+    # combine the results and post a comment with the summary.
+    name: coverage push
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Finished
+        run: |
+          pip3 install coveralls
+          coveralls --finish --service=github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docs:
+    # Build docs separately to make visualise documentation
+    # problems separably in the PR overview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: pip install tox
+      - name: Check docs
+        run: tox -e docs

@@ -1,13 +1,9 @@
-.. _api:
-
-Developer Interface
-===================
+Reference
+=========
 
 .. module:: schedule
 
-This part of the documentation covers all the interfaces of schedule. For
-parts where schedule depends on external libraries, we document the most
-important right here and provide links to the canonical documentation.
+This part of the documentation covers all the interfaces of schedule.
 
 Main Interface
 --------------
@@ -23,11 +19,6 @@ Main Interface
 .. autofunction:: next_run
 .. autofunction:: idle_seconds
 
-Exceptions
-----------
-
-.. autoexception:: schedule.CancelJob
-
 
 Classes
 -------
@@ -39,3 +30,9 @@ Classes
 .. autoclass:: schedule.Job
    :members:
    :undoc-members:
+
+
+Exceptions
+----------
+
+.. autoexception:: schedule.CancelJob

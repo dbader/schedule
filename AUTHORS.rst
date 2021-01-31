@@ -13,3 +13,15 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - Zerrossetto <https://github.com/Zerrossetto>
 - yetingsky <https://github.com/yetingsky>
 - schnepp <https://github.com/schnepp> <https://bitbucket.org/saschaschnepp>
+- grampajoe <https://github.com/grampajoe>
+- gilbsgilbs <https://github.com/gilbsgilbs>
+- Nathan Wailes <https://github.com/NathanWailes>
+- Connor Skees <https://github.com/ConnorSkees>
+- qmorek <https://github.com/qmorek>
+- aisk <https://github.com/aisk>
+- MichaelCorleoneLi <https://github.com/MichaelCorleoneLi>
+- sijmenhuizenga <https://github.com/SijmenHuizenga>
+- eladbi <https://github.com/eladbi>
+- chankeypathak <https://github.com/chankeypathak>
+- vubon <https://github.com/vubon>
+- gaguirregabiria <https://github.com/gaguirregabiria>

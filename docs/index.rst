@@ -2,8 +2,8 @@ schedule
 ========
 
 
-.. image:: https://api.travis-ci.org/dbader/schedule.svg?branch=master
-        :target: https://travis-ci.org/dbader/schedule
+.. image:: https://github.com/dbader/schedule/workflows/Tests/badge.svg
+        :target: https://github.com/dbader/schedule/actions?query=workflow%3ATests+branch%3Amaster
 
 .. image:: https://coveralls.io/repos/dbader/schedule/badge.svg?branch=master
         :target: https://coveralls.io/r/dbader/schedule
@@ -11,24 +11,17 @@ schedule
 .. image:: https://img.shields.io/pypi/v/schedule.svg
         :target: https://pypi.python.org/pypi/schedule
 
-Python job scheduling for humans.
+Python job scheduling for humans. Run Python functions (or any other callable) periodically using a friendly syntax.
 
-An in-process scheduler for periodic jobs that uses the builder pattern
-for configuration. Schedule lets you run Python functions (or any other
-callable) periodically at pre-determined intervals using a simple,
-human-friendly syntax.
-
-Inspired by `Adam Wiggins' <https://github.com/adamwiggins>`_ article `"Rethinking Cron" <https://adam.herokuapp.com/past/2010/4/13/rethinking_cron/>`_ and the `clockwork <https://github.com/Rykian/clockwork>`_ Ruby module.
-
-Features
---------
-- A simple to use API for scheduling jobs.
+- A simple to use API for scheduling jobs, made for humans.
+- In-process scheduler for periodic jobs. No extra processes needed!
 - Very lightweight and no external dependencies.
 - Excellent test coverage.
-- Tested on Python 2.7, 3.5, and 3.6
+- Tested on Python 3.6, 3.7, 3.8 and 3.9
 
-Usage
------
+
+:doc:`Example <examples>`
+-------------------------
 
 .. code-block:: bash
 
@@ -47,40 +40,62 @@ Usage
     schedule.every().day.at("10:30").do(job)
     schedule.every().monday.do(job)
     schedule.every().wednesday.at("13:15").do(job)
+    schedule.every().minute.at(":17").do(job)
 
     while True:
         schedule.run_pending()
         time.sleep(1)
 
 
-API Documentation
------------------
+More :doc:`examples`
 
-If you are looking for information on a specific function, class, or method,
-this part of the documentation is for you.
+When **not** to use Schedule
+----------------------------
+Let's be honest, Schedule is not a 'one size fits all' scheduling library.
+This library is designed to be a simple solution for simple scheduling problems.
+You should probably look somewhere else if you need:
 
+* Job persistence (remember schedule between restarts)
+* Exact timing (sub-second precision execution)
+* Concurrent execution (multiple threads)
+* Localization (time zones, workdays or holidays)
+
+
+**Schedule does not account for the time it takes for the job function to execute.**
+To guarantee a stable execution schedule you need to move long-running jobs off the main-thread (where the scheduler runs).
+See :doc:`parallel-execution` for a sample implementation.
+
+
+Read More
+---------
 .. toctree::
-   api
+   :maxdepth: 2
 
-Common Questions
-----------------
-
-Please check here before creating a new issue ticket.
-
-.. toctree::
+   installation
+   examples
+   background-execution
+   parallel-execution
+   exception-handling
+   logging
+   multiple-schedulers
    faq
+   reference
+   development
 
 
 Issues
 ------
 
-If you encounter any problems, please `file an issue <http://github.com/dbader/schedule/issues>`_ along with a detailed description. Please also check the :ref:`frequently-asked-questions` and use the search feature in the issue tracker beforehand to avoid creating duplicates. Thank you 😃
-
+If you encounter any problems, please `file an issue <http://github.com/dbader/schedule/issues>`_ along with a detailed description.
+Please also use the search feature in the issue tracker beforehand to avoid creating duplicates. Thank you 😃
 
 About Schedule
 --------------
 
-Schedule was created by `Daniel Bader <https://dbader.org/>`__ - `@dbader_org <https://twitter.com/dbader_org>`_
+Created by `Daniel Bader <https://dbader.org/>`__ - `@dbader_org <https://twitter.com/dbader_org>`_
+
+Inspired by `Adam Wiggins' <https://github.com/adamwiggins>`_ article `"Rethinking Cron" <https://adam.herokuapp.com/past/2010/4/13/rethinking_cron/>`_ and the `clockwork <https://github.com/Rykian/clockwork>`_ Ruby module.
+
 
 Distributed under the MIT license. See ``LICENSE.txt`` for more information.
 
