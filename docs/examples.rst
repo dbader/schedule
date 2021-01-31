@@ -115,6 +115,22 @@ To retrieve all jobs from the scheduler, use ``schedule.get_jobs()``
     all_jobs = schedule.get_jobs()
 
 
+Cancel all jobs
+~~~~~~~~~~~~~~~
+To remove all jobs from the scheduler, use ``schedule.clear()``
+
+.. code-block:: python
+
+    import schedule
+
+    def greet(name):
+        print('Hello {}'.format(name))
+
+    schedule.every().second.do(greet)
+
+    schedule.clear()
+
+
 Get several jobs, filtered by tags
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -137,24 +153,8 @@ You can retrieve a group of jobs from the scheduler, selecting them by a unique 
 Will return a list of every job tagged as ``friend``.
 
 
-Cancel all jobs
-~~~~~~~~~~~~~~~
-To remove all jobs from the scheduler, use ``schedule.clear()``
-
-.. code-block:: python
-
-    import schedule
-
-    def greet(name):
-        print('Hello {}'.format(name))
-
-    schedule.every().second.do(greet)
-
-    schedule.clear()
-
-
-Cancel several jobs at once
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Cancel several jobs, filtered by tags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can cancel the scheduling of a group of jobs selecting them by a unique identifier.
 
