@@ -361,18 +361,38 @@ class SchedulerTests(unittest.TestCase):
         mock_job = make_mock_job()
 
         @repeat(every().minute)
-        def _job1():
+        def job1():
             mock_job()
 
         @repeat(every().hour)
-        def _job2():
+        def job2():
             mock_job()
 
         @repeat(every().day.at('11:00'))
-        def _job3():
+        def job3():
             mock_job()
         schedule.run_all()
         assert mock_job.call_count == 3
+
+    def test_run_all_with_decorator_args(self):
+        mock_job = make_mock_job()
+
+        @repeat(every().minute, 1, 2, 'three', foo=23, bar={})
+        def job(*args, **kwargs):
+            mock_job(*args, **kwargs)
+
+        schedule.run_all()
+        mock_job.assert_called_once_with(1, 2, 'three', foo=23, bar={})
+
+    def test_run_all_with_decorator_defaultargs(self):
+        mock_job = make_mock_job()
+
+        @repeat(every().minute)
+        def job(nothing=None):
+            mock_job(nothing)
+
+        schedule.run_all()
+        mock_job.assert_called_once_with(None)
 
     def test_job_func_args_are_passed_on(self):
         mock_job = make_mock_job()

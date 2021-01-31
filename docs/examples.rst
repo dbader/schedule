@@ -43,9 +43,29 @@ Run a job every x minute
     schedule.every().minute.at(":17").do(job)
 
     while True:
-        # run_pending
         schedule.run_pending()
         time.sleep(1)
+
+Use a decorator to schedule a job
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the ``@repeat`` to schedule a function.
+Pass it an interval using the same syntax as above while omitting the ``.do()`` with.
+
+.. code-block:: python
+
+    from schedule import every, repeat, run_pending
+    import time
+
+    @repeat(every(10).minutes)
+    def job():
+        print("I am a scheduled job")
+
+    while True:
+        run_pending()
+        time.sleep(1)
+
+The ``@every`` decorator does not work on non-static class methods.
 
 Pass arguments to a job
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -61,6 +81,13 @@ Pass arguments to a job
 
     schedule.every(2).seconds.do(greet, name='Alice')
     schedule.every(4).seconds.do(greet, name='Bob')
+
+    from schedule import every, repeat
+
+    @repeat(every().second, "World")
+    @repeat(every().day, "Mars")
+    def hello(planet):
+        print("Hello", planet)
 
 
 Cancel a job
