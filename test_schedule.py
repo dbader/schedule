@@ -9,7 +9,8 @@ import unittest
 # pylint: disable-msg=R0201,C0111,E0102,R0904,R0901
 
 import schedule
-from schedule import every, repeat, ScheduleError, ScheduleValueError, IntervalError
+from schedule import every, repeat, \
+    ScheduleError, ScheduleValueError, IntervalError
 
 
 def make_mock_job(name=None):
