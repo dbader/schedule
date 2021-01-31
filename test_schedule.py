@@ -565,7 +565,8 @@ class SchedulerTests(unittest.TestCase):
         # Test None input yields all 3
         jobs = schedule.get_jobs()
         assert len(jobs) == 3
-        assert {'job1', 'job2', 'job3'}.issubset({*jobs[0].tags, *jobs[1].tags, *jobs[2].tags})
+        assert {'job1', 'job2', 'job3'}\
+            .issubset({*jobs[0].tags, *jobs[1].tags, *jobs[2].tags})
 
         # Test each 1:1 tag:job
         jobs = schedule.get_jobs('tag1')
