@@ -75,7 +75,7 @@ To remove a job from the scheduler, use the ``schedule.cancel_job(job)`` method
         print('Hello world')
 
     job = schedule.every().day.at('22:30').do(some_task)
-    shcedule.cancel_job(job)
+    schedule.cancel_job(job)
 
 
 Run a job once
