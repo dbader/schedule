@@ -139,6 +139,7 @@ html_theme_options = {
     'github_repo': 'schedule',
     'github_banner': True,
     'github_button': True,
+    'github_type': 'star',
     'show_related': False
 }
 
