@@ -102,7 +102,7 @@ To remove a job from the scheduler, use the ``schedule.cancel_job(job)`` method
         print('Hello world')
 
     job = schedule.every().day.at('22:30').do(some_task)
-    shcedule.cancel_job(job)
+    schedule.cancel_job(job)
 
 
 Run a job once
@@ -126,6 +126,22 @@ Return ``schedule.CancelJob`` from a job to remove it from the scheduler.
         time.sleep(1)
 
 
+Get all jobs
+~~~~~~~~~~~~
+To retrieve all jobs from the scheduler, use ``schedule.get_jobs()``
+
+.. code-block:: python
+
+    import schedule
+
+    def hello():
+        print('Hello world')
+
+    schedule.every().second.do(hello)
+
+    all_jobs = schedule.get_jobs()
+
+
 Cancel all jobs
 ~~~~~~~~~~~~~~~
 To remove all jobs from the scheduler, use ``schedule.clear()``
@@ -142,8 +158,30 @@ To remove all jobs from the scheduler, use ``schedule.clear()``
     schedule.clear()
 
 
-Cancel several jobs at once
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Get several jobs, filtered by tags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can retrieve a group of jobs from the scheduler, selecting them by a unique identifier.
+
+.. code-block:: python
+
+    import schedule
+
+    def greet(name):
+        print('Hello {}'.format(name))
+
+    schedule.every().day.do(greet, 'Andrea').tag('daily-tasks', 'friend')
+    schedule.every().hour.do(greet, 'John').tag('hourly-tasks', 'friend')
+    schedule.every().hour.do(greet, 'Monica').tag('hourly-tasks', 'customer')
+    schedule.every().day.do(greet, 'Derek').tag('daily-tasks', 'guest')
+
+    friends = schedule.get_jobs('friend')
+
+Will return a list of every job tagged as ``friend``.
+
+
+Cancel several jobs, filtered by tags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can cancel the scheduling of a group of jobs selecting them by a unique identifier.
 
@@ -162,6 +200,7 @@ You can cancel the scheduling of a group of jobs selecting them by a unique iden
     schedule.clear('daily-tasks')
 
 Will prevent every job tagged as ``daily-tasks`` from running again.
+
 
 Run a job at random intervals
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

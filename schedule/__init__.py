@@ -109,6 +109,19 @@ class Scheduler(object):
             self._run_job(job)
             time.sleep(delay_seconds)
 
+    def get_jobs(self, tag=None):
+        """
+        Gets scheduled jobs marked with the given tag, or all jobs
+        if tag is omitted.
+
+        :param tag: An identifier used to identify a subset of
+                    jobs to retrieve
+        """
+        if tag is None:
+            return self.jobs[:]
+        else:
+            return [job for job in self.jobs if tag in job.tags]
+
     def clear(self, tag=None):
         """
         Deletes scheduled jobs marked with the given tag, or all jobs
@@ -597,6 +610,13 @@ def run_all(delay_seconds=0):
     :data:`default scheduler instance <default_scheduler>`.
     """
     default_scheduler.run_all(delay_seconds=delay_seconds)
+
+
+def get_jobs(tag=None):
+    """Calls :meth:`get_jobs <Scheduler.get_jobs>` on the
+    :data:`default scheduler instance <default_scheduler>`.
+    """
+    return default_scheduler.get_jobs(tag)
 
 
 def clear(tag=None):
