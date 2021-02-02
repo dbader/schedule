@@ -50,7 +50,7 @@ Use a decorator to schedule a job
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use the ``@repeat`` to schedule a function.
-Pass it an interval using the same syntax as above while omitting the ``.do()`` with.
+Pass it an interval using the same syntax as above while omitting the ``.do()``.
 
 .. code-block:: python
 
@@ -65,7 +65,7 @@ Pass it an interval using the same syntax as above while omitting the ``.do()`` 
         run_pending()
         time.sleep(1)
 
-The ``@every`` decorator does not work on non-static class methods.
+The ``@repeat`` decorator does not work on non-static class methods.
 
 Pass arguments to a job
 ~~~~~~~~~~~~~~~~~~~~~~~
