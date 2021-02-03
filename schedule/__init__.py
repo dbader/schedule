@@ -223,6 +223,11 @@ class Job(object):
         return self.next_run < other.next_run
 
     def __str__(self):
+        if hasattr(self.job_func, '__name__'):
+            job_func_name = self.job_func.__name__
+        else:
+            job_func_name = repr(self.job_func)
+
         return (
             "Job(interval={}, "
             "unit={}, "
@@ -231,7 +236,7 @@ class Job(object):
             "kwargs={})"
         ).format(self.interval,
                  self.unit,
-                 self.job_func.__name__,
+                 job_func_name,
                  self.job_func.args,
                  self.job_func.keywords)
 
