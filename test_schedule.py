@@ -430,7 +430,7 @@ class SchedulerTests(unittest.TestCase):
         assert len(str(every().minute.do(lambda: 1))) > 1
         assert len(str(every().day.at('10:30').do(lambda: 1))) > 1
 
-    def test_to_string_functools_partial_job_func(self):
+    def test_repr_functools_partial_job_func(self):
         def job_fun(arg):
             pass
         job_fun = functools.partial(job_fun, 'foo')
@@ -438,6 +438,15 @@ class SchedulerTests(unittest.TestCase):
         assert 'functools.partial' in job_repr
         assert 'bar=True' in job_repr
         assert 'somekey=23' in job_repr
+
+    def test_to_string_functools_partial_job_func(self):
+        def job_fun(arg):
+            pass
+        job_fun = functools.partial(job_fun, 'foo')
+        job_str = str(every().minute.do(job_fun, bar=True, somekey=23))
+        assert 'functools.partial' in job_str
+        assert 'bar=True' in job_str
+        assert 'somekey=23' in job_str
 
     def test_run_pending(self):
         """Check that run_pending() runs pending jobs.
