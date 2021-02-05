@@ -79,7 +79,7 @@ For yay users, run:
 Conda (Anaconda)
 ----------------
 
-Schedule is `published <https://anaconda.org/conda-forge/schedule>`__ in the conda (the Anaconda package manager).
+Schedule is `published <https://anaconda.org/conda-forge/schedule>`__ in conda (the Anaconda package manager).
 
 For installation instructions, visit `the conda-forge Schedule repo <https://github.com/conda-forge/schedule-feedstock#installing-schedule>`__.
 The release of Schedule on conda is maintained by the `conda-forge project <https://conda-forge.org/>`__.
