@@ -226,6 +226,11 @@ class Job(object):
         return self.next_run < other.next_run
 
     def __str__(self):
+        if hasattr(self.job_func, '__name__'):
+            job_func_name = self.job_func.__name__
+        else:
+            job_func_name = repr(self.job_func)
+
         return (
             "Job(interval={}, "
             "unit={}, "
@@ -234,7 +239,7 @@ class Job(object):
             "kwargs={})"
         ).format(self.interval,
                  self.unit,
-                 self.job_func.__name__,
+                 job_func_name,
                  self.job_func.args,
                  self.job_func.keywords)
 
@@ -648,3 +653,18 @@ def idle_seconds():
     :data:`default scheduler instance <default_scheduler>`.
     """
     return default_scheduler.idle_seconds
+
+
+def repeat(job, *args, **kwargs):
+    """
+    Decorator to schedule a new periodic job.
+
+    Any additional arguments are passed on to the decorated function
+    when the job runs.
+
+    :param job: a :class:`Jobs <Job>`
+    """
+    def _schedule_decorator(decorated_function):
+        job.do(decorated_function, *args, **kwargs)
+        return decorated_function
+    return _schedule_decorator

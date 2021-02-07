@@ -9,7 +9,8 @@ import unittest
 # pylint: disable-msg=R0201,C0111,E0102,R0904,R0901
 
 import schedule
-from schedule import every, ScheduleError, ScheduleValueError, IntervalError
+from schedule import every, repeat, \
+    ScheduleError, ScheduleValueError, IntervalError
 
 
 def make_mock_job(name=None):
@@ -357,6 +358,43 @@ class SchedulerTests(unittest.TestCase):
         schedule.run_all()
         assert mock_job.call_count == 3
 
+    def test_run_all_with_decorator(self):
+        mock_job = make_mock_job()
+
+        @repeat(every().minute)
+        def job1():
+            mock_job()
+
+        @repeat(every().hour)
+        def job2():
+            mock_job()
+
+        @repeat(every().day.at('11:00'))
+        def job3():
+            mock_job()
+        schedule.run_all()
+        assert mock_job.call_count == 3
+
+    def test_run_all_with_decorator_args(self):
+        mock_job = make_mock_job()
+
+        @repeat(every().minute, 1, 2, 'three', foo=23, bar={})
+        def job(*args, **kwargs):
+            mock_job(*args, **kwargs)
+
+        schedule.run_all()
+        mock_job.assert_called_once_with(1, 2, 'three', foo=23, bar={})
+
+    def test_run_all_with_decorator_defaultargs(self):
+        mock_job = make_mock_job()
+
+        @repeat(every().minute)
+        def job(nothing=None):
+            mock_job(nothing)
+
+        schedule.run_all()
+        mock_job.assert_called_once_with(None)
+
     def test_job_func_args_are_passed_on(self):
         mock_job = make_mock_job()
         every().second.do(mock_job, 1, 2, 'three', foo=23, bar={})
@@ -392,7 +430,7 @@ class SchedulerTests(unittest.TestCase):
         assert len(str(every().minute.do(lambda: 1))) > 1
         assert len(str(every().day.at('10:30').do(lambda: 1))) > 1
 
-    def test_to_string_functools_partial_job_func(self):
+    def test_repr_functools_partial_job_func(self):
         def job_fun(arg):
             pass
         job_fun = functools.partial(job_fun, 'foo')
@@ -400,6 +438,15 @@ class SchedulerTests(unittest.TestCase):
         assert 'functools.partial' in job_repr
         assert 'bar=True' in job_repr
         assert 'somekey=23' in job_repr
+
+    def test_to_string_functools_partial_job_func(self):
+        def job_fun(arg):
+            pass
+        job_fun = functools.partial(job_fun, 'foo')
+        job_str = str(every().minute.do(job_fun, bar=True, somekey=23))
+        assert 'functools.partial' in job_str
+        assert 'bar=True' in job_str
+        assert 'somekey=23' in job_str
 
     def test_run_pending(self):
         """Check that run_pending() runs pending jobs.
