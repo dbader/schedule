@@ -238,6 +238,17 @@ class SchedulerTests(unittest.TestCase):
             self.assertRaises(ScheduleValueError, every().hour.at, "01:61")
             self.assertRaises(TypeError, every().hour.at, 2)
 
+            # test the 'MM:SS' format
+            assert every().hour.at('30:05').do(mock_job).next_run.hour == 12
+            assert every().hour.at('30:05').do(mock_job).next_run.minute == 30
+            assert every().hour.at('30:05').do(mock_job).next_run.second == 5
+            assert every().hour.at('10:25').do(mock_job).next_run.hour == 13
+            assert every().hour.at('10:25').do(mock_job).next_run.minute == 10
+            assert every().hour.at('10:25').do(mock_job).next_run.second == 25
+            assert every().hour.at('00:40').do(mock_job).next_run.hour == 13
+            assert every().hour.at('00:40').do(mock_job).next_run.minute == 0
+            assert every().hour.at('00:40').do(mock_job).next_run.second == 40
+
     def test_at_time_minute(self):
         with mock_datetime(2010, 1, 6, 12, 20, 30):
             mock_job = make_mock_job()
@@ -274,6 +285,69 @@ class SchedulerTests(unittest.TestCase):
             assert every().friday.do(mock_job).next_run.day == 8
             assert every().saturday.do(mock_job).next_run.day == 9
             assert every().sunday.do(mock_job).next_run.day == 10
+
+    def test_next_run_time_day_end(self):
+        mock_job = make_mock_job()
+        # At day 1, schedule job to run at daily 23:30
+        with mock_datetime(2010, 12, 1, 23, 0, 0):
+            job = every().day.at('23:30').do(mock_job)
+            # first occurrence same day
+            assert job.next_run.day == 1
+            assert job.next_run.hour == 23
+
+        # Running the job 01:00 on day 2, afterwards the job should be
+        # scheduled at 23:30 the same day. This simulates a job that started
+        # on day 1 at 23:30 and took 1,5 hours to finish
+        with mock_datetime(2010, 12, 2, 1, 0, 0):
+            job.run()
+            assert job.next_run.day == 2
+            assert job.next_run.hour == 23
+
+        # Run the job at 23:30 on day 2, afterwards the job should be
+        # scheduled at 23:30 the next day
+        with mock_datetime(2010, 12, 2, 23, 30, 0):
+            job.run()
+            assert job.next_run.day == 3
+            assert job.next_run.hour == 23
+
+    def test_next_run_time_hour_end(self):
+        mock_job = make_mock_job()
+        with mock_datetime(2010, 10, 10, 12, 0, 0):
+            job = every().hour.at(':10').do(mock_job)
+            assert job.next_run.hour == 12
+            assert job.next_run.minute == 10
+
+        with mock_datetime(2010, 10, 10, 13, 0, 0):
+            job.run()
+            assert job.next_run.hour == 13
+            assert job.next_run.minute == 10
+
+        with mock_datetime(2010, 10, 10, 13, 15, 0):
+            job.run()
+            assert job.next_run.hour == 14
+            assert job.next_run.minute == 10
+
+    def test_next_run_time_minute_end(self):
+        mock_job = make_mock_job()
+        with mock_datetime(2010, 10, 10, 10, 10, 0):
+            job = every().minute.at(':15').do(mock_job)
+            assert job.next_run.minute == 10
+            assert job.next_run.second == 15
+
+        with mock_datetime(2010, 10, 10, 10, 10, 59):
+            job.run()
+            assert job.next_run.minute == 11
+            assert job.next_run.second == 15
+
+        with mock_datetime(2010, 10, 10, 10, 12, 14):
+            job.run()
+            assert job.next_run.minute == 12
+            assert job.next_run.second == 15
+
+        with mock_datetime(2010, 10, 10, 10, 12, 16):
+            job.run()
+            assert job.next_run.minute == 13
+            assert job.next_run.second == 15
 
     def test_run_all(self):
         mock_job = make_mock_job()
@@ -430,7 +504,18 @@ class SchedulerTests(unittest.TestCase):
             assert len(schedule.jobs) == 2
             # Make sure the hourly job is first
             assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
+
+    def test_idle_seconds(self):
+        assert schedule.next_run() is None
+        assert schedule.idle_seconds() is None
+
+        mock_job = make_mock_job()
+        with mock_datetime(2020, 12, 9, 21, 46):
+            job = every().hour.do(mock_job)
             assert schedule.idle_seconds() == 60 * 60
+            schedule.cancel_job(job)
+            assert schedule.next_run() is None
+            assert schedule.idle_seconds() is None
 
     def test_cancel_job(self):
         def stop_job():
@@ -471,6 +556,33 @@ class SchedulerTests(unittest.TestCase):
         self.assertRaises(TypeError, job1.tag, 1, 'a', [])
         job1.tag(0, 'a', True)
         assert len(job1.tags) == 3
+
+    def test_get_by_tag(self):
+        every().second.do(make_mock_job()).tag('job1', 'tag1')
+        every().second.do(make_mock_job()).tag('job2', 'tag2', 'tag4')
+        every().second.do(make_mock_job()).tag('job3', 'tag3', 'tag4')
+
+        # Test None input yields all 3
+        jobs = schedule.get_jobs()
+        assert len(jobs) == 3
+        assert {'job1', 'job2', 'job3'}\
+            .issubset({*jobs[0].tags, *jobs[1].tags, *jobs[2].tags})
+
+        # Test each 1:1 tag:job
+        jobs = schedule.get_jobs('tag1')
+        assert len(jobs) == 1
+        assert 'job1' in jobs[0].tags
+
+        # Test multiple jobs found.
+        jobs = schedule.get_jobs('tag4')
+        assert len(jobs) == 2
+        assert 'job1' not in {*jobs[0].tags, *jobs[1].tags}
+
+        # Test no tag.
+        jobs = schedule.get_jobs('tag5')
+        assert len(jobs) == 0
+        schedule.clear()
+        assert len(schedule.jobs) == 0
 
     def test_clear_by_tag(self):
         every().second.do(make_mock_job(name='job1')).tag('tag1')

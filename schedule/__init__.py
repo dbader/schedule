@@ -15,7 +15,7 @@ Features:
     - A simple to use API for scheduling jobs.
     - Very lightweight and no external dependencies.
     - Excellent test coverage.
-    - Tested on Python 2.7, 3.5 and 3.6
+    - Tested on Python 3.6, 3.7, 3.8, 3.9
 
 Usage:
     >>> import schedule
@@ -37,10 +37,7 @@ Usage:
 [2] https://github.com/Rykian/clockwork
 [3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
-try:
-    from collections.abc import Hashable
-except ImportError:
-    from collections import Hashable
+from collections.abc import Hashable
 import datetime
 import functools
 import logging
@@ -112,6 +109,19 @@ class Scheduler(object):
             self._run_job(job)
             time.sleep(delay_seconds)
 
+    def get_jobs(self, tag=None):
+        """
+        Gets scheduled jobs marked with the given tag, or all jobs
+        if tag is omitted.
+
+        :param tag: An identifier used to identify a subset of
+                    jobs to retrieve
+        """
+        if tag is None:
+            return self.jobs[:]
+        else:
+            return [job for job in self.jobs if tag in job.tags]
+
     def clear(self, tag=None):
         """
         Deletes scheduled jobs marked with the given tag, or all jobs
@@ -160,6 +170,7 @@ class Scheduler(object):
         Datetime when the next job should run.
 
         :return: A :class:`~datetime.datetime` object
+                 or None if no jobs scheduled
         """
         if not self.jobs:
             return None
@@ -169,8 +180,11 @@ class Scheduler(object):
     def idle_seconds(self):
         """
         :return: Number of seconds until
-                 :meth:`next_run <Scheduler.next_run>`.
+                 :meth:`next_run <Scheduler.next_run>`
+                 or None if no jobs are scheduled
         """
+        if not self.next_run:
+            return None
         return (self.next_run - datetime.datetime.now()).total_seconds()
 
 
@@ -385,12 +399,19 @@ class Job(object):
         """
         Specify a particular time that the job should be run at.
 
-        :param time_str: A string in one of the following formats: `HH:MM:SS`,
-            `HH:MM`,`:MM`, `:SS`. The format must make sense given how often
-            the job is repeating; for example, a job that repeats every minute
-            should not be given a string in the form `HH:MM:SS`. The difference
-            between `:MM` and `:SS` is inferred from the selected time-unit
-            (e.g. `every().hour.at(':30')` vs. `every().minute.at(':30')`).
+        :param time_str: A string in one of the following formats:
+
+            - For daily jobs -> `HH:MM:SS` or `HH:MM`
+            - For hourly jobs -> `MM:SS` or `:MM`
+            - For minute jobs -> `:SS`
+
+            The format must make sense given how often the job is
+            repeating; for example, a job that repeats every minute
+            should not be given a string in the form `HH:MM:SS`. The
+            difference between `:MM` and :SS` is inferred from the
+            selected time-unit (e.g. `every().hour.at(':30')` vs.
+            `every().minute.at(':30')`).
+
         :return: The invoked job instance
         """
         if (self.unit not in ('days', 'hours', 'minutes')
@@ -416,6 +437,10 @@ class Job(object):
             hour = 0
             minute = 0
             _, second = time_values
+        elif len(time_values) == 2 and self.unit == 'hours' and \
+                len(time_values[0]):
+            hour = 0
+            minute, second = time_values
         else:
             hour, minute = time_values
             second = 0
@@ -460,13 +485,7 @@ class Job(object):
         :return: The invoked job instance
         """
         self.job_func = functools.partial(job_func, *args, **kwargs)
-        try:
-            functools.update_wrapper(self.job_func, job_func)
-        except AttributeError:
-            # job_funcs already wrapped by functools.partial won't have
-            # __name__, __module__ or __doc__ and the update_wrapper()
-            # call will fail.
-            pass
+        functools.update_wrapper(self.job_func, job_func)
         self._schedule_next_run()
         self.scheduler.jobs.append(self)
         return self
@@ -539,9 +558,11 @@ class Job(object):
             if self.unit in ['days', 'hours'] or self.start_day is not None:
                 kwargs['minute'] = self.at_time.minute
             self.next_run = self.next_run.replace(**kwargs)
-            # If we are running for the first time, make sure we run
-            # at the specified time *today* (or *this hour*) as well
-            if not self.last_run:
+            # Make sure we run at the specified time *today* (or *this hour*)
+            # as well. This accounts for when a job takes so long it finished
+            # in the next period.
+            if not self.last_run \
+                    or (self.next_run - self.last_run) > self.period:
                 now = datetime.datetime.now()
                 if (self.unit == 'days' and self.at_time > now.time() and
                         self.interval == 1):
@@ -592,6 +613,13 @@ def run_all(delay_seconds=0):
     :data:`default scheduler instance <default_scheduler>`.
     """
     default_scheduler.run_all(delay_seconds=delay_seconds)
+
+
+def get_jobs(tag=None):
+    """Calls :meth:`get_jobs <Scheduler.get_jobs>` on the
+    :data:`default scheduler instance <default_scheduler>`.
+    """
+    return default_scheduler.get_jobs(tag)
 
 
 def clear(tag=None):
