@@ -3,9 +3,7 @@ from setuptools import setup
 
 
 SCHEDULE_VERSION = "1.0.0"
-SCHEDULE_DOWNLOAD_URL = (
-    "https://github.com/dbader/schedule/tarball/" + SCHEDULE_VERSION
-)
+SCHEDULE_DOWNLOAD_URL = "https://github.com/dbader/schedule/tarball/" + SCHEDULE_VERSION
 
 
 def read_file(filename):

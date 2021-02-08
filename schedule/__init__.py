@@ -267,9 +267,7 @@ class Job(object):
         else:
             job_func_name = repr(self.job_func)
         args = [repr(x) if is_repr(x) else str(x) for x in self.job_func.args]
-        kwargs = [
-            "%s=%s" % (k, repr(v)) for k, v in self.job_func.keywords.items()
-        ]
+        kwargs = ["%s=%s" % (k, repr(v)) for k, v in self.job_func.keywords.items()]
         call_repr = job_func_name + "(" + ", ".join(args + kwargs) + ")"
 
         if self.at_time is not None:
@@ -432,10 +430,7 @@ class Job(object):
 
         :return: The invoked job instance
         """
-        if (
-            self.unit not in ("days", "hours", "minutes")
-            and not self.start_day
-        ):
+        if self.unit not in ("days", "hours", "minutes") and not self.start_day:
             raise ScheduleValueError("Invalid unit")
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string")
@@ -444,14 +439,10 @@ class Job(object):
                 raise ScheduleValueError("Invalid time format")
         if self.unit == "hours":
             if not re.match(r"^([0-5]\d)?:[0-5]\d$", time_str):
-                raise ScheduleValueError(
-                    ("Invalid time format for" " an hourly job")
-                )
+                raise ScheduleValueError(("Invalid time format for" " an hourly job"))
         if self.unit == "minutes":
             if not re.match(r"^:[0-5]\d$", time_str):
-                raise ScheduleValueError(
-                    ("Invalid time format for" " a minutely job")
-                )
+                raise ScheduleValueError(("Invalid time format for" " a minutely job"))
         time_values = time_str.split(":")
         if len(time_values) == 3:
             hour, minute, second = time_values
@@ -459,11 +450,7 @@ class Job(object):
             hour = 0
             minute = 0
             _, second = time_values
-        elif (
-            len(time_values) == 2
-            and self.unit == "hours"
-            and len(time_values[0])
-        ):
+        elif len(time_values) == 2 and self.unit == "hours" and len(time_values[0]):
             hour = 0
             minute, second = time_values
         else:
@@ -570,10 +557,7 @@ class Job(object):
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
         if self.at_time is not None:
-            if (
-                self.unit not in ("days", "hours", "minutes")
-                and self.start_day is None
-            ):
+            if self.unit not in ("days", "hours", "minutes") and self.start_day is None:
                 raise ScheduleValueError(
                     ("Invalid unit without" " specifying start day")
                 )
@@ -586,10 +570,7 @@ class Job(object):
             # Make sure we run at the specified time *today* (or *this hour*)
             # as well. This accounts for when a job takes so long it finished
             # in the next period.
-            if (
-                not self.last_run
-                or (self.next_run - self.last_run) > self.period
-            ):
+            if not self.last_run or (self.next_run - self.last_run) > self.period:
                 now = datetime.datetime.now()
                 if (
                     self.unit == "days"
@@ -605,12 +586,8 @@ class Job(object):
                     )
                 ):
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
-                elif (
-                    self.unit == "minutes" and self.at_time.second > now.second
-                ):
-                    self.next_run = self.next_run - datetime.timedelta(
-                        minutes=1
-                    )
+                elif self.unit == "minutes" and self.at_time.second > now.second:
+                    self.next_run = self.next_run - datetime.timedelta(minutes=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:

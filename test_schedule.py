@@ -436,8 +436,7 @@ class SchedulerTests(unittest.TestCase):
 
         s = repr(every().minute.do(job_fun, "foo", bar=23))
         assert s.startswith(
-            "Every 1 minute do job_fun('foo', bar=23) "
-            "(last run: [never], next run: "
+            "Every 1 minute do job_fun('foo', bar=23) " "(last run: [never], next run: "
         )
         assert "job_fun" in s
         assert "foo" in s
