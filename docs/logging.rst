@@ -9,6 +9,7 @@ To receive logs from Schedule, set the logging level to ``DEBUG``.
     import schedule
     import logging
 
+    logging.basicConfig()
     schedule_logger = logging.getLogger('schedule')
     schedule_logger.setLevel(level=logging.DEBUG)
 
@@ -19,13 +20,16 @@ To receive logs from Schedule, set the logging level to ``DEBUG``.
 
     schedule.run_all()
 
+    schedule.clear()
+
 This will result in the following log messages:
 
 .. code-block:: text
 
-    DEBUG:schedule:Running *all* 1 jobs with 0s delay inbetween
+    DEBUG:schedule:Running *all* 1 jobs with 0s delay in between
     DEBUG:schedule:Running job Job(interval=1, unit=seconds, do=job, args=(), kwargs={})
     Hello, Logs
+    DEBUG:schedule:Deleting *all* jobs
 
 
 Customize logging
