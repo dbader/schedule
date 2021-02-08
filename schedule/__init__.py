@@ -241,7 +241,7 @@ class Job(object):
             job_func_name = repr(self.job_func)
 
         return (
-            "Job(interval={}, " "unit={}, " "do={}, " "args={}, " "kwargs={})"
+            "Job(interval={}, unit={}, do={}, args={}, kwargs={})"
         ).format(
             self.interval,
             self.unit,
@@ -439,10 +439,10 @@ class Job(object):
                 raise ScheduleValueError("Invalid time format")
         if self.unit == "hours":
             if not re.match(r"^([0-5]\d)?:[0-5]\d$", time_str):
-                raise ScheduleValueError(("Invalid time format for" " an hourly job"))
+                raise ScheduleValueError(("Invalid time format for an hourly job"))
         if self.unit == "minutes":
             if not re.match(r"^:[0-5]\d$", time_str):
-                raise ScheduleValueError(("Invalid time format for" " a minutely job"))
+                raise ScheduleValueError(("Invalid time format for a minutely job"))
         time_values = time_str.split(":")
         if len(time_values) == 3:
             hour, minute, second = time_values
