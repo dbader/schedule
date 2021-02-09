@@ -21,6 +21,16 @@ Running tests
 
     py.test test_schedule.py --flake8 schedule -v --cov schedule --cov-report term-missing
 
+Formatting the code
+-------------------
+This project uses `black formatter <https://black.readthedocs.io/en/stable/>`_.
+To format the code, run:
+
+.. code-block:: bash
+
+    black .
+
+Make sure you use version 20.8b1 of black.
 
 Compiling documentation
 -----------------------

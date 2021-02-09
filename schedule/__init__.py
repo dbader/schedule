@@ -45,21 +45,24 @@ import random
 import re
 import time
 
-logger = logging.getLogger('schedule')
+logger = logging.getLogger("schedule")
 
 
 class ScheduleError(Exception):
     """Base schedule exception"""
+
     pass
 
 
 class ScheduleValueError(ScheduleError):
     """Base schedule value error"""
+
     pass
 
 
 class IntervalError(ScheduleValueError):
     """An improper interval was used"""
+
     pass
 
 
@@ -67,6 +70,7 @@ class CancelJob(object):
     """
     Can be returned from a job to unschedule itself.
     """
+
     pass
 
 
@@ -76,6 +80,7 @@ class Scheduler(object):
     factories to create jobs, keep record of scheduled jobs and
     handle their execution.
     """
+
     def __init__(self):
         self.jobs = []
 
@@ -103,8 +108,11 @@ class Scheduler(object):
 
         :param delay_seconds: A delay added between every executed job
         """
-        logger.debug('Running *all* %i jobs with %is delay in between',
-                     len(self.jobs), delay_seconds)
+        logger.debug(
+            "Running *all* %i jobs with %is delay in between",
+            len(self.jobs),
+            delay_seconds,
+        )
         for job in self.jobs[:]:
             self._run_job(job)
             time.sleep(delay_seconds)
@@ -205,6 +213,7 @@ class Job(object):
     A job is usually created and returned by :meth:`Scheduler.every`
     method, which also defines its `interval`.
     """
+
     def __init__(self, interval, scheduler=None):
         self.interval = interval  # pause interval * unit between runs
         self.latest = None  # upper limit to the interval
@@ -226,52 +235,54 @@ class Job(object):
         return self.next_run < other.next_run
 
     def __str__(self):
-        if hasattr(self.job_func, '__name__'):
+        if hasattr(self.job_func, "__name__"):
             job_func_name = self.job_func.__name__
         else:
             job_func_name = repr(self.job_func)
 
         return (
-            "Job(interval={}, "
-            "unit={}, "
-            "do={}, "
-            "args={}, "
-            "kwargs={})"
-        ).format(self.interval,
-                 self.unit,
-                 job_func_name,
-                 self.job_func.args,
-                 self.job_func.keywords)
+            "Job(interval={}, unit={}, do={}, args={}, kwargs={})"
+        ).format(
+            self.interval,
+            self.unit,
+            job_func_name,
+            self.job_func.args,
+            self.job_func.keywords,
+        )
 
     def __repr__(self):
         def format_time(t):
-            return t.strftime('%Y-%m-%d %H:%M:%S') if t else '[never]'
+            return t.strftime("%Y-%m-%d %H:%M:%S") if t else "[never]"
 
         def is_repr(j):
             return not isinstance(j, Job)
 
-        timestats = '(last run: %s, next run: %s)' % (
-                    format_time(self.last_run), format_time(self.next_run))
+        timestats = "(last run: %s, next run: %s)" % (
+            format_time(self.last_run),
+            format_time(self.next_run),
+        )
 
-        if hasattr(self.job_func, '__name__'):
+        if hasattr(self.job_func, "__name__"):
             job_func_name = self.job_func.__name__
         else:
             job_func_name = repr(self.job_func)
         args = [repr(x) if is_repr(x) else str(x) for x in self.job_func.args]
-        kwargs = ['%s=%s' % (k, repr(v))
-                  for k, v in self.job_func.keywords.items()]
-        call_repr = job_func_name + '(' + ', '.join(args + kwargs) + ')'
+        kwargs = ["%s=%s" % (k, repr(v)) for k, v in self.job_func.keywords.items()]
+        call_repr = job_func_name + "(" + ", ".join(args + kwargs) + ")"
 
         if self.at_time is not None:
-            return 'Every %s %s at %s do %s %s' % (
-                   self.interval,
-                   self.unit[:-1] if self.interval == 1 else self.unit,
-                   self.at_time, call_repr, timestats)
+            return "Every %s %s at %s do %s %s" % (
+                self.interval,
+                self.unit[:-1] if self.interval == 1 else self.unit,
+                self.at_time,
+                call_repr,
+                timestats,
+            )
         else:
             fmt = (
-                'Every %(interval)s ' +
-                ('to %(latest)s ' if self.latest is not None else '') +
-                '%(unit)s do %(call_repr)s %(timestats)s'
+                "Every %(interval)s "
+                + ("to %(latest)s " if self.latest is not None else "")
+                + "%(unit)s do %(call_repr)s %(timestats)s"
             )
 
             return fmt % dict(
@@ -279,111 +290,111 @@ class Job(object):
                 latest=self.latest,
                 unit=(self.unit[:-1] if self.interval == 1 else self.unit),
                 call_repr=call_repr,
-                timestats=timestats
+                timestats=timestats,
             )
 
     @property
     def second(self):
         if self.interval != 1:
-            raise IntervalError('Use seconds instead of second')
+            raise IntervalError("Use seconds instead of second")
         return self.seconds
 
     @property
     def seconds(self):
-        self.unit = 'seconds'
+        self.unit = "seconds"
         return self
 
     @property
     def minute(self):
         if self.interval != 1:
-            raise IntervalError('Use minutes instead of minute')
+            raise IntervalError("Use minutes instead of minute")
         return self.minutes
 
     @property
     def minutes(self):
-        self.unit = 'minutes'
+        self.unit = "minutes"
         return self
 
     @property
     def hour(self):
         if self.interval != 1:
-            raise IntervalError('Use hours instead of hour')
+            raise IntervalError("Use hours instead of hour")
         return self.hours
 
     @property
     def hours(self):
-        self.unit = 'hours'
+        self.unit = "hours"
         return self
 
     @property
     def day(self):
         if self.interval != 1:
-            raise IntervalError('Use days instead of day')
+            raise IntervalError("Use days instead of day")
         return self.days
 
     @property
     def days(self):
-        self.unit = 'days'
+        self.unit = "days"
         return self
 
     @property
     def week(self):
         if self.interval != 1:
-            raise IntervalError('Use weeks instead of week')
+            raise IntervalError("Use weeks instead of week")
         return self.weeks
 
     @property
     def weeks(self):
-        self.unit = 'weeks'
+        self.unit = "weeks"
         return self
 
     @property
     def monday(self):
         if self.interval != 1:
-            raise IntervalError('Use mondays instead of monday')
-        self.start_day = 'monday'
+            raise IntervalError("Use mondays instead of monday")
+        self.start_day = "monday"
         return self.weeks
 
     @property
     def tuesday(self):
         if self.interval != 1:
-            raise IntervalError('Use tuesdays instead of tuesday')
-        self.start_day = 'tuesday'
+            raise IntervalError("Use tuesdays instead of tuesday")
+        self.start_day = "tuesday"
         return self.weeks
 
     @property
     def wednesday(self):
         if self.interval != 1:
-            raise IntervalError('Use wednesdays instead of wednesday')
-        self.start_day = 'wednesday'
+            raise IntervalError("Use wednesdays instead of wednesday")
+        self.start_day = "wednesday"
         return self.weeks
 
     @property
     def thursday(self):
         if self.interval != 1:
-            raise IntervalError('Use thursdays instead of thursday')
-        self.start_day = 'thursday'
+            raise IntervalError("Use thursdays instead of thursday")
+        self.start_day = "thursday"
         return self.weeks
 
     @property
     def friday(self):
         if self.interval != 1:
-            raise IntervalError('Use fridays instead of friday')
-        self.start_day = 'friday'
+            raise IntervalError("Use fridays instead of friday")
+        self.start_day = "friday"
         return self.weeks
 
     @property
     def saturday(self):
         if self.interval != 1:
-            raise IntervalError('Use saturdays instead of saturday')
-        self.start_day = 'saturday'
+            raise IntervalError("Use saturdays instead of saturday")
+        self.start_day = "saturday"
         return self.weeks
 
     @property
     def sunday(self):
         if self.interval != 1:
-            raise IntervalError('Use sundays instead of sunday')
-        self.start_day = 'sunday'
+            raise IntervalError("Use sundays instead of sunday")
+        self.start_day = "sunday"
         return self.weeks
 
     def tag(self, *tags):
@@ -396,7 +407,7 @@ class Job(object):
         :return: The invoked job instance
         """
         if not all(isinstance(tag, Hashable) for tag in tags):
-            raise TypeError('Tags must be hashable')
+            raise TypeError("Tags must be hashable")
         self.tags.update(tags)
         return self
 
@@ -419,43 +430,39 @@ class Job(object):
 
         :return: The invoked job instance
         """
-        if (self.unit not in ('days', 'hours', 'minutes')
-                and not self.start_day):
-            raise ScheduleValueError('Invalid unit')
+        if self.unit not in ("days", "hours", "minutes") and not self.start_day:
+            raise ScheduleValueError("Invalid unit")
         if not isinstance(time_str, str):
-            raise TypeError('at() should be passed a string')
-        if self.unit == 'days' or self.start_day:
-            if not re.match(r'^([0-2]\d:)?[0-5]\d:[0-5]\d$', time_str):
-                raise ScheduleValueError('Invalid time format')
-        if self.unit == 'hours':
-            if not re.match(r'^([0-5]\d)?:[0-5]\d$', time_str):
-                raise ScheduleValueError(('Invalid time format for'
-                                          ' an hourly job'))
-        if self.unit == 'minutes':
-            if not re.match(r'^:[0-5]\d$', time_str):
-                raise ScheduleValueError(('Invalid time format for'
-                                          ' a minutely job'))
-        time_values = time_str.split(':')
+            raise TypeError("at() should be passed a string")
+        if self.unit == "days" or self.start_day:
+            if not re.match(r"^([0-2]\d:)?[0-5]\d:[0-5]\d$", time_str):
+                raise ScheduleValueError("Invalid time format")
+        if self.unit == "hours":
+            if not re.match(r"^([0-5]\d)?:[0-5]\d$", time_str):
+                raise ScheduleValueError(("Invalid time format for an hourly job"))
+        if self.unit == "minutes":
+            if not re.match(r"^:[0-5]\d$", time_str):
+                raise ScheduleValueError(("Invalid time format for a minutely job"))
+        time_values = time_str.split(":")
         if len(time_values) == 3:
             hour, minute, second = time_values
-        elif len(time_values) == 2 and self.unit == 'minutes':
+        elif len(time_values) == 2 and self.unit == "minutes":
             hour = 0
             minute = 0
             _, second = time_values
-        elif len(time_values) == 2 and self.unit == 'hours' and \
-                len(time_values[0]):
+        elif len(time_values) == 2 and self.unit == "hours" and len(time_values[0]):
             hour = 0
             minute, second = time_values
         else:
             hour, minute = time_values
             second = 0
-        if self.unit == 'days' or self.start_day:
+        if self.unit == "days" or self.start_day:
             hour = int(hour)
             if not (0 <= hour <= 23):
-                raise ScheduleValueError('Invalid number of hours')
-        elif self.unit == 'hours':
+                raise ScheduleValueError("Invalid number of hours")
+        elif self.unit == "hours":
             hour = 0
-        elif self.unit == 'minutes':
+        elif self.unit == "minutes":
             hour = 0
             minute = 0
         minute = int(minute)
@@ -508,7 +515,7 @@ class Job(object):
 
         :return: The return value returned by the `job_func`
         """
-        logger.debug('Running job %s', self)
+        logger.debug("Running job %s", self)
         ret = self.job_func()
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
@@ -518,12 +525,12 @@ class Job(object):
         """
         Compute the instant when this job should run next.
         """
-        if self.unit not in ('seconds', 'minutes', 'hours', 'days', 'weeks'):
-            raise ScheduleValueError('Invalid unit')
+        if self.unit not in ("seconds", "minutes", "hours", "days", "weeks"):
+            raise ScheduleValueError("Invalid unit")
 
         if self.latest is not None:
             if not (self.latest >= self.interval):
-                raise ScheduleError('`latest` is greater than `interval`')
+                raise ScheduleError("`latest` is greater than `interval`")
             interval = random.randint(self.interval, self.latest)
         else:
             interval = self.interval
@@ -531,58 +538,56 @@ class Job(object):
         self.period = datetime.timedelta(**{self.unit: interval})
         self.next_run = datetime.datetime.now() + self.period
         if self.start_day is not None:
-            if self.unit != 'weeks':
-                raise ScheduleValueError('`unit` should be \'weeks\'')
+            if self.unit != "weeks":
+                raise ScheduleValueError("`unit` should be 'weeks'")
             weekdays = (
-                'monday',
-                'tuesday',
-                'wednesday',
-                'thursday',
-                'friday',
-                'saturday',
-                'sunday'
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
             )
             if self.start_day not in weekdays:
-                raise ScheduleValueError('Invalid start day')
+                raise ScheduleValueError("Invalid start day")
             weekday = weekdays.index(self.start_day)
             days_ahead = weekday - self.next_run.weekday()
             if days_ahead <= 0:  # Target day already happened this week
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
         if self.at_time is not None:
-            if (self.unit not in ('days', 'hours', 'minutes')
-                    and self.start_day is None):
-                raise ScheduleValueError(('Invalid unit without'
-                                          ' specifying start day'))
-            kwargs = {
-                'second': self.at_time.second,
-                'microsecond': 0
-            }
-            if self.unit == 'days' or self.start_day is not None:
-                kwargs['hour'] = self.at_time.hour
-            if self.unit in ['days', 'hours'] or self.start_day is not None:
-                kwargs['minute'] = self.at_time.minute
+            if self.unit not in ("days", "hours", "minutes") and self.start_day is None:
+                raise ScheduleValueError(
+                    ("Invalid unit without" " specifying start day")
+                )
+            kwargs = {"second": self.at_time.second, "microsecond": 0}
+            if self.unit == "days" or self.start_day is not None:
+                kwargs["hour"] = self.at_time.hour
+            if self.unit in ["days", "hours"] or self.start_day is not None:
+                kwargs["minute"] = self.at_time.minute
             self.next_run = self.next_run.replace(**kwargs)
             # Make sure we run at the specified time *today* (or *this hour*)
             # as well. This accounts for when a job takes so long it finished
             # in the next period.
-            if not self.last_run \
-                    or (self.next_run - self.last_run) > self.period:
+            if not self.last_run or (self.next_run - self.last_run) > self.period:
                 now = datetime.datetime.now()
-                if (self.unit == 'days' and self.at_time > now.time() and
-                        self.interval == 1):
+                if (
+                    self.unit == "days"
+                    and self.at_time > now.time()
+                    and self.interval == 1
+                ):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
-                elif self.unit == 'hours' \
-                        and (
-                            self.at_time.minute > now.minute
-                            or (self.at_time.minute == now.minute
-                                and self.at_time.second > now.second)
-                        ):
+                elif self.unit == "hours" and (
+                    self.at_time.minute > now.minute
+                    or (
+                        self.at_time.minute == now.minute
+                        and self.at_time.second > now.second
+                    )
+                ):
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
-                elif self.unit == 'minutes' \
-                        and self.at_time.second > now.second:
-                    self.next_run = self.next_run - \
-                                    datetime.timedelta(minutes=1)
+                elif self.unit == "minutes" and self.at_time.second > now.second:
+                    self.next_run = self.next_run - datetime.timedelta(minutes=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:
@@ -664,7 +669,9 @@ def repeat(job, *args, **kwargs):
 
     :param job: a :class:`Jobs <Job>`
     """
+
     def _schedule_decorator(decorated_function):
         job.do(decorated_function, *args, **kwargs)
         return decorated_function
+
     return _schedule_decorator

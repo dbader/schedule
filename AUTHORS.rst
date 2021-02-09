@@ -28,3 +28,4 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - rhagenaars <https://github.com/RHagenaars>
 - Skenvy <https://github.com/skenvy>
 - zcking <https://github.com/zcking>
+- Martin Thoma <https://github.com/MartinThoma>

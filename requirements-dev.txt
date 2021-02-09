@@ -5,3 +5,4 @@ pytest
 pytest-cov
 pytest-flake8
 Sphinx
+black==20.8b1
