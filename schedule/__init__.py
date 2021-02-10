@@ -506,7 +506,8 @@ class Job(object):
         self._schedule_next_run()
         if self.scheduler is None:
             raise ScheduleError(
-                "Unable to a add job to schedule. Job is not associated with a scheduler."
+                "Unable to a add job to schedule. "
+                "Job is not associated with a scheduler."
             )
         self.scheduler.jobs.append(self)
         return self
