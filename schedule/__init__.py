@@ -205,7 +205,7 @@ class Job(object):
     method, which also defines its `interval`.
     """
 
-    def __init__(self, interval, scheduler: Scheduler):
+    def __init__(self, interval, scheduler: Scheduler = None):
         self.interval: int = interval  # pause interval * unit between runs
         self.latest: Optional[int] = None  # upper limit to the interval
         self.job_func: Optional[functools.partial] = None  # the job job_func to run
@@ -229,7 +229,7 @@ class Job(object):
         self.start_day: Optional[str] = None
 
         self.tags: Set[Hashable] = set()  # unique set of tags for the job
-        self.scheduler: Scheduler = scheduler  # scheduler to register with
+        self.scheduler: Optional[Scheduler] = scheduler  # scheduler to register with
 
     def __lt__(self, other) -> bool:
         """
@@ -504,6 +504,8 @@ class Job(object):
         self.job_func = functools.partial(job_func, *args, **kwargs)
         functools.update_wrapper(self.job_func, job_func)
         self._schedule_next_run()
+        if self.scheduler is None:
+            raise ScheduleError("Unable to a add job to schedule. Job is not associated with a scheduler.")
         self.scheduler.jobs.append(self)
         return self
 
