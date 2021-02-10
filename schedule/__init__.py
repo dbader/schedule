@@ -68,7 +68,9 @@ class IntervalError(ScheduleValueError):
 
 
 class CancelJob(object):
-    """Can be returned from a job to unschedule itself."""
+    """
+    Can be returned from a job to unschedule itself.
+    """
 
     pass
 
