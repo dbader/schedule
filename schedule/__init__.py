@@ -205,10 +205,10 @@ class Job(object):
     method, which also defines its `interval`.
     """
 
-    def __init__(self, interval, scheduler: Optional[Scheduler] = None):
+    def __init__(self, interval, scheduler: Scheduler):
         self.interval: int = interval  # pause interval * unit between runs
         self.latest: Optional[int] = None  # upper limit to the interval
-        self.job_func: Optional[Callable] = None  # the job job_func to run
+        self.job_func: Optional[functools.partial] = None  # the job job_func to run
 
         # time units, e.g. 'minutes', 'hours', ...
         self.unit: Optional[str] = None
@@ -229,7 +229,7 @@ class Job(object):
         self.start_day: Optional[str] = None
 
         self.tags: Set[Hashable] = set()  # unique set of tags for the job
-        self.scheduler: Optional[Scheduler] = scheduler  # scheduler to register with
+        self.scheduler: Scheduler = scheduler  # scheduler to register with
 
     def __lt__(self, other) -> bool:
         """
@@ -248,8 +248,8 @@ class Job(object):
             self.interval,
             self.unit,
             job_func_name,
-            self.job_func.args,
-            self.job_func.keywords,
+            "()" if self.job_func is None else self.job_func.args,
+            "{}" if self.job_func is None else self.job_func.keywords,
         )
 
     def __repr__(self):
@@ -490,7 +490,7 @@ class Job(object):
         self.latest = latest
         return self
 
-    def do(self, job_func, *args, **kwargs):
+    def do(self, job_func: Callable, *args, **kwargs):
         """
         Specifies the job_func that should be called every time the
         job runs.
