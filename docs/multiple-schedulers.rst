@@ -8,7 +8,7 @@ This is supported:
 .. code-block:: python
 
     import time
-    import scheduler
+    import schedule
 
     def fooJob():
         print("Foo")
