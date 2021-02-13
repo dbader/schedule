@@ -6,6 +6,7 @@ However, for larger installations it might be desirable to have multiple schedul
 This is supported:
 
 .. code-block:: python
+
     import time
     import schedule
 
