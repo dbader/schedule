@@ -451,7 +451,7 @@ class Job(object):
         if self.unit == "days" or self.start_day:
             if not re.match(r"^([0-2]\d:)?[0-5]\d:[0-5]\d$", time_str):
                 raise ScheduleValueError(
-                    "Invalid time format for an daily job (valid format is HH:MM(:SS)?)"
+                    "Invalid time format for a daily job (valid format is HH:MM(:SS)?)"
                 )
         if self.unit == "hours":
             if not re.match(r"^([0-5]\d)?:[0-5]\d$", time_str):
@@ -528,7 +528,7 @@ class Job(object):
         if self.scheduler is None:
             raise ScheduleError(
                 "Unable to a add job to schedule. "
-                "Job is not associated with a scheduler"
+                "Job is not associated with an scheduler"
             )
         self.scheduler.jobs.append(self)
         return self
