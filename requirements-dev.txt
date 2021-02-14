@@ -1,7 +1,9 @@
-docutils==0.13.1
-mock==2.0.0
-Pygments==2.2.0
-pytest-cov==2.5.1
-pytest-flake8==0.9.1
-pytest==3.2.5
-Sphinx==1.6.2
+docutils
+mock
+Pygments
+pytest
+pytest-cov
+pytest-flake8
+Sphinx
+black==20.8b1
+mypy

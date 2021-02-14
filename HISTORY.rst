@@ -3,6 +3,26 @@
 History
 -------
 
+1.0.0 (2021-01-20)
+++++++++++++++++++
+
+Depending on your configuration, the following bugfixes might change schedule's behaviour:
+
+- Fix: idle_seconds crashes when no jobs are scheduled. See #401. Thanks @yoonghm!
+- Fix: day.at('HH:MM:SS') where HMS=now+10s doesn't run today. See #331. Thanks @qmorek!
+- Fix: hour.at('MM:SS'), the seconds are set to 00. See #290. Thanks @eladbi!
+- Fix: Long-running jobs skip a day when they finish in the next day #404. Thanks @4379711!
+
+Other changes:
+
+- Dropped Python 2.7 and 3.5 support, added 3.8 and 3.9 support. See #409
+- Fix RecursionError when the job is passed to the do function as an arg. See #190. Thanks @connorskees!
+- Fix DeprecationWarning of 'collections'. See #296. Thanks @gaguirregabiria!
+- Replaced Travis with Github Actions for automated testing
+- Revamp and extend documentation. See #395
+- Improved tests. Thanks @connorskees and @Jamim!
+- Changed log messages to DEBUG level. Thanks @aisk!
+
 
 0.6.0 (2019-01-20)
 ++++++++++++++++++

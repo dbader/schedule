@@ -17,3 +17,15 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - gilbsgilbs <https://github.com/gilbsgilbs>
 - Nathan Wailes <https://github.com/NathanWailes>
 - Connor Skees <https://github.com/ConnorSkees>
+- qmorek <https://github.com/qmorek>
+- aisk <https://github.com/aisk>
+- MichaelCorleoneLi <https://github.com/MichaelCorleoneLi>
+- sijmenhuizenga <https://github.com/SijmenHuizenga>
+- eladbi <https://github.com/eladbi>
+- chankeypathak <https://github.com/chankeypathak>
+- vubon <https://github.com/vubon>
+- gaguirregabiria <https://github.com/gaguirregabiria>
+- rhagenaars <https://github.com/RHagenaars>
+- Skenvy <https://github.com/skenvy>
+- zcking <https://github.com/zcking>
+- Martin Thoma <https://github.com/MartinThoma>

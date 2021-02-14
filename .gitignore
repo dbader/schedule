@@ -42,4 +42,7 @@ venv
 
 .cache
 docs/_build
-.idea/
+
+# For Idea (e.g. PyCharm) users
+.idea
+*.iml
