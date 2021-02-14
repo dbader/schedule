@@ -449,7 +449,7 @@ class Job(object):
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string")
         if self.unit == "days" or self.start_day:
-            if not re.match(r"^[0-2]?\d:[0-5]\d(:[0-5]\d)?$", time_str):
+            if not re.match(r"^([0-2]\d:)?[0-5]\d:[0-5]\d$", time_str):
                 raise ScheduleValueError(
                     "Invalid time format for an daily job(valid format is H?H:MM(:SS)?)"
                 )

@@ -170,15 +170,9 @@ class SchedulerTests(unittest.TestCase):
 
     def test_at_time(self):
         mock_job = make_mock_job()
-
         assert every().day.at("10:30").do(mock_job).next_run.hour == 10
         assert every().day.at("10:30").do(mock_job).next_run.minute == 30
         assert every().day.at("10:30:50").do(mock_job).next_run.second == 50
-
-        assert every().day.at("8:30").do(mock_job).next_run.hour == 8
-        assert every().day.at("8:30:50").do(mock_job).next_run.hour == 8
-        assert every().day.at("08:30").do(mock_job).next_run.hour == 8
-        assert every().day.at("08:30:50").do(mock_job).next_run.hour == 8
 
         self.assertRaises(ScheduleValueError, every().day.at, "2:30:000001")
         self.assertRaises(ScheduleValueError, every().day.at, "::2")
@@ -186,9 +180,6 @@ class SchedulerTests(unittest.TestCase):
         self.assertRaises(ScheduleValueError, every().day.at, "2")
         self.assertRaises(ScheduleValueError, every().day.at, ":2")
         self.assertRaises(ScheduleValueError, every().day.at, " 2:30:00")
-        self.assertRaises(ScheduleValueError, every().day.at, "25:30:00")
-        self.assertRaises(ScheduleValueError, every().day.at, "25:30")
-        self.assertRaises(ScheduleValueError, every().day.at, "25")
         self.assertRaises(ScheduleValueError, every().do, lambda: 0)
         self.assertRaises(TypeError, every().day.at, 2)
 
