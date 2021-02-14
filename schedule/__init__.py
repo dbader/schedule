@@ -444,14 +444,14 @@ class Job(object):
         """
         if self.unit not in ("days", "hours", "minutes") and not self.start_day:
             raise ScheduleValueError(
-                "Invalid unit (valid units are `days`, " "`hours`, and `minutes`)"
+                "Invalid unit (valid units are `days`, `hours`, and `minutes`)"
             )
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string")
         if self.unit == "days" or self.start_day:
             if not re.match(r"^([0-2]\d:)?[0-5]\d:[0-5]\d$", time_str):
                 raise ScheduleValueError(
-                    "Invalid time format for an daily job(valid format is H?H:MM(:SS)?)"
+                    "Invalid time format for an daily job (valid format is HH:MM(:SS)?)"
                 )
         if self.unit == "hours":
             if not re.match(r"^([0-5]\d)?:[0-5]\d$", time_str):
@@ -528,7 +528,7 @@ class Job(object):
         if self.scheduler is None:
             raise ScheduleError(
                 "Unable to a add job to schedule. "
-                "Job is not associated with a scheduler."
+                "Job is not associated with a scheduler"
             )
         self.scheduler.jobs.append(self)
         return self
@@ -585,7 +585,9 @@ class Job(object):
                 "sunday",
             )
             if self.start_day not in weekdays:
-                raise ScheduleValueError("Invalid start day (valid start days are {})")
+                raise ScheduleValueError(
+                    "Invalid start day (valid start days are {})".format(weekdays)
+                )
             weekday = weekdays.index(self.start_day)
             days_ahead = weekday - self.next_run.weekday()
             if days_ahead <= 0:  # Target day already happened this week
