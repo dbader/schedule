@@ -443,18 +443,27 @@ class Job(object):
         :return: The invoked job instance
         """
         if self.unit not in ("days", "hours", "minutes") and not self.start_day:
-            raise ScheduleValueError("Invalid unit")
+            raise ScheduleValueError(
+                "Invalid unit (valid units are `days`, `hours`, and `minutes`)"
+            )
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string")
         if self.unit == "days" or self.start_day:
             if not re.match(r"^([0-2]\d:)?[0-5]\d:[0-5]\d$", time_str):
-                raise ScheduleValueError("Invalid time format")
+                raise ScheduleValueError(
+                    "Invalid time format for a daily job (valid format is HH:MM(:SS)?)"
+                )
         if self.unit == "hours":
             if not re.match(r"^([0-5]\d)?:[0-5]\d$", time_str):
-                raise ScheduleValueError(("Invalid time format for an hourly job"))
+                raise ScheduleValueError(
+                    "Invalid time format for an hourly job (valid format is (MM)?:SS)"
+                )
+
         if self.unit == "minutes":
             if not re.match(r"^:[0-5]\d$", time_str):
-                raise ScheduleValueError(("Invalid time format for a minutely job"))
+                raise ScheduleValueError(
+                    "Invalid time format for a minutely job (valid format is :SS)"
+                )
         time_values = time_str.split(":")
         hour: Union[str, int]
         mintue: Union[str, int]
@@ -474,7 +483,9 @@ class Job(object):
         if self.unit == "days" or self.start_day:
             hour = int(hour)
             if not (0 <= hour <= 23):
-                raise ScheduleValueError("Invalid number of hours")
+                raise ScheduleValueError(
+                    "Invalid number of hours ({} is not between 0 and 23)"
+                )
         elif self.unit == "hours":
             hour = 0
         elif self.unit == "minutes":
@@ -517,7 +528,7 @@ class Job(object):
         if self.scheduler is None:
             raise ScheduleError(
                 "Unable to a add job to schedule. "
-                "Job is not associated with a scheduler."
+                "Job is not associated with an scheduler"
             )
         self.scheduler.jobs.append(self)
         return self
@@ -547,7 +558,10 @@ class Job(object):
         Compute the instant when this job should run next.
         """
         if self.unit not in ("seconds", "minutes", "hours", "days", "weeks"):
-            raise ScheduleValueError("Invalid unit")
+            raise ScheduleValueError(
+                "Invalid unit (valid units are `seconds`, `minutes`, `hours`, "
+                "`days`, and `weeks`)"
+            )
 
         if self.latest is not None:
             if not (self.latest >= self.interval):
@@ -571,7 +585,9 @@ class Job(object):
                 "sunday",
             )
             if self.start_day not in weekdays:
-                raise ScheduleValueError("Invalid start day")
+                raise ScheduleValueError(
+                    "Invalid start day (valid start days are {})".format(weekdays)
+                )
             weekday = weekdays.index(self.start_day)
             days_ahead = weekday - self.next_run.weekday()
             if days_ahead <= 0:  # Target day already happened this week
@@ -579,9 +595,7 @@ class Job(object):
             self.next_run += datetime.timedelta(days_ahead) - self.period
         if self.at_time is not None:
             if self.unit not in ("days", "hours", "minutes") and self.start_day is None:
-                raise ScheduleValueError(
-                    ("Invalid unit without" " specifying start day")
-                )
+                raise ScheduleValueError("Invalid unit without specifying start day")
             kwargs = {"second": self.at_time.second, "microsecond": 0}
             if self.unit == "days" or self.start_day is not None:
                 kwargs["hour"] = self.at_time.hour
