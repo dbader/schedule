@@ -81,6 +81,7 @@ Read More
    faq
    reference
    development
+   changelog
 
 
 Issues
