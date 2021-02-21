@@ -82,6 +82,11 @@ Read More
    reference
    development
 
+.. toctree::
+   :maxdepth: 1
+
+   changelog
+
 
 Issues
 ------
