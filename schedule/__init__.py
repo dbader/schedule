@@ -411,7 +411,7 @@ class Job(object):
 
     def tag(self, *tags: Hashable):
         """
-        Tags the job with one or more unique indentifiers.
+        Tags the job with one or more unique identifiers.
 
         Tags must be hashable. Duplicate tags are discarded.
 
@@ -466,7 +466,7 @@ class Job(object):
                 )
         time_values = time_str.split(":")
         hour: Union[str, int]
-        mintue: Union[str, int]
+        minute: Union[str, int]
         second: Union[str, int]
         if len(time_values) == 3:
             hour, minute, second = time_values
