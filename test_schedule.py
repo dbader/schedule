@@ -83,19 +83,33 @@ class SchedulerTests(unittest.TestCase):
             job_instance.day
         with self.assertRaises(IntervalError):
             job_instance.week
-        with self.assertRaises(IntervalError):
+        with self.assertRaisesRegex(
+            IntervalError, "Scheduling jobs every 2 or more weeks is not supported"
+        ):
             job_instance.monday
-        with self.assertRaises(IntervalError):
+        with self.assertRaisesRegex(
+            IntervalError, "Scheduling jobs every 2 or more weeks is not supported"
+        ):
             job_instance.tuesday
-        with self.assertRaises(IntervalError):
+        with self.assertRaisesRegex(
+            IntervalError, "Scheduling jobs every 2 or more weeks is not supported"
+        ):
             job_instance.wednesday
-        with self.assertRaises(IntervalError):
+        with self.assertRaisesRegex(
+            IntervalError, "Scheduling jobs every 2 or more weeks is not supported"
+        ):
             job_instance.thursday
-        with self.assertRaises(IntervalError):
+        with self.assertRaisesRegex(
+            IntervalError, "Scheduling jobs every 2 or more weeks is not supported"
+        ):
             job_instance.friday
-        with self.assertRaises(IntervalError):
+        with self.assertRaisesRegex(
+            IntervalError, "Scheduling jobs every 2 or more weeks is not supported"
+        ):
             job_instance.saturday
-        with self.assertRaises(IntervalError):
+        with self.assertRaisesRegex(
+            IntervalError, "Scheduling jobs every 2 or more weeks is not supported"
+        ):
             job_instance.sunday
 
         # test an invalid unit
