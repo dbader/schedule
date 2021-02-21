@@ -37,6 +37,8 @@ Usage:
 [2] https://github.com/Rykian/clockwork
 [3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
+import asyncio
+import inspect
 from collections.abc import Hashable
 import datetime
 import functools
@@ -99,6 +101,12 @@ class Scheduler(object):
         for job in sorted(runnable_jobs):
             self._run_job(job)
 
+
+    async def run_pending_async(self):
+        runnable_jobs = (job for job in self.jobs if job.should_run)
+        await asyncio.gather(*[self._run_job_async(job) for job in runnable_jobs])
+
+
     def run_all(self, delay_seconds: int = 0) -> None:
         """
         Run all jobs regardless if they are scheduled to run or not.
@@ -117,6 +125,16 @@ class Scheduler(object):
         for job in self.jobs[:]:
             self._run_job(job)
             time.sleep(delay_seconds)
+
+    async def run_all_async(self, delay_seconds=0):
+        logger.debug(
+            "Running *all* %i jobs with %is delay in between",
+            len(self.jobs),
+            delay_seconds,
+        )
+        for job in self.jobs[:]:
+            await self._run_job_async(job)
+            await asyncio.sleep(delay_seconds)
 
     def get_jobs(self, tag: Optional[Hashable] = None) -> List["Job"]:
         """
@@ -170,6 +188,16 @@ class Scheduler(object):
 
     def _run_job(self, job: "Job") -> None:
         ret = job.run()
+        self._process_job_return_value(job, ret)
+
+    async def _run_job_async(self, job: "Job") -> None:
+        ret = job.run()
+        if inspect.isawaitable(ret):
+            ret = await ret
+
+        self._process_job_return_value(job, ret)
+
+    def _process_job_return_value(self, job: "Job", ret: any):
         if isinstance(ret, CancelJob) or ret is CancelJob:
             self.cancel_job(job)
 
@@ -651,6 +679,13 @@ def run_pending() -> None:
     :data:`default scheduler instance <default_scheduler>`.
     """
     default_scheduler.run_pending()
+
+
+async def run_pending_async() -> None:
+    """Calls :meth:`run_pending <Scheduler.run_pending>` on the
+    :data:`default scheduler instance <default_scheduler>`.
+    """
+    await default_scheduler.run_pending_async()
 
 
 def run_all(delay_seconds: int = 0) -> None:
