@@ -83,19 +83,68 @@ class SchedulerTests(unittest.TestCase):
             job_instance.day
         with self.assertRaises(IntervalError):
             job_instance.week
-        with self.assertRaises(IntervalError):
+        with self.assertRaisesRegex(
+            IntervalError,
+            (
+                r"Scheduling \.monday\(\) jobs is only allowed for weekly jobs\. "
+                r"Using \.monday\(\) on a job scheduled to run every 2 or more "
+                r"weeks is not supported\."
+            ),
+        ):
             job_instance.monday
-        with self.assertRaises(IntervalError):
+        with self.assertRaisesRegex(
+            IntervalError,
+            (
+                r"Scheduling \.tuesday\(\) jobs is only allowed for weekly jobs\. "
+                r"Using \.tuesday\(\) on a job scheduled to run every 2 or more "
+                r"weeks is not supported\."
+            ),
+        ):
             job_instance.tuesday
-        with self.assertRaises(IntervalError):
+        with self.assertRaisesRegex(
+            IntervalError,
+            (
+                r"Scheduling \.wednesday\(\) jobs is only allowed for weekly jobs\. "
+                r"Using \.wednesday\(\) on a job scheduled to run every 2 or more "
+                r"weeks is not supported\."
+            ),
+        ):
             job_instance.wednesday
-        with self.assertRaises(IntervalError):
+        with self.assertRaisesRegex(
+            IntervalError,
+            (
+                r"Scheduling \.thursday\(\) jobs is only allowed for weekly jobs\. "
+                r"Using \.thursday\(\) on a job scheduled to run every 2 or more "
+                r"weeks is not supported\."
+            ),
+        ):
             job_instance.thursday
-        with self.assertRaises(IntervalError):
+        with self.assertRaisesRegex(
+            IntervalError,
+            (
+                r"Scheduling \.friday\(\) jobs is only allowed for weekly jobs\. "
+                r"Using \.friday\(\) on a job scheduled to run every 2 or more "
+                r"weeks is not supported\."
+            ),
+        ):
             job_instance.friday
-        with self.assertRaises(IntervalError):
+        with self.assertRaisesRegex(
+            IntervalError,
+            (
+                r"Scheduling \.saturday\(\) jobs is only allowed for weekly jobs\. "
+                r"Using \.saturday\(\) on a job scheduled to run every 2 or more "
+                r"weeks is not supported\."
+            ),
+        ):
             job_instance.saturday
-        with self.assertRaises(IntervalError):
+        with self.assertRaisesRegex(
+            IntervalError,
+            (
+                r"Scheduling \.sunday\(\) jobs is only allowed for weekly jobs\. "
+                r"Using \.sunday\(\) on a job scheduled to run every 2 or more "
+                r"weeks is not supported\."
+            ),
+        ):
             job_instance.sunday
 
         # test an invalid unit

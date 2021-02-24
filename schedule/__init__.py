@@ -363,49 +363,77 @@ class Job(object):
     @property
     def monday(self):
         if self.interval != 1:
-            raise IntervalError("Use mondays instead of monday")
+            raise IntervalError(
+                "Scheduling .monday() jobs is only allowed for weekly jobs. "
+                "Using .monday() on a job scheduled to run every 2 or more weeks "
+                "is not supported."
+            )
         self.start_day = "monday"
         return self.weeks
 
     @property
     def tuesday(self):
         if self.interval != 1:
-            raise IntervalError("Use tuesdays instead of tuesday")
+            raise IntervalError(
+                "Scheduling .tuesday() jobs is only allowed for weekly jobs. "
+                "Using .tuesday() on a job scheduled to run every 2 or more weeks "
+                "is not supported."
+            )
         self.start_day = "tuesday"
         return self.weeks
 
     @property
     def wednesday(self):
         if self.interval != 1:
-            raise IntervalError("Use wednesdays instead of wednesday")
+            raise IntervalError(
+                "Scheduling .wednesday() jobs is only allowed for weekly jobs. "
+                "Using .wednesday() on a job scheduled to run every 2 or more weeks "
+                "is not supported."
+            )
         self.start_day = "wednesday"
         return self.weeks
 
     @property
     def thursday(self):
         if self.interval != 1:
-            raise IntervalError("Use thursdays instead of thursday")
+            raise IntervalError(
+                "Scheduling .thursday() jobs is only allowed for weekly jobs. "
+                "Using .thursday() on a job scheduled to run every 2 or more weeks "
+                "is not supported."
+            )
         self.start_day = "thursday"
         return self.weeks
 
     @property
     def friday(self):
         if self.interval != 1:
-            raise IntervalError("Use fridays instead of friday")
+            raise IntervalError(
+                "Scheduling .friday() jobs is only allowed for weekly jobs. "
+                "Using .friday() on a job scheduled to run every 2 or more weeks "
+                "is not supported."
+            )
         self.start_day = "friday"
         return self.weeks
 
     @property
     def saturday(self):
         if self.interval != 1:
-            raise IntervalError("Use saturdays instead of saturday")
+            raise IntervalError(
+                "Scheduling .saturday() jobs is only allowed for weekly jobs. "
+                "Using .saturday() on a job scheduled to run every 2 or more weeks "
+                "is not supported."
+            )
         self.start_day = "saturday"
         return self.weeks
 
     @property
     def sunday(self):
         if self.interval != 1:
-            raise IntervalError("Use sundays instead of sunday")
+            raise IntervalError(
+                "Scheduling .sunday() jobs is only allowed for weekly jobs. "
+                "Using .sunday() on a job scheduled to run every 2 or more weeks "
+                "is not supported."
+            )
         self.start_day = "sunday"
         return self.weeks
 
