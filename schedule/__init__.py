@@ -364,7 +364,9 @@ class Job(object):
     def monday(self):
         if self.interval != 1:
             raise IntervalError(
-                "Scheduling jobs every 2 or more weeks is not supported"
+                "Scheduling .monday() jobs is only allowed for weekly jobs. "
+                "Using .monday() on a job scheduled to run every 2 or more weeks "
+                "is not supported."
             )
         self.start_day = "monday"
         return self.weeks
@@ -373,7 +375,9 @@ class Job(object):
     def tuesday(self):
         if self.interval != 1:
             raise IntervalError(
-                "Scheduling jobs every 2 or more weeks is not supported"
+                "Scheduling .tuesday() jobs is only allowed for weekly jobs. "
+                "Using .tuesday() on a job scheduled to run every 2 or more weeks "
+                "is not supported."
             )
         self.start_day = "tuesday"
         return self.weeks
@@ -382,7 +386,9 @@ class Job(object):
     def wednesday(self):
         if self.interval != 1:
             raise IntervalError(
-                "Scheduling jobs every 2 or more weeks is not supported"
+                "Scheduling .wednesday() jobs is only allowed for weekly jobs. "
+                "Using .wednesday() on a job scheduled to run every 2 or more weeks "
+                "is not supported."
             )
         self.start_day = "wednesday"
         return self.weeks
@@ -391,7 +397,9 @@ class Job(object):
     def thursday(self):
         if self.interval != 1:
             raise IntervalError(
-                "Scheduling jobs every 2 or more weeks is not supported"
+                "Scheduling .thursday() jobs is only allowed for weekly jobs. "
+                "Using .thursday() on a job scheduled to run every 2 or more weeks "
+                "is not supported."
             )
         self.start_day = "thursday"
         return self.weeks
@@ -400,7 +408,9 @@ class Job(object):
     def friday(self):
         if self.interval != 1:
             raise IntervalError(
-                "Scheduling jobs every 2 or more weeks is not supported"
+                "Scheduling .friday() jobs is only allowed for weekly jobs. "
+                "Using .friday() on a job scheduled to run every 2 or more weeks "
+                "is not supported."
             )
         self.start_day = "friday"
         return self.weeks
@@ -409,7 +419,9 @@ class Job(object):
     def saturday(self):
         if self.interval != 1:
             raise IntervalError(
-                "Scheduling jobs every 2 or more weeks is not supported"
+                "Scheduling .saturday() jobs is only allowed for weekly jobs. "
+                "Using .saturday() on a job scheduled to run every 2 or more weeks "
+                "is not supported."
             )
         self.start_day = "saturday"
         return self.weeks
@@ -418,7 +430,9 @@ class Job(object):
     def sunday(self):
         if self.interval != 1:
             raise IntervalError(
-                "Scheduling jobs every 2 or more weeks is not supported"
+                "Scheduling .sunday() jobs is only allowed for weekly jobs. "
+                "Using .sunday() on a job scheduled to run every 2 or more weeks "
+                "is not supported."
             )
         self.start_day = "sunday"
         return self.weeks
