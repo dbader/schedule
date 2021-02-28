@@ -515,7 +515,8 @@ class Job(object):
         return self
 
     def until(
-        self, until_time: Union[datetime.datetime, datetime.timedelta, datetime.time]
+        self,
+        until_time: Union[datetime.datetime, datetime.timedelta, datetime.time, str]
     ):
         """
         Schedule job to run until the specified moment.
