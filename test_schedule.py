@@ -57,6 +57,10 @@ class mock_datetime(object):
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
+        return MockDate(
+            self.year, self.month, self.day, self.hour, self.minute, self.second
+        )
+
     def __exit__(self, *args, **kwargs):
         datetime.datetime = self.original_datetime
 
@@ -259,6 +263,83 @@ class SchedulerTests(unittest.TestCase):
         with self.assertRaises(IntervalError):
             every(interval=2).sunday
 
+    def test_until_time(self):
+        mock_job = make_mock_job()
+        # Check argument parsing
+        with mock_datetime(2020, 1, 1, 10, 0, 0) as m:
+            assert every().day.until(datetime.datetime(3000, 1, 1, 20, 30)).do(
+                mock_job
+            ).cancel_after == datetime.datetime(3000, 1, 1, 20, 30, 0)
+            assert every().day.until(datetime.datetime(3000, 1, 1, 20, 30, 50)).do(
+                mock_job
+            ).cancel_after == datetime.datetime(3000, 1, 1, 20, 30, 50)
+            assert every().day.until(datetime.time(12, 30)).do(
+                mock_job
+            ).cancel_after == m.replace(hour=12, minute=30, second=0, microsecond=0)
+            assert every().day.until(datetime.time(12, 30, 50)).do(
+                mock_job
+            ).cancel_after == m.replace(hour=12, minute=30, second=50, microsecond=0)
+
+            assert every().day.until(
+                datetime.timedelta(days=40, hours=5, minutes=12, seconds=42)
+            ).do(mock_job).cancel_after == datetime.datetime(2020, 2, 10, 15, 12, 42)
+
+            assert every().day.until("10:30").do(mock_job).cancel_after == m.replace(
+                hour=10, minute=30, second=0, microsecond=0
+            )
+            assert every().day.until("10:30:50").do(mock_job).cancel_after == m.replace(
+                hour=10, minute=30, second=50, microsecond=0
+            )
+            assert every().day.until("3000-01-01 10:30").do(
+                mock_job
+            ).cancel_after == datetime.datetime(3000, 1, 1, 10, 30, 0)
+            assert every().day.until("3000-01-01 10:30:50").do(
+                mock_job
+            ).cancel_after == datetime.datetime(3000, 1, 1, 10, 30, 50)
+            assert every().day.until(datetime.datetime(3000, 1, 1, 10, 30, 50)).do(
+                mock_job
+            ).cancel_after == datetime.datetime(3000, 1, 1, 10, 30, 50)
+
+        # Invalid argument types
+        self.assertRaises(TypeError, every().day.until, 123)
+        self.assertRaises(ScheduleValueError, every().day.until, "123")
+        self.assertRaises(ScheduleValueError, every().day.until, "01-01-3000")
+
+        # Using .until() with moments in the passed
+        self.assertRaises(
+            ScheduleValueError,
+            every().day.until,
+            datetime.datetime(2019, 12, 31, 23, 59),
+        )
+        self.assertRaises(
+            ScheduleValueError, every().day.until, datetime.timedelta(minutes=-1)
+        )
+        self.assertRaises(ScheduleValueError, every().day.until, datetime.time(hour=5))
+
+        # Unschedule job after next_run passes the deadline
+        schedule.clear()
+        with mock_datetime(2020, 1, 1, 11, 35, 10):
+            mock_job.reset_mock()
+            every(5).seconds.until(datetime.time(11, 35, 20)).do(mock_job)
+            with mock_datetime(2020, 1, 1, 11, 35, 15):
+                schedule.run_pending()
+                assert mock_job.call_count == 1
+                assert len(schedule.jobs) == 1
+            with mock_datetime(2020, 1, 1, 11, 35, 20):
+                schedule.run_all()
+                assert mock_job.call_count == 2
+                assert len(schedule.jobs) == 0
+
+        # Unschedule job because current execution time has passed deadline
+        schedule.clear()
+        with mock_datetime(2020, 1, 1, 11, 35, 10):
+            mock_job.reset_mock()
+            every(5).seconds.until(datetime.time(11, 35, 20)).do(mock_job)
+            with mock_datetime(2020, 1, 1, 11, 35, 50):
+                schedule.run_pending()
+                assert mock_job.call_count == 0
+                assert len(schedule.jobs) == 0
+
     def test_weekday_at_todady(self):
         mock_job = make_mock_job()
 
@@ -350,6 +431,10 @@ class SchedulerTests(unittest.TestCase):
             assert every().friday.do(mock_job).next_run.day == 8
             assert every().saturday.do(mock_job).next_run.day == 9
             assert every().sunday.do(mock_job).next_run.day == 10
+            assert (
+                every().minute.until(datetime.time(12, 17)).do(mock_job).next_run.minute
+                == 16
+            )
 
     def test_next_run_time_day_end(self):
         mock_job = make_mock_job()
