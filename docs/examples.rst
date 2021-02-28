@@ -220,15 +220,28 @@ Run a job until a certain time
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
+    import schedule
+    from datetime import datetime, timedelta, time
 
-    def my_job():
+    def job():
         print('Boo')
 
-    schedule.every(1).hours.until("15:30").do(my_job)
+    # run job until a 18:30 today
+    schedule.every(1).hours.until("18:30").do(job)
 
-``every(A).until(B).hours`` executes the job function every A hours until time B.
+    # run job until a 2030-01-01 18:33 today
+    schedule.every(1).hours.until("2030-01-01 18:33").do(job)
 
+    # Schedule a job to run for the next 8 hours
+    schedule.every(1).hours.until(timedelta(hours=8)).do(job)
 
+    # Run my_job until today 11:33:42
+    schedule.every(1).hours.until(time(11, 33, 42)).do(job)
+
+    # run job until a specific datetime
+    schedule.every(1).hours.until(datetime(2020, 5, 17, 11, 36, 20)).do(job)
+
+The ``until`` method sets the jobs deadline. The job will not run after the deadline.
 
 Time until the next execution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -214,6 +214,7 @@ class Job(object):
     A job is usually created and returned by :meth:`Scheduler.every`
     method, which also defines its `interval`.
     """
+
     def __init__(self, interval: int, scheduler: Scheduler = None):
         self.interval: int = interval  # pause interval * unit between runs
         self.latest: Optional[int] = None  # upper limit to the interval
@@ -513,67 +514,71 @@ class Job(object):
         self.latest = latest
         return self
 
-    def until(self, until_time: Union[datetime.datetime, str]):
+    def until(
+        self, until_time: Union[datetime.datetime, datetime.timedelta, datetime.time]
+    ):
         """
-        Schedule job will run until the specified time.  The final execution time
-        of this job can be greater than until_time if the interval that run_pending
-        is called on is longer than the interval the job is being executed on.
+        Schedule job to run until the specified moment.
 
-        For example:
+        The job is canceled whenever the next run is calculated and it turns out the next run is after the until_time.
+        The job is also canceled right before it runs, if the current time is after until_time.
+        This latter case can happen when the the job was scheduled to run before until_time, but runs after until_time.
 
-        >>> schedule.every(10).seconds.until("00:48").do(
-        >>>     lambda: print(datetime.datetime.now())
-        >>> )
-        >>> while True:
-        >>>     schedule.run_pending()
-        >>>     time.sleep(24)
+        If until_time is a moment in the past, ScheduleValueError is thrown.
 
-        could result in the following output:
-
-        2021-02-25 00:47:20.440422
-        2021-02-25 00:47:44.462194
-        2021-02-25 00:48:08.485673
-
-        :param until_time: A datetime or str for a different day representing the
-            latest time a job can be run. If only a time is supplied, it is assumed
-            that date is the current date.
+        :param until_time: A moment in the future representing the latest time a job can be run.
+           If only a time is supplied, the date is set to today.
+           The following formats are accepted:
+              * datetime.datetime
+              * datetime.timedelta
+              * datetime.time
+              * String in one of the following formats:
+                    "%Y-%m-%d %H:%M:%S"
+                    "%Y-%m-%d %H:%M"
+                    "%Y-%m-%d"
+                    "%H:%M:%S"
+                    "%H:%M"
+                as defined by strptime() behaviour.
+                If an invalid string format is passed, ScheduleValueError is thrown.
         :return: The invoked job instance
         """
-        VALID_TS_FORMATS = (
-            "%Y-%m-%d %H:%M:%S",
-            "%Y-%m-%d %H:%M",
-            "%Y-%m-%d",
-            "%H:%M:%S",
-            "%H:%M",
-        )
-
-        def convert_str_to_datetime(ts_str):
-            now = datetime.datetime.now()
-            for format_ in VALID_TS_FORMATS:
-                try:
-                    time = datetime.datetime.strptime(ts_str, format_)
-                except ValueError:
-                    pass
-                else:
-                    if "%Y-%m-%d" not in format_:
-                        time = time.replace(
-                            year=now.year, month=now.month, day=now.day
-                        )
-                    return time
-
-            raise ScheduleValueError(
-                "until() param %s did not match any of the following formats: %s",
-                ts_str,
-                VALID_TS_FORMATS
-            )
 
         if isinstance(until_time, datetime.datetime):
             self.cancel_after = until_time
+        elif isinstance(until_time, datetime.timedelta):
+            self.cancel_after = datetime.datetime.now() + until_time
+        elif isinstance(until_time, datetime.time):
+            self.cancel_after = datetime.datetime.combine(
+                datetime.datetime.now(), until_time
+            )
         elif isinstance(until_time, str):
-            self.cancel_after = convert_str_to_datetime(until_time)
+            cancel_after = self._decode_datetimestr(
+                until_time,
+                [
+                    "%Y-%m-%d %H:%M:%S",
+                    "%Y-%m-%d %H:%M",
+                    "%Y-%m-%d",
+                    "%H:%M:%S",
+                    "%H:%M",
+                ],
+            )
+            if cancel_after is None:
+                raise ScheduleValueError("Invalid string format for until()")
+            if "-" not in until_time:
+                # the until_time is a time-only format. Set the date to today
+                now = datetime.datetime.now()
+                cancel_after = cancel_after.replace(
+                    year=now.year, month=now.month, day=now.day
+                )
+            self.cancel_after = cancel_after
         else:
-            raise TypeError("until() takes a datetime.datetime or str parameter")
-
+            raise TypeError(
+                "until() takes a string, datetime.datetime, datetime.timedelta, datetime.time parameter"
+            )
+        if self.cancel_after < datetime.datetime.now():
+            raise ScheduleValueError(
+                "Cannot schedule a job to run until a time in the past"
+            )
         return self
 
     def do(self, job_func: Callable, *args, **kwargs):
@@ -609,22 +614,24 @@ class Job(object):
     def run(self):
         """
         Run the job and immediately reschedule it.
+        If the job's deadline is reached (configured using .until()), the job is not run and CancelJob is returned immediately.
+        If the next scheduled run exceeds the job's deadline, CancelJob is returned after the execution.
+        In this latter case CancelJob takes priority over any other returned value.
 
-        :return: The return value returned by the `job_func`
+        :return: The return value returned by the `job_func`, or CancelJob if the job's deadline is reached.
         """
-        if (
-            self.cancel_after is not None
-            and self.next_run is not None
-            and self.next_run > self.cancel_after
-        ):
+        if self._is_overdue(datetime.datetime.now()):
             logger.debug("Cancelling job %s", self)
-            ret = CancelJob
-        else:
-            logger.debug("Running job %s", self)
-            ret = self.job_func()
-            self.last_run = datetime.datetime.now()
-            self._schedule_next_run()
+            return CancelJob
 
+        logger.debug("Running job %s", self)
+        ret = self.job_func()
+        self.last_run = datetime.datetime.now()
+        self._schedule_next_run()
+
+        if self._is_overdue(self.next_run):
+            logger.debug("Cancelling job %s", self)
+            return CancelJob
         return ret
 
     def _schedule_next_run(self) -> None:
@@ -701,6 +708,19 @@ class Job(object):
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:
                 self.next_run -= self.period
+
+    def _is_overdue(self, when: datetime.datetime):
+        return self.cancel_after is not None and when > self.cancel_after
+
+    def _decode_datetimestr(
+        self, datetime_str: str, formats: list[str]
+    ) -> Optional[datetime.datetime]:
+        for f in formats:
+            try:
+                return datetime.datetime.strptime(datetime_str, f)
+            except ValueError:
+                pass
+        return None
 
 
 # The following methods are shortcuts for not having to
