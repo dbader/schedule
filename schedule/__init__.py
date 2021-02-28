@@ -520,26 +520,25 @@ class Job(object):
         """
         Schedule job to run until the specified moment.
 
-        The job is canceled whenever the next run is calculated and it turns out the next run is after the until_time.
-        The job is also canceled right before it runs, if the current time is after until_time.
-        This latter case can happen when the the job was scheduled to run before until_time, but runs after until_time.
+        The job is canceled whenever the next run is calculated and it turns out the
+        next run is after the until_time. The job is also canceled right before it runs,
+        if the current time is after until_time. This latter case can happen when the
+        the job was scheduled to run before until_time, but runs after until_time.
 
         If until_time is a moment in the past, ScheduleValueError is thrown.
 
-        :param until_time: A moment in the future representing the latest time a job can be run.
-           If only a time is supplied, the date is set to today.
+        :param until_time: A moment in the future representing the latest time a job can
+           be run. If only a time is supplied, the date is set to today.
            The following formats are accepted:
-              * datetime.datetime
-              * datetime.timedelta
-              * datetime.time
-              * String in one of the following formats:
-                    "%Y-%m-%d %H:%M:%S"
-                    "%Y-%m-%d %H:%M"
-                    "%Y-%m-%d"
-                    "%H:%M:%S"
-                    "%H:%M"
-                as defined by strptime() behaviour.
-                If an invalid string format is passed, ScheduleValueError is thrown.
+
+           - datetime.datetime
+           -  datetime.timedelta
+           - datetime.time
+           - String in one of the following formats: "%Y-%m-%d %H:%M:%S",
+             "%Y-%m-%d %H:%M", "%Y-%m-%d", "%H:%M:%S", "%H:%M"
+             as defined by strptime() behaviour. If an invalid string format is passed,
+             ScheduleValueError is thrown.
+
         :return: The invoked job instance
         """
 
@@ -573,7 +572,8 @@ class Job(object):
             self.cancel_after = cancel_after
         else:
             raise TypeError(
-                "until() takes a string, datetime.datetime, datetime.timedelta, datetime.time parameter"
+                "until() takes a string, datetime.datetime, datetime.timedelta, "
+                "datetime.time parameter"
             )
         if self.cancel_after < datetime.datetime.now():
             raise ScheduleValueError(
@@ -614,11 +614,14 @@ class Job(object):
     def run(self):
         """
         Run the job and immediately reschedule it.
-        If the job's deadline is reached (configured using .until()), the job is not run and CancelJob is returned immediately.
-        If the next scheduled run exceeds the job's deadline, CancelJob is returned after the execution.
-        In this latter case CancelJob takes priority over any other returned value.
+        If the job's deadline is reached (configured using .until()), the job is not
+        run and CancelJob is returned immediately. If the next scheduled run exceeds
+        the job's deadline, CancelJob is returned after the execution. In this latter
+        case CancelJob takes priority over any other returned value.
 
-        :return: The return value returned by the `job_func`, or CancelJob if the job's deadline is reached.
+        :return: The return value returned by the `job_func`, or CancelJob if the job's
+                 deadline is reached.
+
         """
         if self._is_overdue(datetime.datetime.now()):
             logger.debug("Cancelling job %s", self)
@@ -713,7 +716,7 @@ class Job(object):
         return self.cancel_after is not None and when > self.cancel_after
 
     def _decode_datetimestr(
-        self, datetime_str: str, formats: list[str]
+        self, datetime_str: str, formats: List[str]
     ) -> Optional[datetime.datetime]:
         for f in formats:
             try:
