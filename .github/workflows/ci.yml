@@ -52,8 +52,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   docs:
-    # Build docs separately to make visualise documentation
-    # problems separably in the PR overview
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -65,3 +63,29 @@ jobs:
         run: pip install tox
       - name: Check docs
         run: tox -e docs
+
+  formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: pip install tox
+      - name: Check docs
+        run: tox -e docs
+
+  setuppy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: pip install tox
+      - name: Check docs
+        run: tox -e setuppy
