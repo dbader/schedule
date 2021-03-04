@@ -455,6 +455,7 @@ class Job(object):
         return self
 
     def at(self, time_str):
+
         """
         Specify a particular time that the job should be run at.
 
@@ -544,7 +545,7 @@ class Job(object):
 
     def until(
         self,
-        until_time: Union[datetime.datetime, datetime.timedelta, datetime.time, str]
+        until_time: Union[datetime.datetime, datetime.timedelta, datetime.time, str],
     ):
         """
         Schedule job to run until the specified moment.
