@@ -74,8 +74,8 @@ jobs:
           python-version: 3.8
       - name: Install dependencies
         run: pip install tox
-      - name: Check docs
-        run: tox -e docs
+      - name: Check formatting
+        run: tox -e format
 
   setuppy:
     runs-on: ubuntu-latest
