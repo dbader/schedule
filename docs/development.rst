@@ -27,8 +27,9 @@ This project uses `black formatter <https://black.readthedocs.io/en/stable/>`_.
 To format the code, run:
 
 .. code-block:: bash
-
     black .
+    fadafsd
+    afsdafsd
 
 Make sure you use version 20.8b1 of black.
 
