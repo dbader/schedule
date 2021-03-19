@@ -68,6 +68,14 @@ How to continuously run the scheduler without blocking the main thread?
 -----------------------------------------------------------------------
 :doc:`Background Execution<background-execution>`.
 
+Better handling os signals during time.sleep
+-----------------------------------------
+:doc:`non blocking scheduling<async-support>`
+
+Does schedule support coroutines?
+-------------------------------
+:doc:`yes <async-support>`
+
 Another question?
 -----------------
 If you are left with an unanswered question, `browse the issue tracker <http://github.com/dbader/schedule/issues>`_ to see if your question has been asked before.
