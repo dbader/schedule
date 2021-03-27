@@ -38,10 +38,7 @@ If you want tighter control on the number of threads use a shared jobqueue and o
     import time
     import threading
     import schedule
-    try:
-        import queue
-    except ImportError:
-        import Queue as queue
+    import queue
 
     def job():
         print("I'm working")
