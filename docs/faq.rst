@@ -68,13 +68,11 @@ How to continuously run the scheduler without blocking the main thread?
 -----------------------------------------------------------------------
 :doc:`Background Execution<background-execution>`.
 
-Better handling os signals during time.sleep
+Does schedule support asyncio coroutines?
 -----------------------------------------
-:doc:`non blocking scheduling<async-support>`
-
-Does schedule support coroutines?
--------------------------------
-:doc:`yes <async-support>`
+Schedule does not accept coroutines as jobs directly.
+However, using using ``asyncio.create_task`` you able to schedule async jobs.
+See :doc:`this page <async-support>` for an example.
 
 Another question?
 -----------------

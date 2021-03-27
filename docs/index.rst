@@ -16,7 +16,7 @@ Python job scheduling for humans. Run Python functions (or any other callable) p
 - A simple to use API for scheduling jobs, made for humans.
 - In-process scheduler for periodic jobs. No extra processes needed!
 - Very lightweight and no external dependencies.
-- Supports :doc:`non blocking/async scheduling<async-support>`
+- Works with :doc:`asyncio coroutines<async-support>`
 - Excellent test coverage.
 - Tested on Python 3.6, 3.7, 3.8 and 3.9
 
@@ -76,6 +76,7 @@ Read More
    examples
    background-execution
    parallel-execution
+   asyncio
    exception-handling
    logging
    multiple-schedulers
