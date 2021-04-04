@@ -50,7 +50,7 @@ Publish a new version
 ---------------------
 
 Update the ``HISTORY.rst`` and ``AUTHORS.rst`` files.
-Bump the version in ``setup.py``.
+Bump the version in ``setup.py`` and ``docs/conf.py``.
 Merge these changes into master. Finally:
 
 .. code-block:: bash
