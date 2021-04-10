@@ -260,15 +260,13 @@ Returns ``None`` if no jobs are scheduled.
 
     schedule.every(5).seconds.do(job)
 
-    while 1:
-        n = schedule.idle_seconds()
-        if n is None:
-            # no more jobs
-            break
-        elif n > 0:
+    seconds = schedule.idle_seconds()
+    while seconds is not None: #None= no more jobs
+        if n > 0:
             # sleep exactly the right amount of time
             time.sleep(n)
         schedule.run_pending()
+        seconds = schedule.idle_seconds()
 
 
 Run all jobs now, regardless of their scheduling
