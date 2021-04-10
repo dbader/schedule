@@ -3,6 +3,19 @@
 History
 -------
 
+1.1.0 (2021-04-09)
+++++++++++++++++++
+
+- Added @repeat() decorator. See #148. Thanks @rhagenaars!
+- Added execute .until(). See #195. Thanks @fredthomsen!
+- Added job retrieval filtered by tags using get_jobs('tag'). See #419. Thanks @skenvy!
+- Added type annotations. See #427. Thanks @martinthoma!
+
+- Bugfix: str() of job when there is no __name__. See #430. Thanks @biggerfisch!
+- Improved error messages. See #280, #439. Thanks @connorskees and @sosolidkk!
+- Improved logging. See #193. Thanks @zcking!
+- Documentation improvements and fix typos. See #424, #435, #436, #453, #437, #448. Thanks @ebllg!
+
 1.0.0 (2021-01-20)
 ++++++++++++++++++
 
