@@ -46,6 +46,8 @@ import re
 import time
 from typing import Set, List, Optional, Callable, Union
 
+import schedule
+
 logger = logging.getLogger("schedule")
 
 
@@ -813,6 +815,11 @@ def next_run() -> Optional[datetime.datetime]:
     :data:`default scheduler instance <default_scheduler>`.
     """
     return default_scheduler.next_run
+
+
+def next_run(tag) -> dict[Job, datetime.datetime]:
+    """Call :meth: looks up the nextrun for every Job with the specified tag"""
+    return {job : job.next_run for job in schedule.jobs if tag in job.tags}
 
 
 def idle_seconds() -> Optional[float]:

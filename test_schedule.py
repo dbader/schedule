@@ -21,6 +21,7 @@ from schedule import (
 def make_mock_job(name=None):
     job = mock.Mock()
     job.__name__ = name or "job"
+    job.tag("mock")
     return job
 
 
@@ -188,6 +189,26 @@ class SchedulerTests(unittest.TestCase):
         self.assertRaises(ScheduleError, job_instance._schedule_next_run)
         job_instance.latest = 3
         self.assertRaises(ScheduleError, job_instance._schedule_next_run)
+
+
+    def test_next_run_with_tag(self):
+        with mock_datetime(2014, 6, 28, 12, 0):
+            job1 = every(5).seconds.do(make_mock_job(name="job1")).tag("tag1")
+            job2 = every(2).hours.do(make_mock_job(name="job2")).tag("tag1", "tag2")
+            job3 = every(1).minutes.do(make_mock_job(name="job3")).tag(
+                "tag1", "tag3", "tag2"
+            )
+            assert len(schedule.jobs) == 3
+            schedule.run_all()
+            assert len(schedule.next_run("tag2")) == 2
+            assert schedule.next_run("tag2").get(job2).hour == 14
+            assert schedule.next_run("tag2").get(job3).minute == 1
+            assert len(schedule.next_run("tag3")) == 1
+            assert schedule.next_run("tag3").get(job3).minute == 1
+            assert len(schedule.next_run("tag1")) == 3
+            assert schedule.next_run("tag1").get(job1).second == 5
+            schedule.clear()
+
 
     def test_singular_time_units_match_plural_units(self):
         assert every().second.unit == every().seconds.unit
