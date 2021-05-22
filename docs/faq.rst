@@ -72,25 +72,7 @@ Does schedule support asyncio coroutines?
 -----------------------------------------
 Schedule does not accept coroutines as jobs directly yet.
 However, using using ``asyncio.create_task`` you able to schedule async jobs.
-See :doc:`this page <async-support>` for an example.
-
-
-Can i use threading.Event.wait as means of scheduling and Terminating loop with loong sleep?
-----------------------------------------------------------------------------------------
-Only in cases when you are running scheduling loop in separate thread
-you also must make sure that you are not blocking main thread with joins/waiting on event etc.
-This is because python will not handle any signals
-However you can use ``asyncio.Event`` See :doc:`this page <async-events.signals>`
-
-My long sleeping scheduler is not reacting on ctr+c
----------------------------------------------------
-In your code or other dependencies there is somewhere overridden signal handler
-without also calling previous implementation that means KeyboardInterrupt is no longer thrown
-so you will have to override their signal handler with your that exits loop and execute their implementation if needed.
-
-or you may be blocking main thread.
-
-See :doc:`this page <async-events.signals>`.
+See :doc:`this page <asyncio>` for an example.
 
 What happens when my computer hibernates during time.sleep/wait
 ----------------------------------------------------------------

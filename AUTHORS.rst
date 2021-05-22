@@ -30,7 +30,6 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - zcking <https://github.com/zcking>
 - Martin Thoma <https://github.com/MartinThoma>
 - ebllg <https://github.com/ebllg>
-
 - fredthomsen <https://github.com/fredthomsen>
 - biggerfisch <https://github.com/biggerfisch>
 - sosolidkk <https://github.com/sosolidkk>
