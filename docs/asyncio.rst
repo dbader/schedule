@@ -44,6 +44,9 @@ The ``scheduler()`` can be optimized by sleeping *exactly* [1]_ the amount of ti
 
 Keep in mind that if a new job is scheduled while sleeping, the new job's earliest run is whenever the sleep finishes.
 
+More examples
+-------------
+More advanced usage examples of schedule and asyncio can be found in `this thread <https://github.com/dbader/schedule/issues/388>`_.
 
 .. rubric:: Footnotes
 .. [1] `asyncio.sleep` may sleep little more then expected, depending on loop implementation of loop and system load.
