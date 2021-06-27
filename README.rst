@@ -42,6 +42,7 @@ Usage
     schedule.every().monday.do(job)
     schedule.every().wednesday.at("13:15").do(job)
     schedule.every().minute.at(":17").do(job)
+    schedule.every().day.at("10:30").tz("Australia/Sydney").do(job)
 
     while True:
         schedule.run_pending()
