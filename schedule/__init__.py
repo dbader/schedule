@@ -45,6 +45,8 @@ import random
 import re
 import time
 from typing import Set, List, Optional, Callable, Union
+import pytz
+import tzlocal
 
 logger = logging.getLogger("schedule")
 
@@ -237,6 +239,9 @@ class Job(object):
 
         # Specific day of the week to start on
         self.start_day: Optional[str] = None
+        
+        # Default time zone
+        self.at_tz: Optional[str] = tzlocal.get_localzone()
 
         # optional time of final run
         self.cancel_after: Optional[datetime.datetime] = None
@@ -527,6 +532,20 @@ class Job(object):
         second = int(second)
         self.at_time = datetime.time(hour, minute, second)
         return self
+    
+    def tz(self, timezone:str):
+        """
+        Specify the timezone that the job should run at.
+        
+        :param timezone: The defined timezone for this job.
+        :return: The invoked job instance
+        """
+        if not timezone in pytz.all_timezones:
+            raise pytz.UnknownTimeZoneError(
+                "Invalid time zone: %s.\nYou can check for valid time zones with: pytz.all_timezones" % (timezone)
+            )
+        self.at_tz = timezone
+        return self
 
     def to(self, latest: int):
         """
@@ -575,10 +594,10 @@ class Job(object):
         if isinstance(until_time, datetime.datetime):
             self.cancel_after = until_time
         elif isinstance(until_time, datetime.timedelta):
-            self.cancel_after = datetime.datetime.now() + until_time
+            self.cancel_after = datetime.datetime.now(tz=self.at_tz) + until_time
         elif isinstance(until_time, datetime.time):
             self.cancel_after = datetime.datetime.combine(
-                datetime.datetime.now(), until_time
+                datetime.datetime.now(tz=self.at_tz), until_time
             )
         elif isinstance(until_time, str):
             cancel_after = self._decode_datetimestr(
@@ -595,7 +614,7 @@ class Job(object):
                 raise ScheduleValueError("Invalid string format for until()")
             if "-" not in until_time:
                 # the until_time is a time-only format. Set the date to today
-                now = datetime.datetime.now()
+                now = datetime.datetime.now(tz=self.at_tz)
                 cancel_after = cancel_after.replace(
                     year=now.year, month=now.month, day=now.day
                 )
@@ -605,7 +624,7 @@ class Job(object):
                 "until() takes a string, datetime.datetime, datetime.timedelta, "
                 "datetime.time parameter"
             )
-        if self.cancel_after < datetime.datetime.now():
+        if self.cancel_after < datetime.datetime.now(tz=self.at_tz):
             raise ScheduleValueError(
                 "Cannot schedule a job to run until a time in the past"
             )
@@ -639,7 +658,7 @@ class Job(object):
         :return: ``True`` if the job should be run now.
         """
         assert self.next_run is not None, "must run _schedule_next_run before"
-        return datetime.datetime.now() >= self.next_run
+        return datetime.datetime.now(tz=self.at_tz) >= self.next_run
 
     def run(self):
         """
@@ -653,13 +672,13 @@ class Job(object):
                  deadline is reached.
 
         """
-        if self._is_overdue(datetime.datetime.now()):
+        if self._is_overdue(datetime.datetime.now(tz=self.at_tz)):
             logger.debug("Cancelling job %s", self)
             return CancelJob
 
         logger.debug("Running job %s", self)
         ret = self.job_func()
-        self.last_run = datetime.datetime.now()
+        self.last_run = datetime.datetime.now(tz=self.at_tz)
         self._schedule_next_run()
 
         if self._is_overdue(self.next_run):
@@ -685,7 +704,7 @@ class Job(object):
             interval = self.interval
 
         self.period = datetime.timedelta(**{self.unit: interval})
-        self.next_run = datetime.datetime.now() + self.period
+        self.next_run = datetime.datetime.now(tz=self.at_tz) + self.period
         if self.start_day is not None:
             if self.unit != "weeks":
                 raise ScheduleValueError("`unit` should be 'weeks'")
@@ -720,7 +739,7 @@ class Job(object):
             # as well. This accounts for when a job takes so long it finished
             # in the next period.
             if not self.last_run or (self.next_run - self.last_run) > self.period:
-                now = datetime.datetime.now()
+                now = datetime.datetime.now(tz=self.at_tz)
                 if (
                     self.unit == "days"
                     and self.at_time > now.time()
@@ -739,7 +758,7 @@ class Job(object):
                     self.next_run = self.next_run - datetime.timedelta(minutes=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
-            if (self.next_run - datetime.datetime.now()).days >= 7:
+            if (self.next_run - datetime.datetime.now(tz=self.at_tz)).days >= 7:
                 self.next_run -= self.period
 
     def _is_overdue(self, when: datetime.datetime):
