@@ -822,3 +822,10 @@ class SchedulerTests(unittest.TestCase):
         scheduler.every()
         scheduler.every(10).seconds
         scheduler.run_pending()
+
+    def test_at_timezone(self):
+        mock_job = make_mock_job()
+        with mock_datetime(2021, 6, 30, 10, 0):
+            assert every().every().day.at("10:30").tz("America/New_York").do(mock_job).next_run.at_tz == "America/New_York"
+            assert every().wednesday.at("13:15").tz("Australia/Sydney").do(mock_job).next_run.at_tz == "Australia/Sydney"
+            assert every(2).days.at("17:47").tz("Europe/London").do(mock_job).next_run.at_tz == "Europe/London"
