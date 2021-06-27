@@ -42,6 +42,11 @@ Run a job every x minute
     schedule.every().wednesday.at("13:15").do(job)
     schedule.every().minute.at(":17").do(job)
 
+    # Run job at a specific time zone
+    schedule.every().day.at("10:30").tz("America/New_York").do(job)
+    schedule.every().wednesday.at("13:15").tz("Australia/Sydney").do(job)
+    schedule.every(2).days.at("17:47").tz("Europe/London").do(job)
+
     while True:
         schedule.run_pending()
         time.sleep(1)
