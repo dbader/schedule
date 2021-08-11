@@ -562,7 +562,7 @@ class Job(object):
            The following formats are accepted:
 
            - datetime.datetime
-           -  datetime.timedelta
+           - datetime.timedelta
            - datetime.time
            - String in one of the following formats: "%Y-%m-%d %H:%M:%S",
              "%Y-%m-%d %H:%M", "%Y-%m-%d", "%H:%M:%S", "%H:%M"
