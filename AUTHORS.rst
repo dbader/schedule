@@ -33,3 +33,4 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - fredthomsen <https://github.com/fredthomsen>
 - biggerfisch <https://github.com/biggerfisch>
 - sosolidkk <https://github.com/sosolidkk>
+- stromajer <https://github.com/stromajer>

@@ -3,6 +3,10 @@
 History
 -------
 
+1.1.1 (2021-09-17)
+++++++++++++++++++
+- Added deadline callback which may be optionally invoked before Job canceling
+
 1.1.0 (2021-04-09)
 ++++++++++++++++++
 
