@@ -37,6 +37,7 @@ Usage:
 [2] https://github.com/Rykian/clockwork
 [3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
+import datetime
 import sys
 from collections import Hashable
 from typing import List, Optional
@@ -44,16 +45,6 @@ from typing import List, Optional
 from schedule.async_scheduler import AsyncScheduler
 from schedule.job import IntervalError, Job, ScheduleError, ScheduleValueError
 from schedule.scheduler import CancelJob, Scheduler
-
-__all__ = [
-    "IntervalError",
-    "Job",
-    "ScheduleError",
-    "ScheduleValueError",
-    "CancelJob",
-    "Scheduler",
-    "AsyncScheduler",
-]
 
 # The following methods are shortcuts for not having to
 # create a Scheduler instance:

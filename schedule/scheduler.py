@@ -3,6 +3,7 @@
 import datetime
 import logging
 import time
+from collections import Hashable
 from typing import List, Optional
 
 from schedule.job import Job
