@@ -110,3 +110,18 @@ def idle_seconds() -> Optional[float]:
     :data:`default scheduler instance <default_scheduler>`.
     """
     return default_scheduler.idle_seconds
+
+
+def repeat(job, *args, **kwargs):
+    """
+    Decorator to schedule a new periodic job.
+    Any additional arguments are passed on to the decorated function
+    when the job runs.
+    :param job: a :class:`Jobs <Job>`
+    """
+
+    def _schedule_decorator(decorated_function):
+        job.do(decorated_function, *args, **kwargs)
+        return decorated_function
+
+    return
