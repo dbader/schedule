@@ -32,7 +32,6 @@ class Scheduler(object):
     def run_pending(self) -> None:
         """
         Run all jobs that are scheduled to run.
-
         Please note that it is *intended behavior that run_pending()
         does not run missed jobs*. For example, if you've registered a job
         that should run every minute and you only call run_pending()
@@ -64,6 +63,7 @@ class Scheduler(object):
         """
         Gets scheduled jobs marked with the given tag, or all jobs
         if tag is omitted.
+
         :param tag: An identifier used to identify a subset of
                     jobs to retrieve
         """
@@ -76,6 +76,7 @@ class Scheduler(object):
         """
         Deletes scheduled jobs marked with the given tag, or all jobs
         if tag is omitted.
+
         :param tag: An identifier used to identify a subset of
                     jobs to delete
         """
@@ -89,31 +90,27 @@ class Scheduler(object):
     def cancel_job(self, job: "Job") -> None:
         """
         Delete a scheduled job.
-
         :param job: The job to be unscheduled
         """
         try:
+            logger.debug('Cancelling job "%s"', str(job))
             self.jobs.remove(job)
         except ValueError:
-            pass
+            logger.debug('Cancelling not-scheduled job "%s"', str(job))
 
     def every(self, interval: int = 1) -> "Job":
         """
         Schedule a new periodic job.
-
         :param interval: A quantity of a certain time unit
         :return: An unconfigured :class:`Job <Job>`
         """
         job = Job(interval, self)
         return job
 
-    def _check_returned_value(self, job, ret):
-        if isinstance(ret, CancelJob) or ret is CancelJob:
-            self.cancel_job(job)
-
     def _run_job(self, job: "Job") -> None:
         ret = job.run()
-        self._check_returned_value(job, ret)
+        if isinstance(ret, CancelJob) or ret is CancelJob:
+            self.cancel_job(job)
 
     @property
     def next_run(self) -> Optional[datetime.datetime]:
