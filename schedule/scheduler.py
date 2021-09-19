@@ -6,17 +6,9 @@ import time
 from collections import Hashable
 from typing import List, Optional
 
-from schedule.job import Job
+from schedule.job import CancelJob, Job
 
 logger = logging.getLogger("schedule")
-
-
-class CancelJob(object):
-    """
-    Can be returned from a job to unschedule itself.
-    """
-
-    pass
 
 
 class Scheduler(object):
@@ -107,10 +99,13 @@ class Scheduler(object):
         job = Job(interval, self)
         return job
 
-    def _run_job(self, job: "Job") -> None:
-        ret = job.run()
+    def _check_returned_value(self, job, ret):
         if isinstance(ret, CancelJob) or ret is CancelJob:
             self.cancel_job(job)
+
+    def _run_job(self, job: "Job") -> None:
+        ret = job.run()
+        self._check_returned_value(job, ret)
 
     @property
     def next_run(self) -> Optional[datetime.datetime]:

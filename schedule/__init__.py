@@ -43,8 +43,14 @@ from collections import Hashable
 from typing import List, Optional
 
 from schedule.async_scheduler import AsyncScheduler
-from schedule.job import IntervalError, Job, ScheduleError, ScheduleValueError
-from schedule.scheduler import CancelJob, Scheduler
+from schedule.job import (
+    CancelJob,
+    IntervalError,
+    Job,
+    ScheduleError,
+    ScheduleValueError,
+)
+from schedule.scheduler import Scheduler
 
 # The following methods are shortcuts for not having to
 # create a Scheduler instance:
@@ -124,4 +130,4 @@ def repeat(job, *args, **kwargs):
         job.do(decorated_function, *args, **kwargs)
         return decorated_function
 
-    return
+    return _schedule_decorator

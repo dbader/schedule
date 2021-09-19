@@ -3,22 +3,18 @@ import datetime
 import functools
 import mock
 import unittest
+from typing import Callable
+
+import schedule
+from schedule import IntervalError, ScheduleError, ScheduleValueError, every, repeat
+
 
 # Silence "missing docstring", "method could be a function",
 # "class already defined", and "too many public methods" messages:
 # pylint: disable-msg=R0201,C0111,E0102,R0904,R0901
 
-import schedule
-from schedule import (
-    every,
-    repeat,
-    ScheduleError,
-    ScheduleValueError,
-    IntervalError,
-)
 
-
-def make_mock_job(name=None):
+def make_mock_job(name=None) -> Callable:
     job = mock.Mock()
     job.__name__ = name or "job"
     return job

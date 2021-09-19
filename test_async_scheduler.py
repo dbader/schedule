@@ -1,9 +1,9 @@
 """Unit tests for async_scheduler.py"""
 import datetime
+import mock
 import sys
 import unittest
-
-import mock
+from typing import Callable
 
 from test_schedule import make_mock_job, mock_datetime
 
@@ -17,7 +17,7 @@ else:
 async_scheduler = schedule.AsyncScheduler()
 
 
-def make_async_mock_job(name="async_job"):
+def make_async_mock_job(name="async_job") -> Callable:
     job = mock.AsyncMock()
     job.__name__ = name
     return job

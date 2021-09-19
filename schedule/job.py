@@ -29,6 +29,14 @@ class IntervalError(ScheduleValueError):
     pass
 
 
+class CancelJob(object):
+    """
+    Can be returned from a job to unschedule itself.
+    """
+
+    pass
+
+
 class Job(object):
     """
     A periodic job as used by :class:`Scheduler`.
