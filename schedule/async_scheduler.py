@@ -30,36 +30,35 @@ import logging
 
 from schedule.scheduler import Scheduler
 
-logger = logging.getLogger('async_schedule')
+logger = logging.getLogger("async_schedule")
 
 
 def _inherit_doc(doc):
-    return doc.replace(
-        'Scheduler',
-        'AsyncScheduler').replace(
-        'job',
-        'async job')
+    return doc.replace("Scheduler", "AsyncScheduler").replace("job", "async job")
 
 
 class AsyncScheduler(Scheduler):
     __doc__ = _inherit_doc(Scheduler.__doc__)
 
-    async def run_pending(self):
+    async def run_pending(self) -> None:
         runnable_jobs = (job for job in self.jobs if job.should_run)
         await asyncio.gather(*[self._run_job(job) for job in runnable_jobs])
 
     run_pending.__doc__ = _inherit_doc(Scheduler.run_pending.__doc__)
 
-    async def run_all(self, delay_seconds=0):
-        logger.debug('Running *all* %i jobs with %is delay in between',
-                     len(self.jobs), delay_seconds)
+    async def run_all(self, delay_seconds=0) -> None:
+        logger.debug(
+            "Running *all* %i jobs with %is delay in between",
+            len(self.jobs),
+            delay_seconds,
+        )
         for job in self.jobs[:]:
             await self._run_job(job)
             await asyncio.sleep(delay_seconds)
 
     run_all.__doc__ = _inherit_doc(Scheduler.run_all.__doc__)
 
-    async def _run_job(self, job):
+    async def _run_job(self, job) -> None:
         ret = job.run()
         if inspect.isawaitable(ret):
             ret = await ret

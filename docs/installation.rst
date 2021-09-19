@@ -6,7 +6,9 @@ Python version support
 ######################
 
 We recommend using the latest version of Python.
-Schedule is tested on Python 2.7, 3.5, and 3.6
+Schedule is tested on Python 3.6, 3.7, 3.8 and 3.9
+
+Want to use Schedule on Python 2.7 or 3.5? Use version 0.6.0.
 
 
 Dependencies
@@ -21,8 +23,8 @@ Installation instructions
 
 Problems? Check out :doc:`faq`.
 
-Option 1: PIP
-*************
+PIP (preferred)
+***************
 The recommended way to install this package is to use pip.
 Use the following command to install it:
 
@@ -34,8 +36,8 @@ Schedule is now installed.
 Check out the :doc:`examples </examples>` or go to the :doc:`the documentation overview </index>`.
 
 
-Option 2: Linux package manager
-*******************************
+Using another package manager
+*****************************
 Schedule is available through some linux package managers.
 These packages are not maintained by the maintainers of this project.
 It cannot be guarantee that these packages are up-to-date (and will stay up-to-date) with the latest released version.
@@ -44,9 +46,7 @@ If you don't mind having an old version, you can use it.
 Ubuntu
 -------
 
-**OUTDATED!**
-
-At the time of writing, the packages for 20.04LTS and below use version 0.3.2 (2015).
+**OUTDATED!** At the time of writing, the packages for 20.04LTS and below use version 0.3.2 (2015).
 
 .. code-block:: bash
 
@@ -57,10 +57,7 @@ See `package page <https://packages.ubuntu.com/search?keywords=python3-schedule>
 Debian
 ------
 
-**OUTDATED!**
-
-At the time of writing, the packages for buster and below use version 0.3.2 (2015).
-
+**OUTDATED!** At the time of writing, the packages for buster and below use version 0.3.2 (2015).
 
 .. code-block:: bash
 
@@ -79,8 +76,15 @@ For yay users, run:
 
     $ yay -S python-schedule
 
+Conda (Anaconda)
+----------------
 
-Option 3: Install manually
+Schedule is `published <https://anaconda.org/conda-forge/schedule>`__ in conda (the Anaconda package manager).
+
+For installation instructions, visit `the conda-forge Schedule repo <https://github.com/conda-forge/schedule-feedstock#installing-schedule>`__.
+The release of Schedule on conda is maintained by the `conda-forge project <https://conda-forge.org/>`__.
+
+Install manually
 **************************
 If you don't have access to a package manager or need more control, you can manually copy the library into your project.
 This is easy as the schedule library consists of a single sourcefile MIT licenced.

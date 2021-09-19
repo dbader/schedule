@@ -21,6 +21,16 @@ Running tests
 
     py.test test_schedule.py --flake8 schedule -v --cov schedule --cov-report term-missing
 
+Formatting the code
+-------------------
+This project uses `black formatter <https://black.readthedocs.io/en/stable/>`_.
+To format the code, run:
+
+.. code-block:: bash
+
+    black .
+
+Make sure you use version 20.8b1 of black.
 
 Compiling documentation
 -----------------------
@@ -35,3 +45,21 @@ After installing the development requirements it is just a matter of running:
     make html
 
 The resulting html can be found in ``docs/_build/html``
+
+Publish a new version
+---------------------
+
+Update the ``HISTORY.rst`` and ``AUTHORS.rst`` files.
+Bump the version in ``setup.py`` and ``docs/conf.py``.
+Merge these changes into master. Finally:
+
+.. code-block:: bash
+
+    git tag X.Y.Z -m "Release X.Y.Z"
+    git push --tags
+
+    pip install --upgrade setuptools twine wheel
+    python setup.py sdist bdist_wheel --universal
+    twine upload --repository schedule dist/*
+
+This project follows `semantic versioning <https://semver.org/>`_.`

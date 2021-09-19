@@ -14,6 +14,7 @@ Main Interface
 .. autofunction:: every
 .. autofunction:: run_pending
 .. autofunction:: run_all
+.. autofunction:: get_jobs
 .. autofunction:: clear
 .. autofunction:: cancel_job
 .. autofunction:: next_run

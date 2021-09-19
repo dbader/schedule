@@ -14,7 +14,7 @@ jobs:
     strategy:
       max-parallel: 6
       matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9]
+        python-version: [3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -25,31 +25,14 @@ jobs:
         run: pip install tox tox-gh-actions
       - name: Tests
         run: tox
-      - name: Set up Python 3.9
-        # A recent version of coveralls is required for Github
-        # Actions support, which is only available for python3
-        if: matrix.python-version == '2.7'
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: Coveralls for Python 2.7 or 3.5
-        if: matrix.python-version == '2.7' || matrix.python-version == '3.5'
+      - name: Coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: python-${{ matrix.python-version }}
           COVERALLS_PARALLEL: true
         run: |
           pip3 install coveralls
-          coveralls --rcfile=.coveragerc2.7and3.5
-      - name: Coveralls for others
-        if: matrix.python-version != '2.7' && matrix.python-version != '3.5'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: python-${{ matrix.python-version }}
-          COVERALLS_PARALLEL: true
-        run: |
-          pip3 install coveralls
-          coveralls
+          coveralls --service=github
   coveralls:
     # Notify coveralls that the built has finished so they can
     # combine the results and post a comment with the summary.
@@ -64,13 +47,11 @@ jobs:
       - name: Finished
         run: |
           pip3 install coveralls
-          coveralls --finish
+          coveralls --finish --service=github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   docs:
-    # Build docs separately to make visualise documentation
-    # problems separably in the PR overview
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -82,3 +63,29 @@ jobs:
         run: pip install tox
       - name: Check docs
         run: tox -e docs
+
+  formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: pip install tox
+      - name: Check formatting
+        run: tox -e format
+
+  setuppy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: pip install tox
+      - name: Check docs
+        run: tox -e setuppy

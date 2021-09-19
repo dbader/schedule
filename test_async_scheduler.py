@@ -17,7 +17,7 @@ else:
 async_scheduler = schedule.AsyncScheduler()
 
 
-def make_async_mock_job(name='async_job'):
+def make_async_mock_job(name="async_job"):
     job = mock.AsyncMock()
     job.__name__ = name
     return job
@@ -41,9 +41,9 @@ class AsyncSchedulerTest(aiounittest.AsyncTestCase):
         test_array = [0] * duration
 
         for index, value in enumerate(test_array):
-            async_scheduler.every(
-                index + 1).seconds.do(AsyncSchedulerTest.increment,
-                                      test_array, index)
+            async_scheduler.every(index + 1).seconds.do(
+                AsyncSchedulerTest.increment, test_array, index
+            )
 
         start = datetime.datetime.now()
         current = start
@@ -56,8 +56,7 @@ class AsyncSchedulerTest(aiounittest.AsyncTestCase):
         for index, value in enumerate(test_array):
             position = index + 1
             expected = duration / position
-            expected = int(expected) if expected != int(
-                expected) else expected - 1
+            expected = int(expected) if expected != int(expected) else expected - 1
             error_msg = "unexpected value for {}th".format(position)
 
             self.assertEqual(value, expected, msg=error_msg)
@@ -96,16 +95,15 @@ class AsyncSchedulerTest(aiounittest.AsyncTestCase):
         mock_job = make_async_mock_job()
         async_scheduler.every().minute.do(mock_job)
         async_scheduler.every().hour.do(mock_job)
-        async_scheduler.every().day.at('11:00').do(mock_job)
+        async_scheduler.every().day.at("11:00").do(mock_job)
         await async_scheduler.run_all()
         assert mock_job.call_count == 3
 
     async def test_async_job_func_args_are_passed_on(self):
         mock_job = make_async_mock_job()
-        async_scheduler.every().second.do(mock_job, 1, 2, 'three',
-                                          foo=23, bar={})
+        async_scheduler.every().second.do(mock_job, 1, 2, "three", foo=23, bar={})
         await async_scheduler.run_all()
-        mock_job.assert_called_once_with(1, 2, 'three', foo=23, bar={})
+        mock_job.assert_called_once_with(1, 2, "three", foo=23, bar={})
 
     async def test_cancel_async_job(self):
         mock_job = make_async_mock_job()
@@ -118,7 +116,7 @@ class AsyncSchedulerTest(aiounittest.AsyncTestCase):
         assert len(async_scheduler.jobs) == 1
         assert async_scheduler.jobs[0] == mj
 
-        async_scheduler.cancel_job('Not a job')
+        async_scheduler.cancel_job("Not a job")
         assert len(async_scheduler.jobs) == 1
 
         async_scheduler.cancel_job(mj)

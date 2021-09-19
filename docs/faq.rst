@@ -26,12 +26,10 @@ It seems python can't find the schedule package. Let's check some common causes.
 
 Did you install schedule? If not, follow :doc:`installation`. Validate installation:
 
-* Did you install using pip? Run ``pip3 list | grep schedule``.
-* Did you install using apt? Run ``dpkg -l | grep python3-schedule``
+* Did you install using pip? Run ``pip3 list | grep schedule``. This should return ``schedule   0.6.0`` (or a higher version number)
+* Did you install using apt? Run ``dpkg -l | grep python3-schedule``. This should return something along the lines of ``python3-schedule     0.3.2-1.1     Job scheduling for humans (Python 3)`` (or a higher version number)
 
-These should return
-
-Are you using the same Python version to install Schedule and execute your code?
+Are you used python 3 to install Schedule, and are running the script using python 3?
 For example, if you installed schedule using a version of pip that uses Python 2, and your code runs in Python 3, the package won't be found.
 In this case the solution is to install Schedule using pip3: ``pip3 install schedule``.
 
@@ -39,7 +37,7 @@ Are you using virtualenv? Check that you are running the script inside the same 
 
 Is this problem occurring when running the program from inside and IDE like PyCharm or VSCode?
 Try to run your program from a commandline outside of the IDE.
-If it works there, the problem is in your IDE configuration.
+If it works there, the problem is with your IDE configuration.
 It might be that your IDE uses a different Python interpreter installation.
 
 Still having problems? Use Google and StackOverflow before submitting an issue.

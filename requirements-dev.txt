@@ -1,4 +1,4 @@
-aiounittest; python_version >= '3.5'
+aiounittest
 docutils
 mock
 Pygments
@@ -6,3 +6,5 @@ pytest
 pytest-cov
 pytest-flake8
 Sphinx
+black==21.9b0
+mypy

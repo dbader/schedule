@@ -15,7 +15,7 @@ Features:
     - A simple to use API for scheduling jobs.
     - Very lightweight and no external dependencies.
     - Excellent test coverage.
-    - Tested on Python 2.7, 3.5, 3.6, 3.7, 3.8 and 3.9
+    - Tested on Python 3.6, 3.7, 3.8, 3.9
 
 Usage:
     >>> import schedule
@@ -38,22 +38,22 @@ Usage:
 [3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
 import sys
+from collections import Hashable
+from typing import List, Optional
 
+from schedule.async_scheduler import AsyncScheduler
 from schedule.job import IntervalError, Job, ScheduleError, ScheduleValueError
 from schedule.scheduler import CancelJob, Scheduler
 
 __all__ = [
-    'IntervalError',
-    'Job',
-    'ScheduleError',
-    'ScheduleValueError',
-    'CancelJob',
-    'Scheduler']
-
-if sys.version_info >= (3, 5, 0):
-    from schedule.async_scheduler import AsyncScheduler
-
-    __all__ += ['AsyncScheduler']
+    "IntervalError",
+    "Job",
+    "ScheduleError",
+    "ScheduleValueError",
+    "CancelJob",
+    "Scheduler",
+    "AsyncScheduler",
+]
 
 # The following methods are shortcuts for not having to
 # create a Scheduler instance:
@@ -65,49 +65,56 @@ default_scheduler = Scheduler()
 jobs = default_scheduler.jobs  # todo: should this be a copy, e.g. jobs()?
 
 
-def every(interval=1):
+def every(interval: int = 1) -> Job:
     """Calls :meth:`every <Scheduler.every>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
     return default_scheduler.every(interval)
 
 
-def run_pending():
+def run_pending() -> None:
     """Calls :meth:`run_pending <Scheduler.run_pending>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
     default_scheduler.run_pending()
 
 
-def run_all(delay_seconds=0):
+def run_all(delay_seconds: int = 0) -> None:
     """Calls :meth:`run_all <Scheduler.run_all>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
     default_scheduler.run_all(delay_seconds=delay_seconds)
 
 
-def clear(tag=None):
+def get_jobs(tag: Optional[Hashable] = None) -> List[Job]:
+    """Calls :meth:`get_jobs <Scheduler.get_jobs>` on the
+    :data:`default scheduler instance <default_scheduler>`.
+    """
+    return default_scheduler.get_jobs(tag)
+
+
+def clear(tag: Optional[Hashable] = None) -> None:
     """Calls :meth:`clear <Scheduler.clear>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
     default_scheduler.clear(tag)
 
 
-def cancel_job(job):
+def cancel_job(job: Job) -> None:
     """Calls :meth:`cancel_job <Scheduler.cancel_job>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
     default_scheduler.cancel_job(job)
 
 
-def next_run():
+def next_run() -> Optional[datetime.datetime]:
     """Calls :meth:`next_run <Scheduler.next_run>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
     return default_scheduler.next_run
 
 
-def idle_seconds():
+def idle_seconds() -> Optional[float]:
     """Calls :meth:`idle_seconds <Scheduler.idle_seconds>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """

@@ -3,16 +3,18 @@
 import datetime
 import logging
 import time
+from typing import List, Optional
 
 from schedule.job import Job
 
-logger = logging.getLogger('schedule')
+logger = logging.getLogger("schedule")
 
 
 class CancelJob(object):
     """
     Can be returned from a job to unschedule itself.
     """
+
     pass
 
 
@@ -23,10 +25,10 @@ class Scheduler(object):
     handle their execution.
     """
 
-    def __init__(self):
-        self.jobs = []
+    def __init__(self) -> None:
+        self.jobs: List[Job] = []
 
-    def run_pending(self):
+    def run_pending(self) -> None:
         """
         Run all jobs that are scheduled to run.
 
@@ -40,7 +42,7 @@ class Scheduler(object):
         for job in sorted(runnable_jobs):
             self._run_job(job)
 
-    def run_all(self, delay_seconds=0):
+    def run_all(self, delay_seconds: int = 0) -> None:
         """
         Run all jobs regardless if they are scheduled to run or not.
 
@@ -50,13 +52,28 @@ class Scheduler(object):
 
         :param delay_seconds: A delay added between every executed job
         """
-        logger.debug('Running *all* %i jobs with %is delay inbetween',
-                     len(self.jobs), delay_seconds)
+        logger.debug(
+            "Running *all* %i jobs with %is delay inbetween",
+            len(self.jobs),
+            delay_seconds,
+        )
         for job in self.jobs[:]:
             self._run_job(job)
             time.sleep(delay_seconds)
 
-    def clear(self, tag=None):
+    def get_jobs(self, tag: Optional[Hashable] = None) -> List["Job"]:
+        """
+        Gets scheduled jobs marked with the given tag, or all jobs
+        if tag is omitted.
+        :param tag: An identifier used to identify a subset of
+                    jobs to retrieve
+        """
+        if tag is None:
+            return self.jobs[:]
+        else:
+            return [job for job in self.jobs if tag in job.tags]
+
+    def clear(self, tag: Optional[Hashable] = None) -> None:
         """
         Deletes scheduled jobs marked with the given tag, or all jobs
         if tag is omitted.
@@ -69,7 +86,7 @@ class Scheduler(object):
         else:
             self.jobs[:] = (job for job in self.jobs if tag not in job.tags)
 
-    def cancel_job(self, job):
+    def cancel_job(self, job: "Job") -> None:
         """
         Delete a scheduled job.
 
@@ -80,7 +97,7 @@ class Scheduler(object):
         except ValueError:
             pass
 
-    def every(self, interval=1):
+    def every(self, interval: int = 1) -> "Job":
         """
         Schedule a new periodic job.
 
@@ -94,12 +111,12 @@ class Scheduler(object):
         if isinstance(ret, CancelJob) or ret is CancelJob:
             self.cancel_job(job)
 
-    def _run_job(self, job):
+    def _run_job(self, job: "Job") -> None:
         ret = job.run()
         self._check_returned_value(job, ret)
 
     @property
-    def next_run(self):
+    def next_run(self) -> Optional[datetime.datetime]:
         """
         Datetime when the next job should run.
 
@@ -111,7 +128,7 @@ class Scheduler(object):
         return min(self.jobs).next_run
 
     @property
-    def idle_seconds(self):
+    def idle_seconds(self) -> Optional[float]:
         """
         :return: Number of seconds until
                  :meth:`next_run <Scheduler.next_run>`

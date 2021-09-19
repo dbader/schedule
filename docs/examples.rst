@@ -43,9 +43,29 @@ Run a job every x minute
     schedule.every().minute.at(":17").do(job)
 
     while True:
-        # run_pending
         schedule.run_pending()
         time.sleep(1)
+
+Use a decorator to schedule a job
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the ``@repeat`` to schedule a function.
+Pass it an interval using the same syntax as above while omitting the ``.do()``.
+
+.. code-block:: python
+
+    from schedule import every, repeat, run_pending
+    import time
+
+    @repeat(every(10).minutes)
+    def job():
+        print("I am a scheduled job")
+
+    while True:
+        run_pending()
+        time.sleep(1)
+
+The ``@repeat`` decorator does not work on non-static class methods.
 
 Pass arguments to a job
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -62,6 +82,13 @@ Pass arguments to a job
     schedule.every(2).seconds.do(greet, name='Alice')
     schedule.every(4).seconds.do(greet, name='Bob')
 
+    from schedule import every, repeat
+
+    @repeat(every().second, "World")
+    @repeat(every().day, "Mars")
+    def hello(planet):
+        print("Hello", planet)
+
 
 Cancel a job
 ~~~~~~~~~~~~
@@ -75,7 +102,7 @@ To remove a job from the scheduler, use the ``schedule.cancel_job(job)`` method
         print('Hello world')
 
     job = schedule.every().day.at('22:30').do(some_task)
-    shcedule.cancel_job(job)
+    schedule.cancel_job(job)
 
 
 Run a job once
@@ -99,6 +126,22 @@ Return ``schedule.CancelJob`` from a job to remove it from the scheduler.
         time.sleep(1)
 
 
+Get all jobs
+~~~~~~~~~~~~
+To retrieve all jobs from the scheduler, use ``schedule.get_jobs()``
+
+.. code-block:: python
+
+    import schedule
+
+    def hello():
+        print('Hello world')
+
+    schedule.every().second.do(hello)
+
+    all_jobs = schedule.get_jobs()
+
+
 Cancel all jobs
 ~~~~~~~~~~~~~~~
 To remove all jobs from the scheduler, use ``schedule.clear()``
@@ -115,8 +158,30 @@ To remove all jobs from the scheduler, use ``schedule.clear()``
     schedule.clear()
 
 
-Cancel several jobs at once
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Get several jobs, filtered by tags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can retrieve a group of jobs from the scheduler, selecting them by a unique identifier.
+
+.. code-block:: python
+
+    import schedule
+
+    def greet(name):
+        print('Hello {}'.format(name))
+
+    schedule.every().day.do(greet, 'Andrea').tag('daily-tasks', 'friend')
+    schedule.every().hour.do(greet, 'John').tag('hourly-tasks', 'friend')
+    schedule.every().hour.do(greet, 'Monica').tag('hourly-tasks', 'customer')
+    schedule.every().day.do(greet, 'Derek').tag('daily-tasks', 'guest')
+
+    friends = schedule.get_jobs('friend')
+
+Will return a list of every job tagged as ``friend``.
+
+
+Cancel several jobs, filtered by tags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can cancel the scheduling of a group of jobs selecting them by a unique identifier.
 
@@ -136,6 +201,7 @@ You can cancel the scheduling of a group of jobs selecting them by a unique iden
 
 Will prevent every job tagged as ``daily-tasks`` from running again.
 
+
 Run a job at random intervals
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -149,6 +215,34 @@ Run a job at random intervals
 
 ``every(A).to(B).seconds`` executes the job function every N seconds such that A <= N <= B.
 
+
+Run a job until a certain time
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+    import schedule
+    from datetime import datetime, timedelta, time
+
+    def job():
+        print('Boo')
+
+    # run job until a 18:30 today
+    schedule.every(1).hours.until("18:30").do(job)
+
+    # run job until a 2030-01-01 18:33 today
+    schedule.every(1).hours.until("2030-01-01 18:33").do(job)
+
+    # Schedule a job to run for the next 8 hours
+    schedule.every(1).hours.until(timedelta(hours=8)).do(job)
+
+    # Run my_job until today 11:33:42
+    schedule.every(1).hours.until(time(11, 33, 42)).do(job)
+
+    # run job until a specific datetime
+    schedule.every(1).hours.until(datetime(2020, 5, 17, 11, 36, 20)).do(job)
+
+The ``until`` method sets the jobs deadline. The job will not run after the deadline.
 
 Time until the next execution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
