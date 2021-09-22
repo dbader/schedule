@@ -5,8 +5,13 @@ import functools
 import logging
 import random
 import re
-from collections import Hashable
+from collections.abc import Hashable
 from typing import Callable, List, Optional, Set, Union
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from schedule.scheduler import BaseScheduler
 
 logger = logging.getLogger("schedule")
 
@@ -55,7 +60,7 @@ class Job(object):
     method, which also defines its `interval`.
     """
 
-    def __init__(self, interval: int, scheduler: "Scheduler" = None):
+    def __init__(self, interval: int, scheduler: "BaseScheduler" = None):
         self.interval: int = interval  # pause interval * unit between runs
         self.latest: Optional[int] = None  # upper limit to the interval
         self.job_func: Optional[functools.partial] = None  # the job job_func to run
@@ -82,7 +87,9 @@ class Job(object):
         self.cancel_after: Optional[datetime.datetime] = None
 
         self.tags: Set[Hashable] = set()  # unique set of tags for the job
-        self.scheduler: Optional[Scheduler] = scheduler  # scheduler to register with
+        self.scheduler: Optional[
+            "BaseScheduler"
+        ] = scheduler  # scheduler to register with
 
     def __lt__(self, other) -> bool:
         """

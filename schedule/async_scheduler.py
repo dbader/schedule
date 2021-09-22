@@ -28,7 +28,7 @@ import asyncio
 import inspect
 import logging
 
-from schedule.scheduler import Scheduler
+from schedule.scheduler import Scheduler, BaseScheduler
 
 logger = logging.getLogger("async_schedule")
 
@@ -37,7 +37,7 @@ def _inherit_doc(doc):
     return doc.replace("Scheduler", "AsyncScheduler").replace("job", "async job")
 
 
-class AsyncScheduler(Scheduler):
+class AsyncScheduler(BaseScheduler):
     __doc__ = _inherit_doc(Scheduler.__doc__)
 
     async def run_pending(self) -> None:

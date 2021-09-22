@@ -38,8 +38,7 @@ Usage:
 [3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
 import datetime
-import sys
-from collections import Hashable
+from collections.abc import Hashable
 from typing import List, Optional
 
 from schedule.async_scheduler import AsyncScheduler
