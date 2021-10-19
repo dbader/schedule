@@ -4,6 +4,8 @@ import functools
 import mock
 import unittest
 
+from datetime import timezone
+
 # Silence "missing docstring", "method could be a function",
 # "class already defined", and "too many public methods" messages:
 # pylint: disable-msg=R0201,C0111,E0102,R0904,R0901
@@ -16,6 +18,8 @@ from schedule import (
     ScheduleValueError,
     IntervalError,
 )
+
+utc = timezone.utc
 
 
 def make_mock_job(name=None):
@@ -44,7 +48,7 @@ class mock_datetime(object):
                 return cls(self.year, self.month, self.day)
 
             @classmethod
-            def now(cls):
+            def now(cls, tz=None):
                 return cls(
                     self.year,
                     self.month,
@@ -52,7 +56,7 @@ class mock_datetime(object):
                     self.hour,
                     self.minute,
                     self.second,
-                )
+                ).replace(tzinfo=tz)
 
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
@@ -262,6 +266,8 @@ class SchedulerTests(unittest.TestCase):
             every(interval=2).saturday
         with self.assertRaises(IntervalError):
             every(interval=2).sunday
+        with self.assertRaises(ScheduleError):
+            every(interval=2).should_run
 
     def test_until_time(self):
         mock_job = make_mock_job()
@@ -269,43 +275,49 @@ class SchedulerTests(unittest.TestCase):
         with mock_datetime(2020, 1, 1, 10, 0, 0) as m:
             assert every().day.until(datetime.datetime(3000, 1, 1, 20, 30)).do(
                 mock_job
-            ).cancel_after == datetime.datetime(3000, 1, 1, 20, 30, 0)
+            ).cancel_after == datetime.datetime(3000, 1, 1, 20, 30, 0, tzinfo=utc)
             assert every().day.until(datetime.datetime(3000, 1, 1, 20, 30, 50)).do(
                 mock_job
-            ).cancel_after == datetime.datetime(3000, 1, 1, 20, 30, 50)
+            ).cancel_after == datetime.datetime(3000, 1, 1, 20, 30, 50, tzinfo=utc)
             assert every().day.until(datetime.time(12, 30)).do(
                 mock_job
-            ).cancel_after == m.replace(hour=12, minute=30, second=0, microsecond=0)
+            ).cancel_after == m.replace(
+                hour=12, minute=30, second=0, microsecond=0, tzinfo=utc
+            )
             assert every().day.until(datetime.time(12, 30, 50)).do(
                 mock_job
-            ).cancel_after == m.replace(hour=12, minute=30, second=50, microsecond=0)
+            ).cancel_after == m.replace(
+                hour=12, minute=30, second=50, microsecond=0, tzinfo=utc
+            )
 
             assert every().day.until(
                 datetime.timedelta(days=40, hours=5, minutes=12, seconds=42)
-            ).do(mock_job).cancel_after == datetime.datetime(2020, 2, 10, 15, 12, 42)
+            ).do(mock_job).cancel_after == datetime.datetime(
+                2020, 2, 10, 15, 12, 42, tzinfo=utc
+            )
 
             assert every().day.until("10:30").do(mock_job).cancel_after == m.replace(
-                hour=10, minute=30, second=0, microsecond=0
+                hour=10, minute=30, second=0, microsecond=0, tzinfo=utc
             )
             assert every().day.until("10:30:50").do(mock_job).cancel_after == m.replace(
-                hour=10, minute=30, second=50, microsecond=0
+                hour=10, minute=30, second=50, microsecond=0, tzinfo=utc
             )
             assert every().day.until("3000-01-01 10:30").do(
                 mock_job
-            ).cancel_after == datetime.datetime(3000, 1, 1, 10, 30, 0)
+            ).cancel_after == datetime.datetime(3000, 1, 1, 10, 30, 0, tzinfo=utc)
             assert every().day.until("3000-01-01 10:30:50").do(
                 mock_job
-            ).cancel_after == datetime.datetime(3000, 1, 1, 10, 30, 50)
+            ).cancel_after == datetime.datetime(3000, 1, 1, 10, 30, 50, tzinfo=utc)
             assert every().day.until(datetime.datetime(3000, 1, 1, 10, 30, 50)).do(
                 mock_job
-            ).cancel_after == datetime.datetime(3000, 1, 1, 10, 30, 50)
+            ).cancel_after == datetime.datetime(3000, 1, 1, 10, 30, 50, tzinfo=utc)
 
         # Invalid argument types
         self.assertRaises(TypeError, every().day.until, 123)
         self.assertRaises(ScheduleValueError, every().day.until, "123")
         self.assertRaises(ScheduleValueError, every().day.until, "01-01-3000")
 
-        # Using .until() with moments in the passed
+        # Using .until() with moments in the past
         self.assertRaises(
             ScheduleValueError,
             every().day.until,
@@ -314,7 +326,7 @@ class SchedulerTests(unittest.TestCase):
         self.assertRaises(
             ScheduleValueError, every().day.until, datetime.timedelta(minutes=-1)
         )
-        self.assertRaises(ScheduleValueError, every().day.until, datetime.time(hour=5))
+        self.assertRaises(ScheduleValueError, every().day.until, datetime.time(0, 1, 0))
 
         # Unschedule job after next_run passes the deadline
         schedule.clear()
@@ -340,7 +352,7 @@ class SchedulerTests(unittest.TestCase):
                 assert mock_job.call_count == 0
                 assert len(schedule.jobs) == 0
 
-    def test_weekday_at_todady(self):
+    def test_weekday_at_today(self):
         mock_job = make_mock_job()
 
         # This date is a wednesday
@@ -404,6 +416,11 @@ class SchedulerTests(unittest.TestCase):
             assert every().minute.at(":10").do(mock_job).next_run.hour == 12
             assert every().minute.at(":10").do(mock_job).next_run.minute == 21
             assert every().minute.at(":10").do(mock_job).next_run.second == 10
+            # test for missing branch BUT it appears to be unreachable: 517->520
+            assert every().minute.at(":55").do(mock_job).unit == "minutes"
+            assert every().minute.at(":55").do(mock_job).at_time == datetime.time(
+                0, 0, 55
+            )
 
             self.assertRaises(ScheduleValueError, every().minute.at, "::2")
             self.assertRaises(ScheduleValueError, every().minute.at, ".2")
@@ -711,7 +728,9 @@ class SchedulerTests(unittest.TestCase):
             every().hour.do(hourly_job)
             assert len(schedule.jobs) == 2
             # Make sure the hourly job is first
-            assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
+            assert schedule.next_run() == original_datetime(
+                2010, 1, 6, 14, 16, tzinfo=utc
+            )
 
     def test_idle_seconds(self):
         assert schedule.next_run() is None
