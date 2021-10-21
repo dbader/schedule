@@ -44,35 +44,29 @@ import logging
 import random
 import re
 import time
+from datetime import timezone
 from typing import Set, List, Optional, Callable, Union
 
+utc = timezone.utc
 logger = logging.getLogger("schedule")
 
 
 class ScheduleError(Exception):
     """Base schedule exception"""
 
-    pass
-
 
 class ScheduleValueError(ScheduleError):
     """Base schedule value error"""
 
-    pass
-
 
 class IntervalError(ScheduleValueError):
     """An improper interval was used"""
-
-    pass
 
 
 class CancelJob(object):
     """
     Can be returned from a job to unschedule itself.
     """
-
-    pass
 
 
 class Scheduler(object):
@@ -194,7 +188,7 @@ class Scheduler(object):
         """
         if not self.next_run:
             return None
-        return (self.next_run - datetime.datetime.now()).total_seconds()
+        return (self.next_run - datetime.datetime.now(utc)).total_seconds()
 
 
 class Job(object):
@@ -520,7 +514,7 @@ class Job(object):
                 )
         elif self.unit == "hours":
             hour = 0
-        elif self.unit == "minutes":
+        elif self.unit == "minutes":  # pragma: no cover => probable unreachable branch
             hour = 0
             minute = 0
         minute = int(minute)
@@ -573,17 +567,20 @@ class Job(object):
         """
 
         if isinstance(until_time, datetime.datetime):
-            self.cancel_after = until_time
+            self.cancel_after = until_time.replace(tzinfo=utc)
         elif isinstance(until_time, datetime.timedelta):
-            self.cancel_after = datetime.datetime.now() + until_time
+            self.cancel_after = datetime.datetime.now(utc) + until_time
         elif isinstance(until_time, datetime.time):
             self.cancel_after = datetime.datetime.combine(
-                datetime.datetime.now(), until_time
+                datetime.datetime.now(), until_time, tzinfo=utc
             )
         elif isinstance(until_time, str):
             cancel_after = self._decode_datetimestr(
                 until_time,
                 [
+                    "%Y-%m-%d %H:%M:%S+00:00",
+                    "%Y-%m-%d %H:%M+00:00",
+                    "%Y-%m-%d+00:00",
                     "%Y-%m-%d %H:%M:%S",
                     "%Y-%m-%d %H:%M",
                     "%Y-%m-%d",
@@ -599,13 +596,13 @@ class Job(object):
                 cancel_after = cancel_after.replace(
                     year=now.year, month=now.month, day=now.day
                 )
-            self.cancel_after = cancel_after
+            self.cancel_after = cancel_after.replace(tzinfo=utc)
         else:
             raise TypeError(
                 "until() takes a string, datetime.datetime, datetime.timedelta, "
                 "datetime.time parameter"
             )
-        if self.cancel_after < datetime.datetime.now():
+        if self.cancel_after < datetime.datetime.now(utc):
             raise ScheduleValueError(
                 "Cannot schedule a job to run until a time in the past"
             )
@@ -625,7 +622,7 @@ class Job(object):
         self.job_func = functools.partial(job_func, *args, **kwargs)
         functools.update_wrapper(self.job_func, job_func)
         self._schedule_next_run()
-        if self.scheduler is None:
+        if self.scheduler is None:  # pragma: no cover => probable unreachable branch
             raise ScheduleError(
                 "Unable to a add job to schedule. "
                 "Job is not associated with an scheduler"
@@ -638,8 +635,11 @@ class Job(object):
         """
         :return: ``True`` if the job should be run now.
         """
-        assert self.next_run is not None, "must run _schedule_next_run before"
-        return datetime.datetime.now() >= self.next_run
+        if self.next_run is None:
+            raise ScheduleError(
+                "Must run _schedule_next_run before calling should_run!"
+            )
+        return datetime.datetime.now(utc) >= self.next_run
 
     def run(self):
         """
@@ -653,13 +653,13 @@ class Job(object):
                  deadline is reached.
 
         """
-        if self._is_overdue(datetime.datetime.now()):
+        if self._is_overdue(datetime.datetime.now(utc)):
             logger.debug("Cancelling job %s", self)
             return CancelJob
 
         logger.debug("Running job %s", self)
         ret = self.job_func()
-        self.last_run = datetime.datetime.now()
+        self.last_run = datetime.datetime.now(utc)
         self._schedule_next_run()
 
         if self._is_overdue(self.next_run):
@@ -685,7 +685,7 @@ class Job(object):
             interval = self.interval
 
         self.period = datetime.timedelta(**{self.unit: interval})
-        self.next_run = datetime.datetime.now() + self.period
+        self.next_run = datetime.datetime.now(utc) + self.period
         if self.start_day is not None:
             if self.unit != "weeks":
                 raise ScheduleValueError("`unit` should be 'weeks'")
@@ -720,7 +720,7 @@ class Job(object):
             # as well. This accounts for when a job takes so long it finished
             # in the next period.
             if not self.last_run or (self.next_run - self.last_run) > self.period:
-                now = datetime.datetime.now()
+                now = datetime.datetime.now(utc)
                 if (
                     self.unit == "days"
                     and self.at_time > now.time()
@@ -739,7 +739,7 @@ class Job(object):
                     self.next_run = self.next_run - datetime.timedelta(minutes=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
-            if (self.next_run - datetime.datetime.now()).days >= 7:
+            if (self.next_run - datetime.datetime.now(utc)).days >= 7:
                 self.next_run -= self.period
 
     def _is_overdue(self, when: datetime.datetime):
