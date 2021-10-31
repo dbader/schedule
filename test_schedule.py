@@ -36,6 +36,7 @@ class mock_datetime(object):
         self.hour = hour
         self.minute = minute
         self.second = second
+        self.original_datetime = None
 
     def __enter__(self):
         class MockDate(datetime.datetime):
