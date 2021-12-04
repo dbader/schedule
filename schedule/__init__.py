@@ -755,6 +755,185 @@ class Job(object):
                 pass
         return None
 
+class Crontab(object):
+    """
+    from schedule import cron
+
+    @cron.every("1","days","07:00:00")
+    def task():
+        print("Good morning!")
+
+    cron.run()
+
+    # Support time abbreviation
+    # seconds       s
+    # minutes       m
+    # hours         h
+    # days          d
+    # weeks         w
+    #
+    # monday       mon
+    # tuesday      tue
+    # wednesday    wed
+    # thursday     thu
+    # friday       fri
+    # saturday     sat
+    # sunday       sun
+    """
+
+    def __init__(self):
+        self.scheduler = Scheduler()
+        self.funcs_time_attrs = []
+        self.timer_type_map = {
+            's': 'seconds',
+            'm': 'minutes',
+            'h': 'hours',
+            'd': 'days',
+            'w': 'weeks',
+            'mon': 'monday',
+            'tue': 'tuesday',
+            'wed': 'wednesday',
+            'thu': 'thursday',
+            'fri': 'friday',
+            'sat': 'saturday',
+            'sun': 'sunday'
+        }
+
+    def every(self, timer_value, timer_type, timer_concrete=None):
+        """
+        decorate function change to time function.
+        """
+
+        def decorator(func):
+            nonlocal timer_value
+            nonlocal timer_type
+
+            if isinstance(timer_value, str):
+                if '-' not in timer_value:
+                    timer_value = int(timer_value)
+                else:
+                    timer_value = timer_value
+            else:
+                raise Exception("timer_value should be str!")
+
+            timer_type_list = list(chain(*self.timer_type_map.items()))
+
+            if timer_type in timer_type_list:
+                if isinstance(timer_value, int) and timer_concrete is None:
+                    func_time_dict = {func: timer_value}
+                    if self.timer_type_map.get(timer_type):
+                        attr_name = 'funcs_%s_timer' % self.timer_type_map[timer_type]
+                    else:
+                        attr_name = 'funcs_%s_timer' % timer_type
+                elif isinstance(timer_value, int) and timer_concrete is not None:
+                    func_time_dict = {func: [timer_value, timer_concrete]}
+                    if self.timer_type_map.get(timer_type):
+                        attr_name = 'funcs_%s_concrete_timer' % self.timer_type_map[timer_type]
+                    else:
+                        attr_name = 'funcs_%s_concrete_timer' % timer_type
+                elif isinstance(timer_value, str) and timer_concrete is None:
+                    func_time_dict = {func: timer_value}
+                    if self.timer_type_map.get(timer_type):
+                        attr_name = 'funcs_%s_random_timer' % self.timer_type_map[timer_type]
+                    else:
+                        attr_name = 'funcs_%s_random_timer' % timer_type
+                elif isinstance(timer_value, str) and timer_concrete is not None:
+                    func_time_dict = {func: [timer_value, timer_concrete]}
+                    if self.timer_type_map.get(timer_type):
+                        attr_name = 'funcs_%s_random_concrete_timer' % self.timer_type_map[timer_type]
+                    else:
+                        attr_name = 'funcs_%s_random_concrete_timer' % timer_type
+                else:
+                    raise Exception('parameter error!')
+
+                if hasattr(self, attr_name):
+                    attr_name_func_dict = getattr(self, attr_name)
+                    attr_name_func_dict.update(func_time_dict)
+                    setattr(self, attr_name, attr_name_func_dict)
+                else:
+                    setattr(self, attr_name, func_time_dict)
+                self.funcs_time_attrs.append(attr_name)
+            else:
+                raise Exception('timer_type error!')
+
+        return decorator
+
+    def load_time_funcs(self, attr_name):
+        """
+        Load the time type but not specific exact time function.
+        """
+        for k, v in zip(getattr(self, attr_name).keys(), getattr(self, attr_name).values()):
+            time_type = attr_name.split('_')[1]
+            getattr(self.scheduler.every(v), time_type).do(job_func=k)
+
+    def load_concrete_time_funcs(self, attr_name):
+        """
+        Load the time type and specific exact time function.
+        """
+        for k, v in zip(getattr(self, attr_name).keys(), getattr(self, attr_name).values()):
+            time_type = attr_name.split('_')[1]
+            getattr(self.scheduler.every(v[0]), time_type).at(v[1]).do(job_func=k)
+
+    def load_random_time_funcs(self, attr_name):
+        """
+        Load the time range but not specific exact time function.
+        """
+        for k, v in zip(getattr(self, attr_name).keys(), getattr(self, attr_name).values()):
+            v_list = v.split('-')
+            left_value = int(v_list[0])
+            right_value = int(v_list[-1])
+            time_type = attr_name.split('_')[1]
+            getattr(self.scheduler.every(left_value), time_type).to(right_value).do(job_func=k)
+
+    def load_random_concrete_time_funcs(self, attr_name):
+        """
+        Load the time range and specific exact time function.
+        """
+        for k, v in zip(getattr(self, attr_name).keys(), getattr(self, attr_name).values()):
+            v_list = v.split('-')
+            left_value = int(v_list[0])
+            right_value = int(v_list[-1])
+            time_type = attr_name.split('_')[1]
+            getattr(self.scheduler.every(left_value), time_type).to(right_value).at(v[1]).do(job_func=k)
+
+    def load_scheduler_funcs(self):
+        """
+        Load all function decorated.
+        """
+        for attr_name in self.funcs_time_attrs:
+            if attr_name.endswith('_random_concrete_timer'):
+                self.load_random_concrete_time_funcs(attr_name)
+            elif attr_name.endswith('_random_timer'):
+                self.load_random_time_funcs(attr_name)
+            elif attr_name.endswith('_concrete_timer'):
+                self.load_concrete_time_funcs(attr_name)
+            elif attr_name.endswith('_timer'):
+                self.load_time_funcs(attr_name)
+
+    def run_all_jobs(self):
+        """
+        Run all function once immediately.
+        """
+        self.load_scheduler_funcs()
+        self.scheduler.run_all()
+
+    def job_start(self):
+        """
+        Scheduler into pending.
+        """
+        while True:
+            self.scheduler.run_pending()
+            time.sleep(self.interval)
+
+    def run(self, interval=0):
+        """
+        Run all tasks.
+        """
+        self.interval = interval
+        self.load_scheduler_funcs()
+        self.job_start()
+
+cron = Crontab()
 
 # The following methods are shortcuts for not having to
 # create a Scheduler instance:
