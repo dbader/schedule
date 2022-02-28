@@ -440,14 +440,14 @@ class Job(object):
         self.start_day = "sunday"
         return self.weeks
     
-    def ofMonth(self, monthDay):
+    def monthThe(self, monthDay):
         if self.interval != 1:
             raise IntervalError(
-                "Scheduling .ofMonth(d) jobs is only allowed for monthly jobs. "
-                "Using .ofMonth(d) on a job scheduled to run every 2 or more months "
+                "Scheduling .monthThe(d) jobs is only allowed for monthly jobs. "
+                "Using .monthThe(d) on a job scheduled to run every 2 or more months "
                 "is not supported."
             )
-        self.unit = "ofMonth"
+        self.unit = "monthThe"
         self.monthDay = monthDay
         return self
 
@@ -485,13 +485,13 @@ class Job(object):
 
         :return: The invoked job instance
         """
-        if self.unit not in ("days", "hours", "minutes", "ofMonth") and not self.start_day:
+        if self.unit not in ("days", "hours", "minutes", "monthThe") and not self.start_day:
             raise ScheduleValueError(
-                "Invalid unit (valid units are `days`, `hours`, and `minutes` and 'ofMonth')"
+                "Invalid unit (valid units are `days`, `hours`, and `minutes` and 'monthThe')"
             )
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string")
-        if self.unit == "days" or self.start_day or self.unit == "ofMonth":
+        if self.unit == "days" or self.start_day or self.unit == "monthThe":
             if not re.match(r"^([0-2]\d:)?[0-5]\d:[0-5]\d$", time_str):
                 raise ScheduleValueError(
                     "Invalid time format for a daily job (valid format is HH:MM(:SS)?)"
@@ -523,7 +523,7 @@ class Job(object):
         else:
             hour, minute = time_values
             second = 0
-        if self.unit == "days" or self.start_day or self.unit == "ofMonth":
+        if self.unit == "days" or self.start_day or self.unit == "monthThe":
             hour = int(hour)
             if not (0 <= hour <= 23):
                 raise ScheduleValueError(
@@ -682,10 +682,10 @@ class Job(object):
         """
         Compute the instant when this job should run next.
         """
-        if self.unit not in ("seconds", "minutes", "hours", "days", "weeks", "ofMonth"):
+        if self.unit not in ("seconds", "minutes", "hours", "days", "weeks", "monthThe"):
             raise ScheduleValueError(
                 "Invalid unit (valid units are `seconds`, `minutes`, `hours`, "
-                "`days`, and `weeks` and 'ofMonth')"
+                "`days`, and `weeks` and 'monthThe')"
             )
 
         if self.latest is not None:
@@ -695,8 +695,8 @@ class Job(object):
         else:
             interval = self.interval
 
-        # Special case for .ofMonth(d)
-        if self.unit == "ofMonth":
+        # Special case for .monthThe(d)
+        if self.unit == "monthThe":
             # We search for le period of the next run. <start> to know if already run or not.
             start = 0 if not self.last_run else 1
             nextDate = datetime.datetime.now()
@@ -731,18 +731,18 @@ class Job(object):
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
         if self.at_time is not None:
-            if self.unit not in ("days", "hours", "minutes", "ofMonth") and self.start_day is None:
+            if self.unit not in ("days", "hours", "minutes", "monthThe") and self.start_day is None:
                 raise ScheduleValueError("Invalid unit without specifying start day")
             kwargs = {"second": self.at_time.second, "microsecond": 0}
-            if self.unit == "days" or self.start_day is not None or self.unit == "ofMonth":
+            if self.unit == "days" or self.start_day is not None or self.unit == "monthThe":
                 kwargs["hour"] = self.at_time.hour
-            if self.unit in ["days", "hours", "ofMonth"] or self.start_day is not None:
+            if self.unit in ["days", "hours", "monthThe"] or self.start_day is not None:
                 kwargs["minute"] = self.at_time.minute
             self.next_run = self.next_run.replace(**kwargs)  # type: ignore
             # Make sure we run at the specified time *today* (or *this hour*)
             # as well. This accounts for when a job takes so long it finished
             # in the next period.
-            # With ofMonth we consider a job can’t run so long.
+            # With monthThe we consider a job can’t run so long.
             if not self.last_run or (self.next_run - self.last_run) > self.period:
                 now = datetime.datetime.now()
                 if (
