@@ -286,9 +286,10 @@ class Job(object):
         call_repr = job_func_name + "(" + ", ".join(args + kwargs) + ")"
 
         if self.at_time is not None:
-            return "Every %s %s at %s do %s %s" % (
+            return "Every %s %s %s at %s do %s %s" % (
                 self.interval,
                 self.unit[:-1] if self.interval == 1 else self.unit,
+                self.monthDay if self.unit == "monthThe" else "",
                 self.at_time,
                 call_repr,
                 timestats,
