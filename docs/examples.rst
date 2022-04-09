@@ -36,6 +36,7 @@ Run a job every x minute
     # Run job every day at specific HH:MM and next HH:MM:SS
     schedule.every().day.at("10:30").do(job)
     schedule.every().day.at("10:30:42").do(job)
+    schedule.every().day.at("12:42", "Europe/Amsterdam").do(job)
 
     # Run job on a specific day of the week
     schedule.every().monday.do(job)

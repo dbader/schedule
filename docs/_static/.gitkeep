@@ -1,3 +1,0 @@
-Sphinx likes to see the _static folder.
-If it isn't there it will throw an error.
-As long as there aren't any files in here, this file will ensure git doesn't throw away this folder.

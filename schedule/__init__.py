@@ -226,6 +226,9 @@ class Job(object):
         # optional time at which this job runs
         self.at_time: Optional[datetime.time] = None
 
+        # optional time zone of the self.at_time field. Only relevant when at_time is not None
+        self.at_time_zone = None
+
         # datetime of the last run
         self.last_run: Optional[datetime.datetime] = None
 
@@ -454,7 +457,7 @@ class Job(object):
         self.tags.update(tags)
         return self
 
-    def at(self, time_str):
+    def at(self, time_str: str, tz=None):
 
         """
         Specify a particular time that the job should be run at.
@@ -472,12 +475,28 @@ class Job(object):
             selected time-unit (e.g. `every().hour.at(':30')` vs.
             `every().minute.at(':30')`).
 
+        :param tz: The timezone that this timestamp refers to. Can be
+            a string that can be parsed by pytz.timezone, or a pytz.timezone object
+
         :return: The invoked job instance
         """
         if self.unit not in ("days", "hours", "minutes") and not self.start_day:
             raise ScheduleValueError(
                 "Invalid unit (valid units are `days`, `hours`, and `minutes`)"
             )
+
+        if tz is not None:
+            from pytz import timezone
+
+            if isinstance(tz, str):
+                self.at_time_zone = timezone(tz)
+            elif isinstance(tz, timezone):
+                self.at_time_zone = tz
+            else:
+                raise ScheduleValueError(
+                    "Timezone must be string or pytz.timezone object"
+                )
+
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string")
         if self.unit == "days" or self.start_day:
@@ -716,6 +735,16 @@ class Job(object):
             if self.unit in ["days", "hours"] or self.start_day is not None:
                 kwargs["minute"] = self.at_time.minute
             self.next_run = self.next_run.replace(**kwargs)  # type: ignore
+
+            if self.at_time_zone is not None:
+                # Convert next_run from the expected timezone into the local time
+                # self.next_run is a naive datetime so after conversion remove tzinfo
+                self.next_run = (
+                    self.at_time_zone.localize(self.next_run)
+                    .astimezone()
+                    .replace(tzinfo=None)
+                )
+
             # Make sure we run at the specified time *today* (or *this hour*)
             # as well. This accounts for when a job takes so long it finished
             # in the next period.

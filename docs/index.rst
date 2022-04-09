@@ -40,6 +40,7 @@ Python job scheduling for humans. Run Python functions (or any other callable) p
     schedule.every().day.at("10:30").do(job)
     schedule.every().monday.do(job)
     schedule.every().wednesday.at("13:15").do(job)
+    schedule.every().day.at("12:42", "Europe/Amsterdam").do(job)
     schedule.every().minute.at(":17").do(job)
 
     while True:
@@ -58,7 +59,7 @@ You should probably look somewhere else if you need:
 * Job persistence (remember schedule between restarts)
 * Exact timing (sub-second precision execution)
 * Concurrent execution (multiple threads)
-* Localization (time zones, workdays or holidays)
+* Localization (workdays or holidays)
 
 
 **Schedule does not account for the time it takes for the job function to execute.**
@@ -75,6 +76,7 @@ Read More
    examples
    background-execution
    parallel-execution
+   timezones
    exception-handling
    logging
    multiple-schedulers
