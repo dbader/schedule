@@ -202,6 +202,7 @@ class SchedulerTests(unittest.TestCase):
             assert schedule.next_run("tag1") == job1.next_run
             assert schedule.default_scheduler.get_next_run("tag2") == job3.next_run
             assert schedule.next_run("tag3") == job3.next_run
+            assert schedule.next_run("tag4") is None
 
     def test_singular_time_units_match_plural_units(self):
         assert every().second.unit == every().seconds.unit
