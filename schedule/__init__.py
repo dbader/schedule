@@ -476,7 +476,7 @@ class Job(object):
             `every().minute.at(':30')`).
 
         :param tz: The timezone that this timestamp refers to. Can be
-            a string that can be parsed by pytz.timezone, or a pytz.timezone object
+            a string that can be parsed by pytz.timezone(), or a pytz.BaseTzInfo object
 
         :return: The invoked job instance
         """
@@ -486,11 +486,11 @@ class Job(object):
             )
 
         if tz is not None:
-            from pytz import timezone
+            import pytz
 
             if isinstance(tz, str):
-                self.at_time_zone = timezone(tz)  # type: ignore
-            elif isinstance(tz, timezone):  # type: ignore
+                self.at_time_zone = pytz.timezone(tz)  # type: ignore
+            elif isinstance(tz, pytz.BaseTzInfo):  # type: ignore
                 self.at_time_zone = tz
             else:
                 raise ScheduleValueError(

@@ -5,6 +5,7 @@ import mock
 import unittest
 import os
 import time
+import pytz
 
 # Silence "missing docstring", "method could be a function",
 # "class already defined", and "too many public methods" messages:
@@ -533,9 +534,16 @@ class SchedulerTests(unittest.TestCase):
             # Current NY time: 04:00 (during daylight saving)
             # Expected to run NY time: 10:30
             # Next run Berlin time: 15:30
-            next = every().day.at("10:30", "America/New_York").do(mock_job).next_run
+            tz = pytz.timezone("America/New_York")
+            next = every().day.at("10:30", tz).do(mock_job).next_run
             assert next.hour == 15
             assert next.minute == 30
+
+        with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
+            every().day.at("10:30", "FakeZone").do(mock_job)
+
+        with self.assertRaises(ScheduleValueError):
+            every().day.at("10:30", 43).do(mock_job)
 
     def test_daylight_saving_time(self):
         mock_job = make_mock_job()
