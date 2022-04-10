@@ -173,7 +173,9 @@ class Scheduler(object):
         if isinstance(ret, CancelJob) or ret is CancelJob:
             self.cancel_job(job)
 
-    def get_next_run(self, tag: Optional[Hashable] = None) -> Optional[datetime.datetime]:
+    def get_next_run(
+        self, tag: Optional[Hashable] = None
+    ) -> Optional[datetime.datetime]:
         """
         Datetime when the next job should run.
 

@@ -190,18 +190,18 @@ class SchedulerTests(unittest.TestCase):
         job_instance.latest = 3
         self.assertRaises(ScheduleError, job_instance._schedule_next_run)
 
-
     def test_next_run_with_tag(self):
         with mock_datetime(2014, 6, 28, 12, 0):
             job1 = every(5).seconds.do(make_mock_job(name="job1")).tag("tag1")
             job2 = every(2).hours.do(make_mock_job(name="job2")).tag("tag1", "tag2")
-            job3 = every(1).minutes.do(make_mock_job(name="job3")).tag(
-                "tag1", "tag3", "tag2"
+            job3 = (
+                every(1)
+                .minutes.do(make_mock_job(name="job3"))
+                .tag("tag1", "tag3", "tag2")
             )
             assert schedule.next_run("tag1") == job1.next_run
             assert schedule.default_scheduler.get_next_run("tag2") == job3.next_run
             assert schedule.next_run("tag3") == job3.next_run
-
 
     def test_singular_time_units_match_plural_units(self):
         assert every().second.unit == every().seconds.unit
