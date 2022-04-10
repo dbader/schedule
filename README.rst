@@ -31,9 +31,10 @@ Usage
     import schedule
     import time
 
+    """ Basic scheduling """
     def job():
         print("I'm working...")
-
+    
     schedule.every(10).seconds.do(job)
     schedule.every(10).minutes.do(job)
     schedule.every().hour.do(job)
@@ -43,6 +44,12 @@ Usage
     schedule.every().wednesday.at("13:15").do(job)
     schedule.every().minute.at(":17").do(job)
 
+    """ Scheduling with argument in function """
+    def function_job(name):
+        print(f"I am {name}")
+        
+    schedule.every(10).seconds.do(job, name="Peter Griffin")
+        
     while True:
         schedule.run_pending()
         time.sleep(1)
