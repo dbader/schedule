@@ -31,7 +31,6 @@ Usage
     import schedule
     import time
 
-    """ Basic scheduling """
     def job():
         print("I'm working...")
     
