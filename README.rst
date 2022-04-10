@@ -48,7 +48,7 @@ Usage
     def function_job(name):
         print(f"I am {name}")
         
-    schedule.every(10).seconds.do(job, name="Peter Griffin")
+    schedule.every(10).seconds.do(job, name="Peter")
         
     while True:
         schedule.run_pending()
