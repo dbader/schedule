@@ -5,7 +5,6 @@ import mock
 import unittest
 import os
 import time
-import pytz
 
 # Silence "missing docstring", "method could be a function",
 # "class already defined", and "too many public methods" messages:
@@ -510,6 +509,11 @@ class SchedulerTests(unittest.TestCase):
 
     def test_at_timezone(self):
         mock_job = make_mock_job()
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+            return
 
         with mock_datetime(2022, 2, 1, 23, 15):
             # Current Berlin time: feb-1 23:15 (local)
