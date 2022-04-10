@@ -457,7 +457,7 @@ class Job(object):
         self.tags.update(tags)
         return self
 
-    def at(self, time_str: str, tz=None):
+    def at(self, time_str: str, tz: str = None):
 
         """
         Specify a particular time that the job should be run at.
@@ -489,8 +489,8 @@ class Job(object):
             from pytz import timezone
 
             if isinstance(tz, str):
-                self.at_time_zone = timezone(tz)
-            elif isinstance(tz, timezone):
+                self.at_time_zone = timezone(tz)  # type: ignore
+            elif isinstance(tz, timezone):  # type: ignore
                 self.at_time_zone = tz
             else:
                 raise ScheduleValueError(
@@ -542,6 +542,7 @@ class Job(object):
         elif self.unit == "minutes":
             hour = 0
             minute = 0
+        hour = int(hour)
         minute = int(minute)
         second = int(second)
         self.at_time = datetime.time(hour, minute, second)
