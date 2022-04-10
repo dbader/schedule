@@ -21,7 +21,6 @@ from schedule import (
 def make_mock_job(name=None):
     job = mock.Mock()
     job.__name__ = name or "job"
-    job.tag("mock")
     return job
 
 
