@@ -198,16 +198,9 @@ class SchedulerTests(unittest.TestCase):
             job3 = every(1).minutes.do(make_mock_job(name="job3")).tag(
                 "tag1", "tag3", "tag2"
             )
-            assert len(schedule.jobs) == 3
-            schedule.run_all()
-            assert len(schedule.next_run("tag2")) == 2
-            assert schedule.next_run("tag2").get(job2).hour == 14
-            assert schedule.next_run("tag2").get(job3).minute == 1
-            assert len(schedule.next_run("tag3")) == 1
-            assert schedule.next_run("tag3").get(job3).minute == 1
-            assert len(schedule.next_run("tag1")) == 3
-            assert schedule.next_run("tag1").get(job1).second == 5
-            schedule.clear()
+            assert schedule.next_run("tag1") == job1.next_run
+            assert schedule.default_scheduler.get_next_run("tag2") == job3.next_run
+            assert schedule.next_run("tag3") == job3.next_run
 
 
     def test_singular_time_units_match_plural_units(self):
@@ -735,7 +728,7 @@ class SchedulerTests(unittest.TestCase):
             assert schedule.next_run() == original_datetime(2010, 1, 6, 14, 16)
 
     def test_idle_seconds(self):
-        assert schedule.next_run() is None
+        assert schedule.default_scheduler.next_run is None
         assert schedule.idle_seconds() is None
 
         mock_job = make_mock_job()
