@@ -173,17 +173,25 @@ class Scheduler(object):
         if isinstance(ret, CancelJob) or ret is CancelJob:
             self.cancel_job(job)
 
-    @property
-    def next_run(self) -> Optional[datetime.datetime]:
+    def get_next_run(
+        self, tag: Optional[Hashable] = None
+    ) -> Optional[datetime.datetime]:
         """
         Datetime when the next job should run.
+
+        :param tag: Filter the next run for the given tag parameter
 
         :return: A :class:`~datetime.datetime` object
                  or None if no jobs scheduled
         """
         if not self.jobs:
             return None
-        return min(self.jobs).next_run
+        jobs_filtered = self.get_jobs(tag)
+        if not jobs_filtered:
+            return None
+        return min(jobs_filtered).next_run
+
+    next_run = property(get_next_run)
 
     @property
     def idle_seconds(self) -> Optional[float]:
@@ -808,11 +816,11 @@ def cancel_job(job: Job) -> None:
     default_scheduler.cancel_job(job)
 
 
-def next_run() -> Optional[datetime.datetime]:
+def next_run(tag: Optional[Hashable] = None) -> Optional[datetime.datetime]:
     """Calls :meth:`next_run <Scheduler.next_run>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
-    return default_scheduler.next_run
+    return default_scheduler.get_next_run(tag)
 
 
 def idle_seconds() -> Optional[float]:
