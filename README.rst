@@ -43,8 +43,7 @@ Usage
     schedule.every().wednesday.at("13:15").do(job)
     schedule.every().minute.at(":17").do(job)
 
-    """ Scheduling with argument in function """
-    def function_job(name):
+    def job_with_argument(name):
         print(f"I am {name}")
         
     schedule.every(10).seconds.do(job, name="Peter")
