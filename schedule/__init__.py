@@ -490,7 +490,7 @@ class Job(object):
 
             if isinstance(tz, str):
                 self.at_time_zone = pytz.timezone(tz)  # type: ignore
-            elif isinstance(tz, pytz.BaseTzInfo):  # type: ignore
+            elif isinstance(tz, pytz.BaseTzInfo):
                 self.at_time_zone = tz
             else:
                 raise ScheduleValueError(
