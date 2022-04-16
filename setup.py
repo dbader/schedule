@@ -17,6 +17,7 @@ def read_file(filename):
 setup(
     name="schedule",
     packages=["schedule"],
+    package_data={"schedule": ["py.typed"]},
     version=SCHEDULE_VERSION,
     description="Job scheduling for humans.",
     long_description=read_file("README.rst"),
