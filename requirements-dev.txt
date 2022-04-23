@@ -8,3 +8,5 @@ Sphinx
 black==20.8b1
 click==8.0.4
 mypy
+pytz
+types-pytz

@@ -3,6 +3,8 @@ import datetime
 import functools
 import mock
 import unittest
+import os
+import time
 
 # Silence "missing docstring", "method could be a function",
 # "class already defined", and "too many public methods" messages:
@@ -16,6 +18,10 @@ from schedule import (
     ScheduleValueError,
     IntervalError,
 )
+
+# Set timezone to Europe/Berlin (CEST) to ensure global reproducibility
+os.environ["TZ"] = "CET-1CEST,M3.5.0,M10.5.0"
+time.tzset()
 
 
 def make_mock_job(name=None):
@@ -515,6 +521,58 @@ class SchedulerTests(unittest.TestCase):
             job.run()
             assert job.next_run.minute == 13
             assert job.next_run.second == 15
+
+    def test_at_timezone(self):
+        mock_job = make_mock_job()
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+            return
+
+        with mock_datetime(2022, 2, 1, 23, 15):
+            # Current Berlin time: feb-1 23:15 (local)
+            # Current India time: feb-2 03:45
+            # Expected to run India time: feb-2 06:30
+            # Next run Berlin time: feb-2 02:00
+            next = every().day.at("06:30", "Asia/Kolkata").do(mock_job).next_run
+            assert next.hour == 2
+            assert next.minute == 0
+
+        with mock_datetime(2022, 4, 8, 10, 0):
+            # Current Berlin time: 10:00 (local) (during daylight saving)
+            # Current NY time: 04:00
+            # Expected to run NY time: 10:30
+            # Next run Berlin time: 16:30
+            next = every().day.at("10:30", "America/New_York").do(mock_job).next_run
+            assert next.hour == 16
+            assert next.minute == 30
+
+        with mock_datetime(2022, 3, 20, 10, 0):
+            # Current Berlin time: 10:00 (local) (NOT during daylight saving)
+            # Current NY time: 04:00 (during daylight saving)
+            # Expected to run NY time: 10:30
+            # Next run Berlin time: 15:30
+            tz = pytz.timezone("America/New_York")
+            next = every().day.at("10:30", tz).do(mock_job).next_run
+            assert next.hour == 15
+            assert next.minute == 30
+
+        with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
+            every().day.at("10:30", "FakeZone").do(mock_job)
+
+        with self.assertRaises(ScheduleValueError):
+            every().day.at("10:30", 43).do(mock_job)
+
+    def test_daylight_saving_time(self):
+        mock_job = make_mock_job()
+        # 27 March 2022, 02:00:00 clocks were turned forward 1 hour
+        with mock_datetime(2022, 3, 27, 0, 0):
+            assert every(4).hours.do(mock_job).next_run.hour == 4
+
+        # Sunday, 30 October 2022, 03:00:00 clocks were turned backward 1 hour
+        with mock_datetime(2022, 10, 30, 0, 0):
+            assert every(4).hours.do(mock_job).next_run.hour == 4
 
     def test_run_all(self):
         mock_job = make_mock_job()
