@@ -75,6 +75,13 @@ class CancelJob(object):
     pass
 
 
+class SkipJob(object):
+    """
+    Can be returned from a job to skip a run.
+    """
+    pass
+
+
 class Scheduler(object):
     """
     Objects instantiated by the :class:`Scheduler <Scheduler>` are
@@ -687,7 +694,8 @@ class Job(object):
 
         logger.debug("Running job %s", self)
         ret = self.job_func()
-        self.last_run = datetime.datetime.now()
+        if not isinstance(ret, SkipJob) and ret is not SkipJob:
+            self.last_run = datetime.datetime.now()
         self._schedule_next_run()
 
         if self._is_overdue(self.next_run):

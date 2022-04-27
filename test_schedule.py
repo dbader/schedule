@@ -834,6 +834,31 @@ class SchedulerTests(unittest.TestCase):
         schedule.run_all()
         assert len(schedule.jobs) == 0
 
+    def test_skip_job(self):
+        skip = True
+
+        def skip_job():
+            if skip:
+                return schedule.SkipJob
+            else:
+                return None
+
+        job = every().second.do(skip_job)
+
+        assert len(schedule.jobs) == 1
+        assert job.last_run is None
+
+        schedule.run_all()
+
+        assert len(schedule.jobs) == 1
+        assert job.last_run is None
+
+        skip = False
+        schedule.run_all()
+
+        assert len(schedule.jobs) == 1
+        assert job.last_run is not None
+
     def test_tag_type_enforcement(self):
         job1 = every().second.do(make_mock_job(name="job1"))
         self.assertRaises(TypeError, job1.tag, {})
