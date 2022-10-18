@@ -4,7 +4,7 @@ Pygments
 pytest
 pytest-cov
 pytest-flake8
-Sphinx<=4.5.0
+Sphinx
 black==20.8b1
 click==8.0.4
 mypy
