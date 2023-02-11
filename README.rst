@@ -43,6 +43,8 @@ Usage
     schedule.every().wednesday.at("13:15").do(job)
     schedule.every().day.at("12:42", "Europe/Amsterdam").do(job)
     schedule.every().minute.at(":17").do(job)
+    schedule.every().date("05").do(job)
+    schedule.every().date("12/05").at("09:00").do(job)
 
     def job_with_argument(name):
         print(f"I am {name}")
