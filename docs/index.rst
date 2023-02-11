@@ -17,7 +17,7 @@ Python job scheduling for humans. Run Python functions (or any other callable) p
 - In-process scheduler for periodic jobs. No extra processes needed!
 - Very lightweight and no external dependencies.
 - Excellent test coverage.
-- Tested on Python 3.6, 3.7, 3.8 and 3.9
+- Tested on Python 3.7, 3.8, 3.9 and 3.10
 
 
 :doc:`Example <examples>`
