@@ -223,7 +223,7 @@ class Job(object):
     method, which also defines its `interval`.
     """
 
-    def __init__(self, interval: int, scheduler: Scheduler = None):
+    def __init__(self, interval: int, scheduler: Optional[Scheduler] = None):
         self.interval: int = interval  # pause interval * unit between runs
         self.latest: Optional[int] = None  # upper limit to the interval
         self.job_func: Optional[functools.partial] = None  # the job job_func to run
@@ -465,7 +465,7 @@ class Job(object):
         self.tags.update(tags)
         return self
 
-    def at(self, time_str: str, tz: str = None):
+    def at(self, time_str: str, tz: Optional[str] = None):
 
         """
         Specify a particular time that the job should be run at.
