@@ -43,6 +43,18 @@ Run a job every x minute
     schedule.every().wednesday.at("13:15").do(job)
     schedule.every().minute.at(":17").do(job)
 
+    # Run jobs every month on the 15th
+    schedule.every().date("15").do(job)
+
+    # Run jobs every 3 months at 12:34 on the 20th
+    schedule.every(3).date("20").at("12:34").do(job)
+
+    # Run jobs every year on the July 15th
+    schedule.every().date("07/15").do(job)
+
+    # Run jobs every 3 years at 11:11 on the August 25th
+    schedule.every(3).date("08/25").at("11:11").do(job)
+
     while True:
         schedule.run_pending()
         time.sleep(1)
