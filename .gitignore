@@ -47,3 +47,4 @@ docs/_build
 .idea
 *.iml
 multitasking.py
+schedule_test.py
