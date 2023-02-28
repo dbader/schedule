@@ -46,3 +46,4 @@ docs/_build
 # For Idea (e.g. PyCharm) users
 .idea
 *.iml
+multitasking.py

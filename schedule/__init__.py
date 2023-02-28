@@ -82,9 +82,9 @@ class Scheduler(object):
     handle their execution.
     """
 
-    def __init__(self, start_time_based: bool = True) -> None:
+    def __init__(self, schedule_base: bool = 'scheduled_time') -> None:
         self.jobs: List[Job] = []
-        self.start_time_based = start_time_based
+        self.schedule_base = schedule_base
 
     def run_pending(self) -> None:
         """
@@ -240,7 +240,7 @@ class Job(object):
         self.at_time_zone = None
 
         # datetime of the last run
-        self.last_run_start: Optional[datetime.datetime] = None
+        self.last_run_start: Optional[datetime.datetime] = datetime.datetime.now()
 
         # datetime of the last run
         self.last_run: Optional[datetime.datetime] = None
@@ -692,6 +692,7 @@ class Job(object):
 
         logger.debug("Running job %s", self)
         self.last_run_start = datetime.datetime.now()
+        self.scheduled_time = self.next_run
         ret = self.job_func()
         self.last_run = datetime.datetime.now()
         self._schedule_next_run()
@@ -719,11 +720,16 @@ class Job(object):
             interval = self.interval
 
         self.period = datetime.timedelta(**{self.unit: interval})
-        if self.scheduler.start_time_based:
+        if self.scheduler.schedule_base == 'last_run_start':
             base_time = getattr(self, 'last_run_start', datetime.datetime.now())
+        elif self.scheduler.schedule_base == 'scheduled_time':
+            base_time = getattr(self, 'scheduled_time', datetime.datetime.now())
+            if base_time > datetime.datetime.now():
+                return
         else:
             base_time = datetime.datetime.now()
-        self.next_run = base_time + self.period
+        while self.next_run < datetime.datetime.now():
+            self.next_run = base_time + self.period
         if self.start_day is not None:
             if self.unit != "weeks":
                 raise ScheduleValueError("`unit` should be 'weeks'")

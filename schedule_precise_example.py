@@ -14,17 +14,21 @@ def greet(name):
 #
 from schedule import every, repeat
 
-scheduler1 = schedule.Scheduler(start_time_based=False)
+scheduler = schedule.Scheduler()  # start_time_based=False)
 
 
-@repeat(scheduler1.every(5).seconds, "World")
+@repeat(scheduler.every(13).seconds, "World")
+@repeat(scheduler.every(7).seconds, "Mars")
 @repeat(every().day, "Mars")
 def hello(planet):
     print("\n Hello1", planet, dt.datetime.now())
-    pause.seconds(2)
+    # pause.seconds(2)
+
+
+# scheduler1.jobs
 
 
 while True:
-    scheduler1.run_pending()
-    next_time = dt.datetime.now().replace(microsecond=0) + dt.timedelta(seconds=1)
-    pause.until(next_time)
+    scheduler.run_pending()
+    print(scheduler.next_run)
+    pause.until(scheduler.get_next_run())

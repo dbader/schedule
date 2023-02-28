@@ -2,8 +2,8 @@ import codecs
 from setuptools import setup
 
 
-SCHEDULE_VERSION = "1.1.0"
-SCHEDULE_DOWNLOAD_URL = "https://github.com/dbader/schedule/tarball/" + SCHEDULE_VERSION
+pyscheduler_VERSION = "1.1.0"
+pyscheduler_DOWNLOAD_URL = "https://github.com/dbader/pyscheduler/tarball/" + pyscheduler_VERSION
 
 
 def read_file(filename):
@@ -15,17 +15,17 @@ def read_file(filename):
 
 
 setup(
-    name="schedule",
+    name="pyscheduler",
     packages=["schedule"],
-    package_data={"schedule": ["py.typed"]},
-    version=SCHEDULE_VERSION,
+    package_data={"pyscheduler": ["py.typed"]},
+    version=pyscheduler_VERSION,
     description="Job scheduling for humans.",
     long_description=read_file("README.rst"),
     license="MIT",
     author="Daniel Bader",
     author_email="mail@dbader.org",
-    url="https://github.com/dbader/schedule",
-    download_url=SCHEDULE_DOWNLOAD_URL,
+    url="https://github.com/dbader/pyscheduler",
+    download_url=pyscheduler_DOWNLOAD_URL,
     keywords=[
         "schedule",
         "periodic",
