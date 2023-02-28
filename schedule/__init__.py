@@ -81,6 +81,7 @@ class Scheduler(object):
     Objects instantiated by the :class:`Scheduler <Scheduler>` are
     factories to create jobs, keep record of scheduled jobs and
     handle their execution.
+    option to select the way next run time is calculated
     """
 
     def __init__(self, schedule_base: bool = 'scheduled_time') -> None:
