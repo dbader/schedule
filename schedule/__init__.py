@@ -799,9 +799,9 @@ class Job(object):
                 return
         else:
             base_time = datetime.datetime.now()
-        # self.next_run = datetime.datetime.now() if self.next_run is not None else self.next_run
-        # while self.next_run < datetime.datetime.now():
-        self.next_run = base_time + self.period
+        self.next_run = datetime.datetime.now() if self.next_run is not None else self.next_run
+        while self.next_run < datetime.datetime.now():
+            self.next_run = base_time + self.period
         if self.unit in ("months", "years"):
             interval = interval * 12 if self.unit == "years" else interval
             # Convert monthly interval to daily
