@@ -84,7 +84,7 @@ class Scheduler(object):
     option to select the way next run time is calculated
     """
 
-    def __init__(self, schedule_base: bool = 'scheduled_time') -> None:
+    def __init__(self, schedule_base: str = 'last_run_end') -> None:
         self.jobs: List[Job] = []
         self.schedule_base = schedule_base
 
