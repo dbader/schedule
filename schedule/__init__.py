@@ -502,8 +502,8 @@ class Job(object):
         :return: The invoked job instance
         """
         if (
-                self.unit in ("weeks", "days", "hours", "minutes", "seconds")
-                or self.start_day
+            self.unit in ("weeks", "days", "hours", "minutes", "seconds")
+            or self.start_day
         ):
             raise ScheduleValueError(
                 "Invalid unit (valid units are `months` and `years`)"
@@ -553,9 +553,9 @@ class Job(object):
         :return: The invoked job instance
         """
         if (
-                self.unit not in ("days", "hours", "minutes")
-                and not self.start_day
-                and not self.on_date
+            self.unit not in ("days", "hours", "minutes")
+            and not self.start_day
+            and not self.on_date
         ):
             raise ScheduleValueError(
                 "Invalid unit (valid units are `days`, `hours`, and `minutes`)"
@@ -770,13 +770,13 @@ class Job(object):
         Compute the instant when this job should run next.
         """
         if self.unit not in (
-                "seconds",
-                "minutes",
-                "hours",
-                "days",
-                "weeks",
-                "months",
-                "years",
+            "seconds",
+            "minutes",
+            "hours",
+            "days",
+            "weeks",
+            "months",
+            "years",
         ):
             raise ScheduleValueError(
                 "Invalid unit (valid units are `seconds`, `minutes`, `hours`, "
@@ -799,7 +799,6 @@ class Job(object):
                 return
         else:
             base_time = datetime.datetime.now()
-        self.next_run = datetime.datetime.now() if self.next_run is not None else self.next_run
         while self.next_run < datetime.datetime.now():
             self.next_run = base_time + self.period
         if self.unit in ("months", "years"):
@@ -848,22 +847,22 @@ class Job(object):
             self.next_run = self.next_run.replace(**kwargs)  # type: ignore[arg-type]
         if self.at_time is not None:
             if (
-                    self.unit not in ("days", "hours", "minutes")
-                    and self.start_day is None
-                    and self.on_date is None
+                self.unit not in ("days", "hours", "minutes")
+                and self.start_day is None
+                and self.on_date is None
             ):
                 raise ScheduleValueError("Invalid unit without specifying start day")
             kwargs = {"second": self.at_time.second, "microsecond": 0}
             if (
-                    self.unit == "days"
-                    or self.start_day is not None
-                    or self.on_date is not None
+                self.unit == "days"
+                or self.start_day is not None
+                or self.on_date is not None
             ):
                 kwargs["hour"] = self.at_time.hour
             if (
-                    self.unit in ["days", "hours"]
-                    or self.start_day is not None
-                    or self.on_date is not None
+                self.unit in ["days", "hours"]
+                or self.start_day is not None
+                or self.on_date is not None
             ):
                 kwargs["minute"] = self.at_time.minute
             self.next_run = self.next_run.replace(**kwargs)  # type: ignore
@@ -902,7 +901,7 @@ class Job(object):
             # Let's see if we will still make that time we specified today
             if (self.next_run - datetime.datetime.now()).days >= 7:
                 self.next_run -= self.period
-
+       
         if self.on_date is not None:
             # Make sure that next_run is within the period specified by interval
             if (self.next_run - datetime.datetime.now()).days >= days_interval:
