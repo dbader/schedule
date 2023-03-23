@@ -3,6 +3,12 @@
 History
 -------
 
+Unreleased
+++++++++++
+
+- Fix: Job __repr__ throws AttributeError when job_func is None.  See #485.
+
+
 1.1.0 (2021-04-09)
 ++++++++++++++++++
 

@@ -277,6 +277,10 @@ class Job(object):
         )
 
     def __repr__(self):
+        # If the Job is not yet fully composed, we cannot generate a pretty repr for it
+        if not self.job_func:
+            return str(self)
+
         def format_time(t):
             return t.strftime("%Y-%m-%d %H:%M:%S") if t else "[never]"
 
