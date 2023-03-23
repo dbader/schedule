@@ -897,3 +897,10 @@ class SchedulerTests(unittest.TestCase):
         scheduler.every()
         scheduler.every(10).seconds
         scheduler.run_pending()
+
+    def test_repr_partial_job(self) -> None:
+        """
+        Ensure Job.__repr__ does not throw exception on a partially-composed Job
+        """
+        job = schedule.every(10)
+        repr(job)  # Used to throw exception due to Issue https://github.com/dbader/schedule/issues/485
