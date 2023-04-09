@@ -3,6 +3,11 @@
 History
 -------
 
+Next release
+++++++++++++++++++
+
+- Dropped support for Python 3.6, add support for Python 3.10 and 3.11.
+
 1.1.0 (2021-04-09)
 ++++++++++++++++++
 
