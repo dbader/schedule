@@ -255,6 +255,8 @@ class Job(object):
         self.tags: Set[Hashable] = set()  # unique set of tags for the job
         self.scheduler: Optional[Scheduler] = scheduler  # scheduler to register with
 
+        self.d_callback = None
+
     def __lt__(self, other) -> bool:
         """
         PeriodicJobs are sortable based on the scheduled time they
@@ -639,6 +641,17 @@ class Job(object):
             )
         return self
 
+    def deadline_callback(self, callback: Callable):
+        """
+        Specifies optional callback function which will be invoked before Job cancelling.
+        Function will be called with canceling Job.
+
+        :param callback: The function to be invoked
+        :return: The invoked job instance
+        """
+        self.d_callback = callback
+        return self
+
     def do(self, job_func: Callable, *args, **kwargs):
         """
         Specifies the job_func that should be called every time the
@@ -683,6 +696,9 @@ class Job(object):
         """
         if self._is_overdue(datetime.datetime.now()):
             logger.debug("Cancelling job %s", self)
+            # run callback if defined
+            if self.d_callback:
+                self.d_callback(self)
             return CancelJob
 
         logger.debug("Running job %s", self)
@@ -692,6 +708,9 @@ class Job(object):
 
         if self._is_overdue(self.next_run):
             logger.debug("Cancelling job %s", self)
+            # run callback if defined
+            if self.d_callback:
+                self.d_callback(self)
             return CancelJob
         return ret
 
