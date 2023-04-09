@@ -67,7 +67,7 @@ class IntervalError(ScheduleValueError):
     pass
 
 
-class CancelJob(object):
+class CancelJob:
     """
     Can be returned from a job to unschedule itself.
     """
@@ -75,7 +75,7 @@ class CancelJob(object):
     pass
 
 
-class Scheduler(object):
+class Scheduler:
     """
     Objects instantiated by the :class:`Scheduler <Scheduler>` are
     factories to create jobs, keep record of scheduled jobs and
@@ -205,7 +205,7 @@ class Scheduler(object):
         return (self.next_run - datetime.datetime.now()).total_seconds()
 
 
-class Job(object):
+class Job:
     """
     A periodic job as used by :class:`Scheduler`.
 
