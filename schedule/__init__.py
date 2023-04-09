@@ -75,6 +75,17 @@ class CancelJob(object):
     pass
 
 
+class DuringTime:
+
+    def __init__(self,
+                 run_start: Optional[datetime.datetime] = None,
+                 run_end: Optional[datetime.datetime] = None,
+                 format: Optional[str] = None):
+        self.run_start = run_start
+        self.run_end = run_end
+        self.format = format
+
+
 class Scheduler(object):
     """
     Objects instantiated by the :class:`Scheduler <Scheduler>` are
@@ -174,7 +185,7 @@ class Scheduler(object):
             self.cancel_job(job)
 
     def get_next_run(
-        self, tag: Optional[Hashable] = None
+            self, tag: Optional[Hashable] = None
     ) -> Optional[datetime.datetime]:
         """
         Datetime when the next job should run.
@@ -252,6 +263,9 @@ class Job(object):
         # optional time of final run
         self.cancel_after: Optional[datetime.datetime] = None
 
+        # optional time of start run and end run
+        self.run_during: Optional[DuringTime] = DuringTime
+
         self.tags: Set[Hashable] = set()  # unique set of tags for the job
         self.scheduler: Optional[Scheduler] = scheduler  # scheduler to register with
 
@@ -306,9 +320,9 @@ class Job(object):
             )
         else:
             fmt = (
-                "Every %(interval)s "
-                + ("to %(latest)s " if self.latest is not None else "")
-                + "%(unit)s do %(call_repr)s %(timestats)s"
+                    "Every %(interval)s "
+                    + ("to %(latest)s " if self.latest is not None else "")
+                    + "%(unit)s do %(call_repr)s %(timestats)s"
             )
 
             return fmt % dict(
@@ -572,8 +586,8 @@ class Job(object):
         return self
 
     def until(
-        self,
-        until_time: Union[datetime.datetime, datetime.timedelta, datetime.time, str],
+            self,
+            until_time: Union[datetime.datetime, datetime.timedelta, datetime.time, str],
     ):
         """
         Schedule job to run until the specified moment.
@@ -609,7 +623,7 @@ class Job(object):
                 datetime.datetime.now(), until_time
             )
         elif isinstance(until_time, str):
-            cancel_after = self._decode_datetimestr(
+            cancel_after, f = self._decode_datetimestr(
                 until_time,
                 [
                     "%Y-%m-%d %H:%M:%S",
@@ -637,6 +651,34 @@ class Job(object):
             raise ScheduleValueError(
                 "Cannot schedule a job to run until a time in the past"
             )
+        return self
+
+    def time_between(self, start: str, end: str):
+        start_time, f1 = self._decode_datetimestr(
+            start,
+            [
+                "%Y-%m-%d %H:%M:%S",
+                "%Y-%m-%d %H:%M",
+                "%Y-%m-%d",
+                "%H:%M:%S",
+                "%H:%M",
+            ],
+        )
+        end_time, f2 = self._decode_datetimestr(
+            end,
+            [
+                "%Y-%m-%d %H:%M:%S",
+                "%Y-%m-%d %H:%M",
+                "%Y-%m-%d",
+                "%H:%M:%S",
+                "%H:%M",
+            ],
+        )
+
+        if f1 != f2:
+            raise RuntimeError('The format of the start time and end time must be same!')
+
+        self.run_during = DuringTime(start_time, end_time, f1)
         return self
 
     def do(self, job_func: Callable, *args, **kwargs):
@@ -681,6 +723,10 @@ class Job(object):
                  deadline is reached.
 
         """
+        if not self._is_during_time(datetime.datetime.now()):
+            logger.debug(f"Cancelling job {self} because of out-of the during time")
+            return CancelJob
+
         if self._is_overdue(datetime.datetime.now()):
             logger.debug("Cancelling job %s", self)
             return CancelJob
@@ -760,17 +806,17 @@ class Job(object):
             if not self.last_run or (self.next_run - self.last_run) > self.period:
                 now = datetime.datetime.now()
                 if (
-                    self.unit == "days"
-                    and self.at_time > now.time()
-                    and self.interval == 1
+                        self.unit == "days"
+                        and self.at_time > now.time()
+                        and self.interval == 1
                 ):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
                 elif self.unit == "hours" and (
-                    self.at_time.minute > now.minute
-                    or (
-                        self.at_time.minute == now.minute
-                        and self.at_time.second > now.second
-                    )
+                        self.at_time.minute > now.minute
+                        or (
+                                self.at_time.minute == now.minute
+                                and self.at_time.second > now.second
+                        )
                 ):
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
                 elif self.unit == "minutes" and self.at_time.second > now.second:
@@ -783,12 +829,29 @@ class Job(object):
     def _is_overdue(self, when: datetime.datetime):
         return self.cancel_after is not None and when > self.cancel_after
 
+    def _is_during_time(self, when: datetime.datetime):
+        during_bool = False
+        f = self.run_during.format
+        if f is not None:
+            now_time, f3 = self._decode_datetimestr(
+                when.strftime(f),
+                [
+                    "%Y-%m-%d %H:%M:%S",
+                    "%Y-%m-%d %H:%M",
+                    "%Y-%m-%d",
+                    "%H:%M:%S",
+                    "%H:%M",
+                ],
+            )
+            during_bool = self.run_during.run_start < now_time < self.run_during.run_end
+        return during_bool
+
     def _decode_datetimestr(
-        self, datetime_str: str, formats: List[str]
+            self, datetime_str: str, formats: List[str]
     ) -> Optional[datetime.datetime]:
         for f in formats:
             try:
-                return datetime.datetime.strptime(datetime_str, f)
+                return datetime.datetime.strptime(datetime_str, f), f
             except ValueError:
                 pass
         return None
