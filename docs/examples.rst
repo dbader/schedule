@@ -26,7 +26,7 @@ Run a job every x minute
     # Run job every minute at the 23rd second
     schedule.every().minute.at(":23").do(job)
 
-    # Run job every hour at the 42rd minute
+    # Run job every hour at the 42nd minute
     schedule.every().hour.at(":42").do(job)
 
     # Run jobs every 5th hour, 20 minutes and 30 seconds in.
