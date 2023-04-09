@@ -30,7 +30,7 @@ def make_mock_job(name=None):
     return job
 
 
-class mock_datetime(object):
+class mock_datetime:
     """
     Monkey-patch datetime for predictable results
     """
