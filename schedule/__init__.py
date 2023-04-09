@@ -15,7 +15,7 @@ Features:
     - A simple to use API for scheduling jobs.
     - Very lightweight and no external dependencies.
     - Excellent test coverage.
-    - Tested on Python 3.6, 3.7, 3.8, 3.9
+    - Tested on Python 3.7, 3.8, 3.9, 3.10 and 3.11
 
 Usage:
     >>> import schedule
@@ -67,7 +67,7 @@ class IntervalError(ScheduleValueError):
     pass
 
 
-class CancelJob(object):
+class CancelJob:
     """
     Can be returned from a job to unschedule itself.
     """
@@ -75,7 +75,7 @@ class CancelJob(object):
     pass
 
 
-class Scheduler(object):
+class Scheduler:
     """
     Objects instantiated by the :class:`Scheduler <Scheduler>` are
     factories to create jobs, keep record of scheduled jobs and
@@ -205,7 +205,7 @@ class Scheduler(object):
         return (self.next_run - datetime.datetime.now()).total_seconds()
 
 
-class Job(object):
+class Job:
     """
     A periodic job as used by :class:`Scheduler`.
 
@@ -223,7 +223,7 @@ class Job(object):
     method, which also defines its `interval`.
     """
 
-    def __init__(self, interval: int, scheduler: Scheduler = None):
+    def __init__(self, interval: int, scheduler: Optional[Scheduler] = None):
         self.interval: int = interval  # pause interval * unit between runs
         self.latest: Optional[int] = None  # upper limit to the interval
         self.job_func: Optional[functools.partial] = None  # the job job_func to run
@@ -469,7 +469,7 @@ class Job(object):
         self.tags.update(tags)
         return self
 
-    def at(self, time_str: str, tz: str = None):
+    def at(self, time_str: str, tz: Optional[str] = None):
 
         """
         Specify a particular time that the job should be run at.

@@ -30,7 +30,7 @@ def make_mock_job(name=None):
     return job
 
 
-class mock_datetime(object):
+class mock_datetime:
     """
     Monkey-patch datetime for predictable results
     """
@@ -337,7 +337,8 @@ class SchedulerTests(unittest.TestCase):
         self.assertRaises(
             ScheduleValueError, every().day.until, datetime.timedelta(minutes=-1)
         )
-        self.assertRaises(ScheduleValueError, every().day.until, datetime.time(hour=5))
+        one_hour_ago = datetime.datetime.now() - datetime.timedelta(hours=1)
+        self.assertRaises(ScheduleValueError, every().day.until, one_hour_ago)
 
         # Unschedule job after next_run passes the deadline
         schedule.clear()
