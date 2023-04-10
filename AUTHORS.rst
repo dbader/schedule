@@ -33,3 +33,12 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - fredthomsen <https://github.com/fredthomsen>
 - biggerfisch <https://github.com/biggerfisch>
 - sosolidkk <https://github.com/sosolidkk>
+- rudSarkar <https://github.com/rudSarkar>
+- chrimaho <https://github.com/chrimaho>
+- jweijers <https://github.com/jweijers>
+- Akuli <https://github.com/Akuli>
+- NaelsonDouglas <https://github.com/NaelsonDouglas>
+- SergBobrovsky <https://github.com/SergBobrovsky>
+- CPickens42 <https://github.com/CPickens42>
+- emollier <https://github.com/emollier>
+- sunpro108 <https://github.com/sunpro108>
