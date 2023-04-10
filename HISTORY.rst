@@ -3,10 +3,19 @@
 History
 -------
 
-Next release
+1.2.0 (2023-04-10)
 ++++++++++++++++++
 
 - Dropped support for Python 3.6, add support for Python 3.10 and 3.11.
+- Add timezone support for .at(). See #517. Thanks @chrimaho!
+- Get next run by tag (#463) Thanks @jweijers!
+- Add py.typed file. See #521. Thanks @Akuli!
+
+- Fix the re pattern of the 'days'. See #506 Thanks @sunpro108!
+- Fix test_until_time failure when run early. See #563. Thanks @emollier!
+- Fix crash repr on partially constructed job. See #569. Thanks @CPickens42!
+- Code cleanup and modernization. See #567, #536. Thanks @masa-08 and @SergBobrovsky!
+- Documentation improvements and fix typos. See #469, #479, #493, #519, #520. Thanks to @NaelsonDouglas, @chrimaho, @rudSarkar
 
 1.1.0 (2021-04-09)
 ++++++++++++++++++
