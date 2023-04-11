@@ -41,7 +41,6 @@ Run a job every x minute
     # Run job on a specific day of the week
     schedule.every().monday.do(job)
     schedule.every().wednesday.at("13:15").do(job)
-    schedule.every().minute.at(":17").do(job)
 
     while True:
         schedule.run_pending()
