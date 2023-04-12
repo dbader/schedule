@@ -286,6 +286,10 @@ class SchedulerTests(unittest.TestCase):
         with self.assertRaises(IntervalError):
             every(interval=2).sunday
 
+    # todo: test_start_at
+    def test_start_at(self):
+        pass
+
     def test_until_time(self):
         mock_job = make_mock_job()
         # Check argument parsing

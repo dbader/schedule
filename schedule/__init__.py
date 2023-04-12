@@ -252,6 +252,9 @@ class Job:
         # optional time of final run
         self.cancel_after: Optional[datetime.datetime] = None
 
+        # optional time of start run
+        self.start_at: Optional[datetime.datetime] = None  # todo: may have confict with 'self.at_time'
+
         self.tags: Set[Hashable] = set()  # unique set of tags for the job
         self.scheduler: Optional[Scheduler] = scheduler  # scheduler to register with
 
@@ -309,6 +312,7 @@ class Job:
                 timestats,
             )
         else:
+            # todo: show self.start_at?
             fmt = (
                 "Every %(interval)s "
                 + ("to %(latest)s " if self.latest is not None else "")
@@ -575,6 +579,64 @@ class Job:
         self.latest = latest
         return self
 
+    def when(
+            self,
+            start_time: Union[datetime.datetime, datetime.timedelta, datetime.time, str],
+    ):
+        """
+        Schedule job to run at the specified moment.
+
+        :param start_time: A moment in the future representing the latest time a job can
+           be run. If only a time is supplied, the date is set to today.
+           The following formats are accepted:
+
+           - datetime.datetime
+           - datetime.timedelta
+           - datetime.time
+           - String in one of the following formats: "%Y-%m-%d %H:%M:%S",
+             "%Y-%m-%d %H:%M", "%Y-%m-%d", "%H:%M:%S", "%H:%M"
+             as defined by strptime() behaviour. If an invalid string format is passed,
+             ScheduleValueError is thrown.
+
+        :return: The invoked job instance
+        """
+
+        # todo: support a range like from each Monday to Friday or Saturday to Sunday?
+        if isinstance(start_time, datetime.datetime):
+            self.start_at = start_time
+        elif isinstance(start_time, datetime.timedelta):
+            self.start_day = datetime.datetime.now() + start_time
+        elif isinstance(start_time, datetime.time):
+            self.start_at = datetime.datetime.combine(
+                datetime.datetime.now(), start_time
+            )
+        elif isinstance(start_time, str):
+            start_at = self._decode_datetimestr(
+                start_time,
+                [
+                    "%Y-%m-%d %H:%M:%S",
+                    "%Y-%m-%d %H:%M",
+                    "%Y-%m-%d",
+                    "%H:%M:%S",
+                    "%H:%M",
+                ],
+            )
+            if start_at is None:
+                raise ScheduleValueError("Invalid string format for when()")
+            if "-" not in start_time:
+                # the start_time is a time-only format. Set the date to today
+                now = datetime.datetime.now()
+                start_at = start_at.replace(
+                    year=now.year, month=now.month, day=now.day
+                )
+            self.start_at = start_at
+        else:
+            raise TypeError(
+                "when() takes a string, datetime.datetime, datetime.timedelta, "
+                "datetime.time parameter"
+            )
+        return self
+
     def until(
         self,
         until_time: Union[datetime.datetime, datetime.timedelta, datetime.time, str],
@@ -717,7 +779,14 @@ class Job:
             interval = self.interval
 
         self.period = datetime.timedelta(**{self.unit: interval})
-        self.next_run = datetime.datetime.now() + self.period
+        now = datetime.datetime.now()
+        if self.start_at is not None and self.start_at > now:  # start time is later than now
+            self.next_run = self.start_at
+            # self.star_at property is high priority, do not need to execute the rest if statment
+            return
+        else:
+            self.next_run = now + self.period
+
         if self.start_day is not None:
             if self.unit != "weeks":
                 raise ScheduleValueError("`unit` should be 'weeks'")
