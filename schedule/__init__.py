@@ -46,6 +46,9 @@ import re
 import time
 from typing import Set, List, Optional, Callable, Union
 
+from .crontab import Crontab
+
+
 logger = logging.getLogger("schedule")
 
 
@@ -228,7 +231,7 @@ class Job:
         self.latest: Optional[int] = None  # upper limit to the interval
         self.job_func: Optional[functools.partial] = None  # the job job_func to run
 
-        # time units, e.g. 'minutes', 'hours', ...
+        # time units, e.g. 'minutes', 'hours', ... Only relevant when not using crontab
         self.unit: Optional[str] = None
 
         # optional time at which this job runs
@@ -236,6 +239,9 @@ class Job:
 
         # optional time zone of the self.at_time field. Only relevant when at_time is not None
         self.at_time_zone = None
+
+        # crontab
+        self.crontab: Optional[Crontab] = None
 
         # datetime of the last run
         self.last_run: Optional[datetime.datetime] = None
@@ -469,6 +475,18 @@ class Job:
         self.tags.update(tags)
         return self
 
+    def crontab_expression(self, expression: str, tz: Optional[str] = None) -> "Job":
+        if self.unit is not None:
+            raise ScheduleValueError(
+                "crontab expression cannot be used if a unit is already defined")
+        if self.at_time is not None:
+            raise ScheduleValueError(
+                "crontab expression cannot be used if an `at` time is already defined")
+
+        c = Crontab.from_expression(expression, tz=tz)
+        self.crontab = c
+        return self
+
     def at(self, time_str: str, tz: Optional[str] = None):
 
         """
@@ -495,6 +513,11 @@ class Job:
         if self.unit not in ("days", "hours", "minutes") and not self.start_day:
             raise ScheduleValueError(
                 "Invalid unit (valid units are `days`, `hours`, and `minutes`)"
+            )
+
+        if self.crontab is not None:
+            raise ScheduleValueError(
+                "`at` function cannot be used if a crontab expression is already defined"
             )
 
         if tz is not None:
@@ -703,6 +726,13 @@ class Job:
         """
         Compute the instant when this job should run next.
         """
+        if self.crontab is not None:
+            self.next_run = self.crontab.next_run_time()
+            # the whole library lacks proper timezone support
+            # -> convert to unaware local time.
+            self.next_run = self.next_run.astimezone().replace(tzinfo=None)
+            return
+
         if self.unit not in ("seconds", "minutes", "hours", "days", "weeks"):
             raise ScheduleValueError(
                 "Invalid unit (valid units are `seconds`, `minutes`, `hours`, "

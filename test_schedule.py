@@ -6,6 +6,8 @@ import unittest
 import os
 import time
 
+from freezegun import freeze_time
+
 # Silence "missing docstring", "method could be a function",
 # "class already defined", and "too many public methods" messages:
 # pylint: disable-msg=R0201,C0111,E0102,R0904,R0901
@@ -902,3 +904,56 @@ class SchedulerTests(unittest.TestCase):
         scheduler.every()
         scheduler.every(10).seconds
         scheduler.run_pending()
+
+    def test_crontab_timezone(self):
+        mock_job = make_mock_job()
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+            return
+
+        with freeze_time("2022-2-1T23:15:00+01:00"):
+            # Current Berlin time: feb-1 23:15 (local)
+            # Current India time: feb-2 03:45
+            # Expected to run India time: feb-2 06:30
+            # Next run Berlin time: feb-2 02:00
+            next = every().crontab_expression("30 6 * * *", "Asia/Kolkata").do(mock_job).next_run
+            assert next.hour == 2
+            assert next.minute == 0
+
+        with freeze_time("2022-4-8T10:00:00+01:00"):
+            # Current Berlin time: 10:00 (local) (during daylight saving)
+            # Current NY time: 04:00
+            # Expected to run NY time: 10:30
+            # Next run Berlin time: 16:30
+            next = every().crontab_expression("30 10 * * *", "America/New_York").do(mock_job).next_run
+            assert next.hour == 16
+            assert next.minute == 30
+
+        with freeze_time("2022-3-20T10:00:00+01:00"):
+            # Current Berlin time: 10:00 (local) (NOT during daylight saving)
+            # Current NY time: 04:00 (during daylight saving)
+            # Expected to run NY time: 10:30
+            # Next run Berlin time: 15:30
+            tz = pytz.timezone("America/New_York")
+            next = every().crontab_expression("30 10 * * *", tz).do(mock_job).next_run
+            assert next.hour == 15
+            assert next.minute == 30
+
+        with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
+            every().crontab_expression("30 6 * * *", "FakeZone").do(mock_job)
+
+        with self.assertRaises(ValueError):
+            every().crontab_expression("30 6 * * *", 43).do(mock_job)
+
+    def test_crontab_without_timezone(self):
+        mock_job = make_mock_job()
+
+        with freeze_time("2022-2-1T23:15:00"):
+            next = every().crontab_expression("30 10 * * *").do(mock_job).next_run
+            assert next.year == 2022
+            assert next.month == 2
+            assert next.day == 2
+            assert next.hour == 10
+            assert next.minute == 30
