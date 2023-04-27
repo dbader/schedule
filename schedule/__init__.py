@@ -757,6 +757,19 @@ class Job:
                     .astimezone()
                     .replace(tzinfo=None)
                 )
+                
+                # Changing at_time so checks with it stay consistent.
+                # Datetime is needed for using pytz library.
+                at_time_datetime = datetime.datetime.combine(
+                    datetime.date(2000, 1, 1),  # Arbitrary date
+                    self.at_time
+                )
+                at_time_datetime = (
+                    self.at_time_zone.localize(at_time_datetime)
+                    .astimezone()
+                    .replace(tzinfo=None)
+                )
+                self.at_time = at_time_datetime.time()
 
             # Make sure we run at the specified time *today* (or *this hour*)
             # as well. This accounts for when a job takes so long it finished
