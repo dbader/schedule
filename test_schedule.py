@@ -536,18 +536,32 @@ class SchedulerTests(unittest.TestCase):
             # Current India time: feb-2 03:45
             # Expected to run India time: feb-2 06:30
             # Next run Berlin time: feb-2 02:00
-            next = every().day.at("06:30", "Asia/Kolkata").do(mock_job).next_run
+            job = every().day.at("06:30", "Asia/Kolkata").do(mock_job)
+            
+            next = job.next_run
             assert next.hour == 2
             assert next.minute == 0
+
+            expected_delta = datetime.datetime(2022, 2, 2, 2, 0) - datetime.datetime.now()
+            assert schedule.idle_seconds() == expected_delta.total_seconds()
+
+            schedule.cancel_job(job)
 
         with mock_datetime(2022, 4, 8, 10, 0):
             # Current Berlin time: 10:00 (local) (during daylight saving)
             # Current NY time: 04:00
             # Expected to run NY time: 10:30
             # Next run Berlin time: 16:30
-            next = every().day.at("10:30", "America/New_York").do(mock_job).next_run
+            job = every().day.at("10:30", "America/New_York").do(mock_job)
+
+            next = job.next_run
             assert next.hour == 16
             assert next.minute == 30
+
+            expected_delta = datetime.datetime(2022, 4, 8, 16, 30) - datetime.datetime.now()
+            assert schedule.idle_seconds() == expected_delta.total_seconds()
+
+            schedule.cancel_job(job)
 
         with mock_datetime(2022, 3, 20, 10, 0):
             # Current Berlin time: 10:00 (local) (NOT during daylight saving)
@@ -555,9 +569,33 @@ class SchedulerTests(unittest.TestCase):
             # Expected to run NY time: 10:30
             # Next run Berlin time: 15:30
             tz = pytz.timezone("America/New_York")
-            next = every().day.at("10:30", tz).do(mock_job).next_run
+            job = every().day.at("10:30", tz).do(mock_job)
+
+            next = job.next_run
             assert next.hour == 15
             assert next.minute == 30
+
+            expected_delta = datetime.datetime(2022, 3, 20, 15, 30) - datetime.datetime.now()
+            assert schedule.idle_seconds() == expected_delta.total_seconds()
+
+            schedule.cancel_job(job)
+
+        with mock_datetime(2022, 3, 20, 10, 0):
+            # Current Berlin time: 10:00 (local) (NOT during daylight saving)
+            # Current Krasnoyarsk time: 15:00
+            # Expected to run Krasnoyarsk time: mar-21 11:00
+            # Next run Berlin time: mar-21 06:00
+            tz = pytz.timezone("Asia/Krasnoyarsk")
+            job = every().day.at("11:00", tz).do(mock_job)
+
+            next = job.next_run
+            assert next.hour == 5
+            assert next.minute == 0
+
+            expected_delta = datetime.datetime(2022, 3, 21, 5, 0) - datetime.datetime.now()
+            assert schedule.idle_seconds() == expected_delta.total_seconds()
+
+            schedule.cancel_job(job)
 
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
             every().day.at("10:30", "FakeZone").do(mock_job)
