@@ -758,7 +758,7 @@ class Job:
                     .replace(tzinfo=None)
                 )
                 
-                # Changing at_time so checks with it stay consistent.
+                # Applying timezone to at_time as well so that checks with it stay consistent.
                 # Datetime is needed for using pytz library.
                 at_time_datetime = datetime.datetime.combine(
                     datetime.date(2000, 1, 1),  # Arbitrary date
