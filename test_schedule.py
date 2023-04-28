@@ -537,7 +537,18 @@ class SchedulerTests(unittest.TestCase):
             # Expected to run India time: feb-2 06:30
             # Next run Berlin time: feb-2 02:00
             next = every().day.at("06:30", "Asia/Kolkata").do(mock_job).next_run
+            assert next.day == 2
             assert next.hour == 2
+            assert next.minute == 0
+
+        with mock_datetime(2023, 4, 14, 4, 50):
+            # Current Berlin time: april-14 04:50 (local) (during daylight saving)
+            # Current US/Central time: april-13 21:50
+            # Expected to run US/Central time: april-14 00:00
+            # Next run Berlin time: april-14 07:00
+            next = every().day.at("00:00", "US/Central").do(mock_job).next_run
+            assert next.day == 14
+            assert next.hour == 7
             assert next.minute == 0
 
         with mock_datetime(2022, 4, 8, 10, 0):
