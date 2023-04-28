@@ -757,20 +757,6 @@ class Job:
                     .astimezone()
                     .replace(tzinfo=None)
                 )
-                
-                # Applying timezone to at_time as well so that checks with it stay consistent.
-                # Datetime is needed for using pytz library to make conversions date-specific
-                # in cases of, for example, daylight savings.
-                # at_time_datetime = datetime.datetime.combine(
-                #     self.next_run.date(),
-                #     self.at_time
-                # )
-                # at_time_datetime = (
-                #     self.at_time_zone.localize(at_time_datetime)
-                #     .astimezone()
-                #     .replace(tzinfo=None)
-                # )
-                # self.at_time = at_time_datetime.time()
 
             # Make sure we run at the specified time *today* (or *this hour*)
             # as well. This accounts for when a job takes so long it finished
