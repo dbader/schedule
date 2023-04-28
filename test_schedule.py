@@ -584,7 +584,7 @@ class SchedulerTests(unittest.TestCase):
             # Current Berlin time: 10:00 (local) (NOT during daylight saving)
             # Current Krasnoyarsk time: 15:00
             # Expected to run Krasnoyarsk time: mar-21 11:00
-            # Next run Berlin time: mar-21 06:00
+            # Next run Berlin time: mar-21 05:00
             tz = pytz.timezone("Asia/Krasnoyarsk")
             job = every().day.at("11:00", tz).do(mock_job)
 
