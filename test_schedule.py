@@ -567,7 +567,9 @@ class SchedulerTests(unittest.TestCase):
             # Expected idle seconds: 68400
             schedule.clear()
             every().day.at("11:00", "Asia/Krasnoyarsk").do(mock_job)
-            expected_delta = datetime.datetime(2022, 3, 21, 5, 0) - datetime.datetime.now()
+            expected_delta = (
+                datetime.datetime(2022, 3, 21, 5, 0) - datetime.datetime.now()
+            )
             assert schedule.idle_seconds() == expected_delta.total_seconds()
 
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
