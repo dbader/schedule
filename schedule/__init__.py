@@ -759,7 +759,8 @@ class Job:
                 )
                 
                 # Applying timezone to at_time as well so that checks with it stay consistent.
-                # Datetime is needed for using pytz library.
+                # Datetime is needed for using pytz library to make conversions date-specific
+                # in cases of, for example, daylight savings.
                 at_time_datetime = datetime.datetime.combine(
                     self.next_run.date(),
                     self.at_time
