@@ -572,7 +572,7 @@ class SchedulerTests(unittest.TestCase):
 
         with mock_datetime(2022, 3, 20, 10, 0):
             # Current Berlin time: 10:00 (local) (NOT during daylight saving)
-            # Current Krasnoyarsk time: 15:00
+            # Current Krasnoyarsk time: 16:00
             # Expected to run Krasnoyarsk time: mar-21 11:00
             # Next run Berlin time: mar-21 05:00
             # Expected idle seconds: 68400
