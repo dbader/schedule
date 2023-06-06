@@ -498,16 +498,28 @@ class Job:
             )
 
         if tz is not None:
-            import pytz
-
-            if isinstance(tz, str):
-                self.at_time_zone = pytz.timezone(tz)  # type: ignore
-            elif isinstance(tz, pytz.BaseTzInfo):
-                self.at_time_zone = tz
-            else:
-                raise ScheduleValueError(
-                    "Timezone must be string or pytz.timezone object"
-                )
+            try:
+                import pytz
+                if isinstance(tz, str):
+                    self.at_time_zone = pytz.timezone(tz)  # type: ignore
+                elif isinstance(tz, pytz.BaseTzInfo):
+                    self.at_time_zone = tz
+                else:
+                    raise ScheduleValueError(
+                        "Timezone must be string or pytz.timezone object"
+                    )
+            except ModuleNotFoundError:
+                import dateutil.tz
+                if isinstance(tz, str):
+                    self.at_time_zone = dateutil.tz.gettz(tz)
+                elif isinstance(tz, dateutil.tz.tzfile):
+                    self.at_time_zone = tz
+                else:
+                    raise ScheduleValueError(
+                        "Timezone must be string or dateutil.tz.tzfile object"
+                    )
+                if self.at_time_zone is None:
+                    raise KeyError("Unknown timezone")
 
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string")
@@ -752,11 +764,15 @@ class Job:
             if self.at_time_zone is not None:
                 # Convert next_run from the expected timezone into the local time
                 # self.next_run is a naive datetime so after conversion remove tzinfo
-                self.next_run = (
-                    self.at_time_zone.localize(self.next_run)
-                    .astimezone()
-                    .replace(tzinfo=None)
-                )
+                try:
+                    self.next_run = (
+                        self.at_time_zone.localize(self.next_run)
+                        .astimezone()
+                        .replace(tzinfo=None)
+                    )
+                except Exception:
+                    # if the code above fails, we are using dateutil
+                    self.next_run = self.next_run.replace(tzinfo=self.at_time_zone).astimezone().replace(tzinfo=None)
 
             # Make sure we run at the specified time *today* (or *this hour*)
             # as well. This accounts for when a job takes so long it finished

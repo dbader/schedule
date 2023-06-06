@@ -1,6 +1,7 @@
 """Unit tests for schedule.py"""
 import datetime
 import functools
+
 import mock
 import unittest
 import os
@@ -560,6 +561,53 @@ class SchedulerTests(unittest.TestCase):
             assert next.minute == 30
 
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
+            every().day.at("10:30", "FakeZone").do(mock_job)
+
+        with self.assertRaises(ScheduleValueError):
+            every().day.at("10:30", 43).do(mock_job)
+
+    def test_at_timezone_dateutil(self):
+        mock_job = make_mock_job()
+        try:
+            from dateutil.tz import gettz
+        except ModuleNotFoundError:
+            self.skipTest("dateutil unavailable")
+            return
+        try:
+            import pytz
+            self.skipTest("pytz available, cannot do this test")
+        except ModuleNotFoundError:
+            pass
+
+        with mock_datetime(2022, 2, 1, 23, 15):
+            # Current Berlin time: feb-1 23:15 (local)
+            # Current India time: feb-2 03:45
+            # Expected to run India time: feb-2 06:30
+            # Next run Berlin time: feb-2 02:00
+            next = every().day.at("06:30", "Asia/Kolkata").do(mock_job).next_run
+            assert next.hour == 2
+            assert next.minute == 0
+
+        with mock_datetime(2022, 4, 8, 10, 0):
+            # Current Berlin time: 10:00 (local) (during daylight saving)
+            # Current NY time: 04:00
+            # Expected to run NY time: 10:30
+            # Next run Berlin time: 16:30
+            next = every().day.at("10:30", "America/New_York").do(mock_job).next_run
+            assert next.hour == 16
+            assert next.minute == 30
+
+        with mock_datetime(2022, 3, 20, 10, 0):
+            # Current Berlin time: 10:00 (local) (NOT during daylight saving)
+            # Current NY time: 04:00 (during daylight saving)
+            # Expected to run NY time: 10:30
+            # Next run Berlin time: 15:30
+            tz = gettz("America/New_York")
+            next = every().day.at("10:30", tz).do(mock_job).next_run
+            assert next.hour == 15
+            assert next.minute == 30
+
+        with self.assertRaises(KeyError):
             every().day.at("10:30", "FakeZone").do(mock_job)
 
         with self.assertRaises(ScheduleValueError):
