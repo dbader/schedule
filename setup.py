@@ -1,6 +1,6 @@
 import codecs
-from setuptools import setup
 
+from setuptools import setup
 
 SCHEDULE_VERSION = "1.2.0"
 SCHEDULE_DOWNLOAD_URL = "https://github.com/dbader/schedule/tarball/" + SCHEDULE_VERSION
