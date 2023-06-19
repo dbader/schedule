@@ -37,14 +37,14 @@ Usage:
 [2] https://github.com/Rykian/clockwork
 [3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
-from collections.abc import Hashable
 import datetime
 import functools
 import logging
 import random
 import re
 import time
-from typing import Set, List, Optional, Callable, Union
+from collections.abc import Hashable
+from typing import Callable, List, Optional, Set, Union
 
 logger = logging.getLogger("schedule")
 
@@ -295,7 +295,7 @@ class Job:
 
         if self.job_func is not None:
             args = [repr(x) if is_repr(x) else str(x) for x in self.job_func.args]
-            kwargs = ["%s=%s" % (k, repr(v)) for k, v in self.job_func.keywords.items()]
+            kwargs = [f"{k}={repr(v)}" for k, v in self.job_func.keywords.items()]
             call_repr = job_func_name + "(" + ", ".join(args + kwargs) + ")"
         else:
             call_repr = "[None]"
@@ -545,7 +545,7 @@ class Job:
             second = 0
         if self.unit == "days" or self.start_day:
             hour = int(hour)
-            if not (0 <= hour <= 23):
+            if not 0 <= hour <= 23:
                 raise ScheduleValueError(
                     "Invalid number of hours ({} is not between 0 and 23)"
                 )
@@ -710,7 +710,7 @@ class Job:
             )
 
         if self.latest is not None:
-            if not (self.latest >= self.interval):
+            if not self.latest >= self.interval:
                 raise ScheduleError("`latest` is greater than `interval`")
             interval = random.randint(self.interval, self.latest)
         else:
@@ -732,7 +732,7 @@ class Job:
             )
             if self.start_day not in weekdays:
                 raise ScheduleValueError(
-                    "Invalid start day (valid start days are {})".format(weekdays)
+                    f"Invalid start day (valid start days are {weekdays})"
                 )
             weekday = weekdays.index(self.start_day)
             days_ahead = weekday - self.next_run.weekday()

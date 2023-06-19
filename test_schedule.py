@@ -1,23 +1,20 @@
 """Unit tests for schedule.py"""
 import datetime
 import functools
-import mock
-import unittest
 import os
 import time
+import unittest
+
+import mock
+
+import schedule
+from schedule import (IntervalError, ScheduleError, ScheduleValueError, every,
+                      repeat)
 
 # Silence "missing docstring", "method could be a function",
 # "class already defined", and "too many public methods" messages:
-# pylint: disable-msg=R0201,C0111,E0102,R0904,R0901
+# pylint: disable-msg=C0111,E0102,R0904,R0901
 
-import schedule
-from schedule import (
-    every,
-    repeat,
-    ScheduleError,
-    ScheduleValueError,
-    IntervalError,
-)
 
 # Set timezone to Europe/Berlin (CEST) to ensure global reproducibility
 os.environ["TZ"] = "CET-1CEST,M3.5.0,M10.5.0"
