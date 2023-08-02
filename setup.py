@@ -2,7 +2,7 @@ import codecs
 from setuptools import setup
 
 
-SCHEDULE_VERSION = "1.2.1"
+SCHEDULE_VERSION = "1.2.2"
 
 
 def read_file(filename):
