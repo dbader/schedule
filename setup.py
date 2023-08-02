@@ -2,8 +2,7 @@ import codecs
 from setuptools import setup
 
 
-SCHEDULE_VERSION = "1.2.0"
-SCHEDULE_DOWNLOAD_URL = "https://github.com/dbader/schedule/tarball/" + SCHEDULE_VERSION
+SCHEDULE_VERSION = "1.2.2"
 
 
 def read_file(filename):
@@ -15,17 +14,16 @@ def read_file(filename):
 
 
 setup(
-    name="schedule",
+    name="arivo_schedule",
     packages=["schedule"],
-    package_data={"schedule": ["py.typed"]},
+    package_data={"arivo-schedule": ["py.typed"]},
     version=SCHEDULE_VERSION,
     description="Job scheduling for humans.",
     long_description=read_file("README.rst"),
     license="MIT",
     author="Daniel Bader",
     author_email="mail@dbader.org",
-    url="https://github.com/dbader/schedule",
-    download_url=SCHEDULE_DOWNLOAD_URL,
+    url="https://github.com/ts-accessio/schedule",
     keywords=[
         "schedule",
         "periodic",

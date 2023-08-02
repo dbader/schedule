@@ -1,6 +1,7 @@
 """Unit tests for schedule.py"""
 import datetime
 import functools
+
 import mock
 import unittest
 import os
@@ -286,6 +287,28 @@ class SchedulerTests(unittest.TestCase):
         with self.assertRaises(IntervalError):
             every(interval=2).sunday
 
+    def test_at_time_tz(self):
+        """Test schedule with utc time having different date than local time"""
+        mock_job = make_mock_job()
+        # mocked times are local time
+        from dateutil.tz import UTC, tzlocal
+        with mock_datetime(2023, 8, 1, 11, 30):
+            job = every().day.at("00:30", "Europe/Vienna").do(mock_job)
+            initial_run = datetime.datetime(2023, 8, 1, 22, 30, tzinfo=UTC).astimezone(tzlocal()).replace(tzinfo=None)
+            self.assertEqual(initial_run, job.next_run)
+
+        rt1 = datetime.datetime(2023, 8, 1, 22, 15, tzinfo=UTC).astimezone(tzlocal()).replace(tzinfo=None)
+        with mock_datetime(rt1.year, rt1.month, rt1.day, rt1.hour, rt1.minute):
+            self.assertEqual(False, job.should_run)
+
+        rt2 = datetime.datetime(2023, 8, 1, 22, 35, tzinfo=UTC).astimezone(tzlocal()).replace(tzinfo=None)
+        with mock_datetime(rt2.year, rt2.month, rt2.day, rt2.hour, rt2.minute):
+            self.assertEqual(True, job.should_run)
+            job.run()
+            self.assertEqual(datetime.datetime.now(), job.last_run)
+            next_run_time = datetime.datetime(2023, 8, 2, 22, 30, tzinfo=UTC).astimezone(tzlocal()).replace(tzinfo=None)
+            self.assertEqual(next_run_time, job.next_run)
+
     def test_until_time(self):
         mock_job = make_mock_job()
         # Check argument parsing
@@ -560,6 +583,53 @@ class SchedulerTests(unittest.TestCase):
             assert next.minute == 30
 
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
+            every().day.at("10:30", "FakeZone").do(mock_job)
+
+        with self.assertRaises(ScheduleValueError):
+            every().day.at("10:30", 43).do(mock_job)
+
+    def test_at_timezone_dateutil(self):
+        mock_job = make_mock_job()
+        try:
+            from dateutil.tz import gettz
+        except ModuleNotFoundError:
+            self.skipTest("dateutil unavailable")
+            return
+        try:
+            import pytz
+            self.skipTest("pytz available, cannot do this test")
+        except ModuleNotFoundError:
+            pass
+
+        with mock_datetime(2022, 2, 1, 23, 15):
+            # Current Berlin time: feb-1 23:15 (local)
+            # Current India time: feb-2 03:45
+            # Expected to run India time: feb-2 06:30
+            # Next run Berlin time: feb-2 02:00
+            next = every().day.at("06:30", "Asia/Kolkata").do(mock_job).next_run
+            assert next.hour == 2
+            assert next.minute == 0
+
+        with mock_datetime(2022, 4, 8, 10, 0):
+            # Current Berlin time: 10:00 (local) (during daylight saving)
+            # Current NY time: 04:00
+            # Expected to run NY time: 10:30
+            # Next run Berlin time: 16:30
+            next = every().day.at("10:30", "America/New_York").do(mock_job).next_run
+            assert next.hour == 16
+            assert next.minute == 30
+
+        with mock_datetime(2022, 3, 20, 10, 0):
+            # Current Berlin time: 10:00 (local) (NOT during daylight saving)
+            # Current NY time: 04:00 (during daylight saving)
+            # Expected to run NY time: 10:30
+            # Next run Berlin time: 15:30
+            tz = gettz("America/New_York")
+            next = every().day.at("10:30", tz).do(mock_job).next_run
+            assert next.hour == 15
+            assert next.minute == 30
+
+        with self.assertRaises(KeyError):
             every().day.at("10:30", "FakeZone").do(mock_job)
 
         with self.assertRaises(ScheduleValueError):

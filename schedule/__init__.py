@@ -498,16 +498,28 @@ class Job:
             )
 
         if tz is not None:
-            import pytz
-
-            if isinstance(tz, str):
-                self.at_time_zone = pytz.timezone(tz)  # type: ignore
-            elif isinstance(tz, pytz.BaseTzInfo):
-                self.at_time_zone = tz
-            else:
-                raise ScheduleValueError(
-                    "Timezone must be string or pytz.timezone object"
-                )
+            try:
+                import pytz
+                if isinstance(tz, str):
+                    self.at_time_zone = pytz.timezone(tz)  # type: ignore
+                elif isinstance(tz, pytz.BaseTzInfo):
+                    self.at_time_zone = tz
+                else:
+                    raise ScheduleValueError(
+                        "Timezone must be string or pytz.timezone object"
+                    )
+            except ModuleNotFoundError:
+                import dateutil.tz
+                if isinstance(tz, str):
+                    self.at_time_zone = dateutil.tz.gettz(tz)
+                elif isinstance(tz, dateutil.tz.tzfile):
+                    self.at_time_zone = tz
+                else:
+                    raise ScheduleValueError(
+                        "Timezone must be string or dateutil.tz.tzfile object"
+                    )
+                if self.at_time_zone is None:
+                    raise KeyError("Unknown timezone")
 
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string")
@@ -699,6 +711,16 @@ class Job:
             return CancelJob
         return ret
 
+    def _localize(self, dt: datetime.datetime):
+        if not self.at_time_zone:
+            return dt
+        try:
+            return self.at_time_zone.localize(dt)
+        except Exception:
+            # if the code above fails, we are using dateutil
+            from dateutil.tz import UTC, tzlocal
+            return dt.replace(tzinfo=tzlocal()).astimezone(self.at_time_zone)
+
     def _schedule_next_run(self) -> None:
         """
         Compute the instant when this job should run next.
@@ -717,7 +739,9 @@ class Job:
             interval = self.interval
 
         self.period = datetime.timedelta(**{self.unit: interval})
-        self.next_run = datetime.datetime.now() + self.period
+        # localize here to avoid errors due to daylight savings time
+        self.next_run = self._localize(datetime.datetime.now())
+        self.next_run += self.period
         if self.start_day is not None:
             if self.unit != "weeks":
                 raise ScheduleValueError("`unit` should be 'weeks'")
@@ -739,6 +763,7 @@ class Job:
             if days_ahead <= 0:  # Target day already happened this week
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
+
         if self.at_time is not None:
             if self.unit not in ("days", "hours", "minutes") and self.start_day is None:
                 raise ScheduleValueError("Invalid unit without specifying start day")
@@ -749,40 +774,30 @@ class Job:
                 kwargs["minute"] = self.at_time.minute
             self.next_run = self.next_run.replace(**kwargs)  # type: ignore
 
-            if self.at_time_zone is not None:
-                # Convert next_run from the expected timezone into the local time
-                # self.next_run is a naive datetime so after conversion remove tzinfo
-                self.next_run = (
-                    self.at_time_zone.localize(self.next_run)
-                    .astimezone()
-                    .replace(tzinfo=None)
-                )
-
             # Make sure we run at the specified time *today* (or *this hour*)
             # as well. This accounts for when a job takes so long it finished
             # in the next period.
-            if not self.last_run or (self.next_run - self.last_run) > self.period:
-                now = datetime.datetime.now()
-                if (
-                    self.unit == "days"
-                    and self.at_time > now.time()
-                    and self.interval == 1
-                ):
+            if not self.last_run or (self.next_run - self._localize(self.last_run)) > self.period:
+                now = self._localize(datetime.datetime.now())
+                if self.unit == "days" and self.at_time > now.time() and self.interval == 1:
                     self.next_run = self.next_run - datetime.timedelta(days=1)
                 elif self.unit == "hours" and (
-                    self.at_time.minute > now.minute
-                    or (
-                        self.at_time.minute == now.minute
-                        and self.at_time.second > now.second
-                    )
+                        self.at_time.minute > now.minute
+                        or (
+                                self.at_time.minute == now.minute
+                                and self.at_time.second > now.second
+                        )
                 ):
                     self.next_run = self.next_run - datetime.timedelta(hours=1)
                 elif self.unit == "minutes" and self.at_time.second > now.second:
                     self.next_run = self.next_run - datetime.timedelta(minutes=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
-            if (self.next_run - datetime.datetime.now()).days >= 7:
+            if (self.next_run - self._localize(datetime.datetime.now())).days >= 7:
                 self.next_run -= self.period
+
+        if self.at_time_zone is not None:
+            self.next_run = self.next_run.astimezone().replace(tzinfo=None)
 
     def _is_overdue(self, when: datetime.datetime):
         return self.cancel_after is not None and when > self.cancel_after
