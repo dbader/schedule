@@ -287,6 +287,28 @@ class SchedulerTests(unittest.TestCase):
         with self.assertRaises(IntervalError):
             every(interval=2).sunday
 
+    def test_at_time_tz(self):
+        """Test schedule with utc time having different date than local time"""
+        mock_job = make_mock_job()
+        # mocked times are local time
+        from dateutil.tz import UTC, tzlocal
+        with mock_datetime(2023, 8, 1, 11, 30):
+            job = every().day.at("00:30", "Europe/Vienna").do(mock_job)
+            initial_run = datetime.datetime(2023, 8, 1, 22, 30, tzinfo=UTC).astimezone(tzlocal()).replace(tzinfo=None)
+            self.assertEqual(initial_run, job.next_run)
+
+        rt1 = datetime.datetime(2023, 8, 1, 22, 15, tzinfo=UTC).astimezone(tzlocal()).replace(tzinfo=None)
+        with mock_datetime(rt1.year, rt1.month, rt1.day, rt1.hour, rt1.minute):
+            self.assertEqual(False, job.should_run)
+
+        rt2 = datetime.datetime(2023, 8, 1, 22, 35, tzinfo=UTC).astimezone(tzlocal()).replace(tzinfo=None)
+        with mock_datetime(rt2.year, rt2.month, rt2.day, rt2.hour, rt2.minute):
+            self.assertEqual(True, job.should_run)
+            job.run()
+            self.assertEqual(datetime.datetime.now(), job.last_run)
+            next_run_time = datetime.datetime(2023, 8, 2, 22, 30, tzinfo=UTC).astimezone(tzlocal()).replace(tzinfo=None)
+            self.assertEqual(next_run_time, job.next_run)
+
     def test_until_time(self):
         mock_job = make_mock_job()
         # Check argument parsing
