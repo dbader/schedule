@@ -10,7 +10,6 @@ from collections.abc import Iterable
 from datetime import datetime, timedelta, date
 from calendar import monthrange
 
-import pytz
 
 DAYNAMES = "sun", "mon", "tue", "wed", "thu", "fri", "sat"
 WEEKDAYS = dict(zip(DAYNAMES, range(7)))
@@ -292,6 +291,7 @@ class Crontab:
         self.month_of_year = self._expand_cronspec(month_of_year, 12, 1)
         self.tz = None
         if tz is not None:
+            import pytz
             if isinstance(tz, str):
                 self.tz = pytz.timezone(tz)  # type: ignore
             elif isinstance(tz, pytz.BaseTzInfo):
@@ -483,6 +483,7 @@ class Crontab:
         if self.tz is None:
             return datetime.now()
 
+        import pytz
         utcnow = datetime.now(pytz.UTC)
         return utcnow.astimezone(self.tz)
 
