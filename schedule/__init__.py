@@ -698,6 +698,21 @@ class Job:
             logger.debug("Cancelling job %s", self)
             return CancelJob
         return ret
+    
+    def change_func(self, job_func, *args, **kwargs):
+        """
+        Change the job's function that's called every time the
+        job runs.
+
+        Any additional arguments are passed on to job_func when
+        the job runs.
+
+        :param job_func: The function to replace the old one
+        :return: The invoked job instance
+        """
+        self.job_func = functools.partial(job_func, *args, **kwargs)
+        functools.update_wrapper(self.job_func, job_func)
+        return self
 
     def _schedule_next_run(self) -> None:
         """
