@@ -537,7 +537,18 @@ class SchedulerTests(unittest.TestCase):
             # Expected to run India time: feb-2 06:30
             # Next run Berlin time: feb-2 02:00
             next = every().day.at("06:30", "Asia/Kolkata").do(mock_job).next_run
+            assert next.day == 2
             assert next.hour == 2
+            assert next.minute == 0
+
+        with mock_datetime(2023, 4, 14, 4, 50):
+            # Current Berlin time: april-14 04:50 (local) (during daylight saving)
+            # Current US/Central time: april-13 21:50
+            # Expected to run US/Central time: april-14 00:00
+            # Next run Berlin time: april-14 07:00
+            next = every().day.at("00:00", "US/Central").do(mock_job).next_run
+            assert next.day == 14
+            assert next.hour == 7
             assert next.minute == 0
 
         with mock_datetime(2022, 4, 8, 10, 0):
@@ -558,6 +569,19 @@ class SchedulerTests(unittest.TestCase):
             next = every().day.at("10:30", tz).do(mock_job).next_run
             assert next.hour == 15
             assert next.minute == 30
+
+        with mock_datetime(2022, 3, 20, 10, 0):
+            # Current Berlin time: 10:00 (local) (NOT during daylight saving)
+            # Current Krasnoyarsk time: 16:00
+            # Expected to run Krasnoyarsk time: mar-21 11:00
+            # Next run Berlin time: mar-21 05:00
+            # Expected idle seconds: 68400
+            schedule.clear()
+            every().day.at("11:00", "Asia/Krasnoyarsk").do(mock_job)
+            expected_delta = (
+                datetime.datetime(2022, 3, 21, 5, 0) - datetime.datetime.now()
+            )
+            assert schedule.idle_seconds() == expected_delta.total_seconds()
 
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
             every().day.at("10:30", "FakeZone").do(mock_job)

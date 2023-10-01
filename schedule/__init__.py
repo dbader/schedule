@@ -765,7 +765,7 @@ class Job:
                 now = datetime.datetime.now()
                 if (
                     self.unit == "days"
-                    and self.at_time > now.time()
+                    and self.next_run.time() > now.time()
                     and self.interval == 1
                 ):
                     self.next_run = self.next_run - datetime.timedelta(days=1)
