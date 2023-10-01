@@ -22,6 +22,7 @@ from schedule import (
 # POSIX TZ string format
 TZ_BERLIN = "CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00"
 TZ_AUCKLAND = "NZST-12NZDT-13,M10.1.0/02:00:00,M3.3.0/03:00:00"
+TZ_UTC = "UTC0"
 
 # Set timezone to Europe/Berlin (CEST) to ensure global reproducibility
 os.environ["TZ"] = TZ_BERLIN
@@ -615,6 +616,17 @@ class SchedulerTests(unittest.TestCase):
             assert next.day == 18
             assert next.hour == 12
             assert next.minute == 0
+
+        with mock_datetime(2023, 7, 15, 13, 0, 0, TZ_UTC):
+            # Testing issue #592
+            # Current UTC time: 13:00
+            # Expected to run US East time: 9:45 (daylight saving active)
+            # Next run UTC time: july-15 13:45
+            schedule.clear()
+            next = every().day.at("09:45", "US/Eastern").do(mock_job).next_run
+            assert next.day == 15
+            assert next.hour == 13
+            assert next.minute == 45
 
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
             every().day.at("10:30", "FakeZone").do(mock_job)
