@@ -3,6 +3,12 @@
 History
 -------
 
+1.2.1 (2023-11-01)
+++++++++++++++++++
+
+-  Fix bug where schedule was off when using .at with timezone (#583) Thanks @AnezeR!
+
+
 1.2.0 (2023-04-10)
 ++++++++++++++++++
 
