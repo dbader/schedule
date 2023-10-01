@@ -42,3 +42,6 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - CPickens42 <https://github.com/CPickens42>
 - emollier <https://github.com/emollier>
 - sunpro108 <https://github.com/sunpro108>
+- kurtasov <https://github.com/kurtasov>
+- AnezeR <https://github.com/AnezeR>
+
