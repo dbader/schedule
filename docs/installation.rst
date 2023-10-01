@@ -14,9 +14,9 @@ Want to use Schedule on earlier Python versions? See the History.
 Dependencies
 ############
 
-Schedule has no dependencies. None. Zero. Nada. Nopes.
-We plan to keep it that way.
+Schedule has 1 optional dependency:
 
+Only when you use ``.at()`` with a timezone, you must have `pytz <https://pypi.org/project/pytz/>`_ installed.
 
 Installation instructions
 #########################
