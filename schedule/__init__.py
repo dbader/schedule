@@ -335,6 +335,17 @@ class Job:
         return self
 
     @property
+    def millisecond(self):
+        if self.interval != 1:
+            raise IntervalError("Use milliseconds instead of millisecond")
+        return self.milliseconds
+
+    @property
+    def milliseconds(self):
+        self.unit = "milliseconds"
+        return self
+
+    @property
     def minute(self):
         if self.interval != 1:
             raise IntervalError("Use minutes instead of minute")
@@ -703,9 +714,9 @@ class Job:
         """
         Compute the instant when this job should run next.
         """
-        if self.unit not in ("seconds", "minutes", "hours", "days", "weeks"):
+        if self.unit not in ("milliseconds", "seconds", "minutes", "hours", "days", "weeks"):
             raise ScheduleValueError(
-                "Invalid unit (valid units are `seconds`, `minutes`, `hours`, "
+                "Invalid unit (valid units are `millisecond`, `seconds`, `minutes`, `hours`, "
                 "`days`, and `weeks`)"
             )
 

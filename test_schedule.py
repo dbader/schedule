@@ -35,13 +35,14 @@ class mock_datetime:
     Monkey-patch datetime for predictable results
     """
 
-    def __init__(self, year, month, day, hour, minute, second=0):
+    def __init__(self, year, month, day, hour, minute, second=0, microsecond=0):
         self.year = year
         self.month = month
         self.day = day
         self.hour = hour
         self.minute = minute
         self.second = second
+        self.microsecond = microsecond
         self.original_datetime = None
 
     def __enter__(self):
@@ -59,13 +60,14 @@ class mock_datetime:
                     self.hour,
                     self.minute,
                     self.second,
+                    self.microsecond,
                 )
 
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
         return MockDate(
-            self.year, self.month, self.day, self.hour, self.minute, self.second
+            self.year, self.month, self.day, self.hour, self.minute, self.second, self.microsecond,
         )
 
     def __exit__(self, *args, **kwargs):
@@ -77,6 +79,7 @@ class SchedulerTests(unittest.TestCase):
         schedule.clear()
 
     def test_time_units(self):
+        assert every().milliseconds.unit == "milliseconds"
         assert every().seconds.unit == "seconds"
         assert every().minutes.unit == "minutes"
         assert every().hours.unit == "hours"
@@ -211,6 +214,7 @@ class SchedulerTests(unittest.TestCase):
             assert schedule.next_run("tag4") is None
 
     def test_singular_time_units_match_plural_units(self):
+        assert every().millisecond.unit == every().milliseconds.unit
         assert every().second.unit == every().seconds.unit
         assert every().minute.unit == every().minutes.unit
         assert every().hour.unit == every().hours.unit
@@ -438,9 +442,15 @@ class SchedulerTests(unittest.TestCase):
             self.assertRaises(TypeError, every().minute.at, 2)
 
     def test_next_run_time(self):
-        with mock_datetime(2010, 1, 6, 12, 15):
+        with mock_datetime(2010, 1, 6, 12, 15, 22, 45000):
             mock_job = make_mock_job()
             assert schedule.next_run() is None
+            assert every().millisecond.do(mock_job).next_run.microsecond == 46000
+            assert every(100).milliseconds.do(mock_job).next_run.microsecond == 145000
+            assert every().second.do(mock_job).next_run.second == 23
+            assert every(3).seconds.do(mock_job).next_run.second == 25
+            assert every().second.do(mock_job).next_run.second == 23
+            assert every(3).seconds.do(mock_job).next_run.second == 25
             assert every().minute.do(mock_job).next_run.minute == 16
             assert every(5).minutes.do(mock_job).next_run.minute == 20
             assert every().hour.do(mock_job).next_run.hour == 13
