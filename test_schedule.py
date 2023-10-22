@@ -19,8 +19,13 @@ from schedule import (
     IntervalError,
 )
 
+# POSIX TZ string format
+TZ_BERLIN = "CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00"
+TZ_AUCKLAND = "NZST-12NZDT-13,M10.1.0/02:00:00,M3.3.0/03:00:00"
+TZ_UTC = "UTC0"
+
 # Set timezone to Europe/Berlin (CEST) to ensure global reproducibility
-os.environ["TZ"] = "CET-1CEST,M3.5.0,M10.5.0"
+os.environ["TZ"] = TZ_BERLIN
 time.tzset()
 
 
@@ -35,14 +40,16 @@ class mock_datetime:
     Monkey-patch datetime for predictable results
     """
 
-    def __init__(self, year, month, day, hour, minute, second=0):
+    def __init__(self, year, month, day, hour, minute, second=0, zone=None):
         self.year = year
         self.month = month
         self.day = day
         self.hour = hour
         self.minute = minute
         self.second = second
+        self.zone = zone
         self.original_datetime = None
+        self.original_zone = None
 
     def __enter__(self):
         class MockDate(datetime.datetime):
@@ -64,12 +71,20 @@ class mock_datetime:
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
 
+        self.original_zone = os.environ.get("TZ")
+        if self.zone:
+            os.environ["TZ"] = self.zone
+            time.tzset()
+
         return MockDate(
             self.year, self.month, self.day, self.hour, self.minute, self.second
         )
 
     def __exit__(self, *args, **kwargs):
         datetime.datetime = self.original_datetime
+        if self.original_zone:
+            os.environ["TZ"] = self.original_zone
+            time.tzset()
 
 
 class SchedulerTests(unittest.TestCase):
@@ -582,6 +597,36 @@ class SchedulerTests(unittest.TestCase):
                 datetime.datetime(2022, 3, 21, 5, 0) - datetime.datetime.now()
             )
             assert schedule.idle_seconds() == expected_delta.total_seconds()
+
+        with mock_datetime(2023, 9, 18, 10, 59, 0, TZ_AUCKLAND):
+            # Testing issue #598
+            # Current Auckland time: 10:59 (local) (NOT during daylight saving)
+            # Current UTC time: 21:59 (17 september)
+            # Expected to run UTC time: sept-18 00:00
+            # Next run Auckland time: sept-18 12:00
+            schedule.clear()
+            next = every().day.at("00:00", "UTC").do(mock_job).next_run
+            assert next.day == 18
+            assert next.hour == 12
+            assert next.minute == 0
+
+            # Test that .day.at() and .monday.at() are equivalent in this case
+            schedule.clear()
+            next = every().monday.at("00:00", "UTC").do(mock_job).next_run
+            assert next.day == 18
+            assert next.hour == 12
+            assert next.minute == 0
+
+        with mock_datetime(2023, 7, 15, 13, 0, 0, TZ_UTC):
+            # Testing issue #592
+            # Current UTC time: 13:00
+            # Expected to run US East time: 9:45 (daylight saving active)
+            # Next run UTC time: july-15 13:45
+            schedule.clear()
+            next = every().day.at("09:45", "US/Eastern").do(mock_job).next_run
+            assert next.day == 15
+            assert next.hour == 13
+            assert next.minute == 45
 
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
             every().day.at("10:30", "FakeZone").do(mock_job)
