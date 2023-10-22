@@ -58,8 +58,8 @@ class mock_datetime:
                 return cls(self.year, self.month, self.day)
 
             @classmethod
-            def now(cls):
-                return cls(
+            def now(cls, tz=None):
+                mock_date = cls(
                     self.year,
                     self.month,
                     self.day,
@@ -67,6 +67,9 @@ class mock_datetime:
                     self.minute,
                     self.second,
                 )
+                if tz:
+                    return mock_date.astimezone(tz)
+                return mock_date
 
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
@@ -627,6 +630,19 @@ class SchedulerTests(unittest.TestCase):
             assert next.day == 15
             assert next.hour == 13
             assert next.minute == 45
+
+        with mock_datetime(2023, 10, 19, 15, 0, 0, TZ_UTC):
+            # Testing issue #603
+            # Current UTC: oktober-19 15:00
+            # Current Amsterdam: oktober-19 17:00 (daylight saving active)
+            # Expected run Amsterdam: oktober-20 00:00:20 (daylight saving active)
+            # Next run UTC time: oktober-19 22:00:20
+            schedule.clear()
+            next = every().day.at("00:00:20", "Europe/Amsterdam").do(mock_job).next_run
+            assert next.day == 19
+            assert next.hour == 22
+            assert next.minute == 00
+            assert next.second == 20
 
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
             every().day.at("10:30", "FakeZone").do(mock_job)

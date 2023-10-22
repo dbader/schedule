@@ -716,8 +716,15 @@ class Job:
         else:
             interval = self.interval
 
+        # Do all computation in the context of the requested timezone
+        if self.at_time_zone is not None:
+            # get a naive datetime representation of the current time in the local timezone
+            now = datetime.datetime.now(self.at_time_zone)
+        else:
+            now = datetime.datetime.now()
+
         self.period = datetime.timedelta(**{self.unit: interval})
-        self.next_run = datetime.datetime.now() + self.period
+        self.next_run = now + self.period
         if self.start_day is not None:
             if self.unit != "weeks":
                 raise ScheduleValueError("`unit` should be 'weeks'")
@@ -749,20 +756,10 @@ class Job:
                 kwargs["minute"] = self.at_time.minute
             self.next_run = self.next_run.replace(**kwargs)  # type: ignore
 
-            if self.at_time_zone is not None:
-                # Convert next_run from the expected timezone into the local time
-                # self.next_run is a naive datetime so after conversion remove tzinfo
-                self.next_run = (
-                    self.at_time_zone.localize(self.next_run)
-                    .astimezone()
-                    .replace(tzinfo=None)
-                )
-
             # Make sure we run at the specified time *today* (or *this hour*)
             # as well. This accounts for when a job takes so long it finished
             # in the next period.
             if not self.last_run or (self.next_run - self.last_run) > self.period:
-                now = datetime.datetime.now()
                 if (
                     self.unit == "days"
                     and self.next_run.time() > now.time()
@@ -781,8 +778,13 @@ class Job:
                     self.next_run = self.next_run - datetime.timedelta(minutes=1)
         if self.start_day is not None and self.at_time is not None:
             # Let's see if we will still make that time we specified today
-            if (self.next_run - datetime.datetime.now()).days >= 7:
+            if (self.next_run - now).days >= 7:
                 self.next_run -= self.period
+
+        # Calculations happen in the configured timezone, but to execute the schedule we
+        # need to know the next_run time in the system time. So we convert back to naive local
+        if self.next_run.tzinfo:
+            self.next_run = self.next_run.astimezone().replace(tzinfo=None)
 
     def _is_overdue(self, when: datetime.datetime):
         return self.cancel_after is not None and when > self.cancel_after
