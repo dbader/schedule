@@ -794,9 +794,11 @@ class Job:
             self.next_run = self.next_run.astimezone().replace(tzinfo=None)
 
     # Usually when normalization of a timestamp causes the timestamp to change,
-    # it preseves the moment in time and changes the local timestamp.
+    # it preserves the moment in time and changes the local timestamp.
     # This method applies pytz normalization but preserves the local timestamp, in fact changing the moment in time.
     def _normalize_preserve_timestamp(self, input: datetime.datetime) -> datetime.datetime:
+        if self.at_time_zone is None:
+            return input
         normalized = self.at_time_zone.normalize(input)
         return normalized.replace(day=input.day, hour=input.hour, minute=input.minute, second=input.second, microsecond=input.microsecond)
 
