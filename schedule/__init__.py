@@ -745,6 +745,12 @@ class Job:
             if days_ahead <= 0:  # Target day already happened this week
                 days_ahead += 7
             self.next_run += datetime.timedelta(days_ahead) - self.period
+
+        # before we apply the .at() time, we need to normalize the timestamp
+        # to ensure we change the time elements in the new timezone
+        if self.at_time_zone is not None:
+            self.next_run = self.at_time_zone.normalize(self.next_run)
+
         if self.at_time is not None:
             if self.unit not in ("days", "hours", "minutes") and self.start_day is None:
                 raise ScheduleValueError("Invalid unit without specifying start day")
@@ -755,15 +761,6 @@ class Job:
                 kwargs["minute"] = self.at_time.minute
 
             self.next_run = self.next_run.replace(**kwargs)  # type: ignore
-
-            if self.at_time_zone is not None:
-                # Sometimes when changing time we move into a different timezone (e.g. DST)
-                # To correct the timezone-element, we can 'normalize' the time.
-                self.next_run = self.at_time_zone.normalize(self.next_run)
-                # But normalization keeps the hour/minute/second elements at the same moment in time,
-                # For example 23:00 might become 22:00. But the .at() promises a specific hour/minute/second
-                # so we re-apply those elements here.
-                self.next_run = self.next_run.replace(**kwargs)  # type: ignore
 
             # Make sure we run at the specified time *today* (or *this hour*)
             # as well. This accounts for when a job takes so long it finished
@@ -793,8 +790,15 @@ class Job:
         # Calculations happen in the configured timezone, but to execute the schedule we
         # need to know the next_run time in the system time. So we convert back to naive local
         if self.at_time_zone is not None:
-            self.next_run = self.at_time_zone.normalize(self.next_run)
+            self.next_run = self._normalize_preserve_timestamp(self.next_run)
             self.next_run = self.next_run.astimezone().replace(tzinfo=None)
+
+    # Usually when normalization of a timestamp causes the timestamp to change,
+    # it preseves the moment in time and changes the local timestamp.
+    # This method applies pytz normalization but preserves the local timestamp, in fact changing the moment in time.
+    def _normalize_preserve_timestamp(self, input: datetime.datetime) -> datetime.datetime:
+        normalized = self.at_time_zone.normalize(input)
+        return normalized.replace(day=input.day, hour=input.hour, minute=input.minute, second=input.second, microsecond=input.microsecond)
 
     def _is_overdue(self, when: datetime.datetime):
         return self.cancel_after is not None and when > self.cancel_after
