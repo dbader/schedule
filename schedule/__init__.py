@@ -756,7 +756,7 @@ class Job:
 
             self.next_run = self.next_run.replace(**kwargs)  # type: ignore
 
-            if self.next_run.tzinfo:
+            if self.at_time_zone is not None:
                 # Sometimes when changing time we move into a different timezone (e.g. DST)
                 # To correct the timezone-element, we can 'normalize' the time.
                 self.next_run = self.at_time_zone.normalize(self.next_run)
@@ -792,7 +792,7 @@ class Job:
 
         # Calculations happen in the configured timezone, but to execute the schedule we
         # need to know the next_run time in the system time. So we convert back to naive local
-        if self.next_run.tzinfo:
+        if self.at_time_zone is not None:
             self.next_run = self.at_time_zone.normalize(self.next_run)
             self.next_run = self.next_run.astimezone().replace(tzinfo=None)
 
