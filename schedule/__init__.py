@@ -718,7 +718,6 @@ class Job:
 
         # Do all computation in the context of the requested timezone
         if self.at_time_zone is not None:
-            # get a naive datetime representation of the current time in the local timezone
             now = datetime.datetime.now(self.at_time_zone)
         else:
             now = datetime.datetime.now()
@@ -754,7 +753,17 @@ class Job:
                 kwargs["hour"] = self.at_time.hour
             if self.unit in ["days", "hours"] or self.start_day is not None:
                 kwargs["minute"] = self.at_time.minute
+
             self.next_run = self.next_run.replace(**kwargs)  # type: ignore
+
+            if self.next_run.tzinfo:
+                # Sometimes when changing time we move into a different timezone (e.g. DST)
+                # To correct the timezone-element, we can 'normalize' the time.
+                self.next_run = self.at_time_zone.normalize(self.next_run)
+                # But normalization keeps the hour/minute/second elements at the same moment in time,
+                # For example 23:00 might become 22:00. But the .at() promises a specific hour/minute/second
+                # so we re-apply those elements here.
+                self.next_run = self.next_run.replace(**kwargs)  # type: ignore
 
             # Make sure we run at the specified time *today* (or *this hour*)
             # as well. This accounts for when a job takes so long it finished
@@ -784,6 +793,7 @@ class Job:
         # Calculations happen in the configured timezone, but to execute the schedule we
         # need to know the next_run time in the system time. So we convert back to naive local
         if self.next_run.tzinfo:
+            self.next_run = self.at_time_zone.normalize(self.next_run)
             self.next_run = self.next_run.astimezone().replace(tzinfo=None)
 
     def _is_overdue(self, when: datetime.datetime):

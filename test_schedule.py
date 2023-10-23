@@ -644,6 +644,17 @@ class SchedulerTests(unittest.TestCase):
             assert next.minute == 00
             assert next.second == 20
 
+        with mock_datetime(2023, 10, 22, 23, 0, 0, TZ_UTC):
+            # Current UTC: sunday 23:00
+            # Current Amsterdam: monday 01:00 (daylight saving active)
+            # Expected run Amsterdam: sunday 29 oktober 23:00 (daylight saving NOT active)
+            # Next run UTC time: oktober-29 22:00
+            schedule.clear()
+            next = every().sunday.at("23:00", "Europe/Amsterdam").do(mock_job).next_run
+            assert next.day == 29
+            assert next.hour == 22
+            assert next.minute == 00
+
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
             every().day.at("10:30", "FakeZone").do(mock_job)
 
