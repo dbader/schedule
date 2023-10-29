@@ -765,7 +765,8 @@ class Job:
             # Make sure we run at the specified time *today* (or *this hour*)
             # as well. This accounts for when a job takes so long it finished
             # in the next period.
-            if not self.last_run or (self.next_run - self.last_run) > self.period:
+            last_run_tz = self._to_at_timezone(self.last_run)
+            if not last_run_tz or (self.next_run - last_run_tz) > self.period:
                 if (
                     self.unit == "days"
                     and self.next_run.time() > now.time()
@@ -797,10 +798,15 @@ class Job:
     # it preserves the moment in time and changes the local timestamp.
     # This method applies pytz normalization but preserves the local timestamp, in fact changing the moment in time.
     def _normalize_preserve_timestamp(self, input: datetime.datetime) -> datetime.datetime:
-        if self.at_time_zone is None:
+        if self.at_time_zone is None or input is None:
             return input
         normalized = self.at_time_zone.normalize(input)
         return normalized.replace(day=input.day, hour=input.hour, minute=input.minute, second=input.second, microsecond=input.microsecond)
+
+    def _to_at_timezone(self, input: datetime.datetime) -> datetime.datetime:
+        if self.at_time_zone is None or input is None:
+            return input
+        return input.astimezone(self.at_time_zone)
 
     def _is_overdue(self, when: datetime.datetime):
         return self.cancel_after is not None and when > self.cancel_after

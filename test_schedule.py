@@ -503,26 +503,76 @@ class SchedulerTests(unittest.TestCase):
             assert job.next_run.hour == 23
 
     def test_next_run_time_hour_end(self):
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+
+        self.tst_next_run_time_hour_end(None, 0)
+
+    def test_next_run_time_hour_end_london(self):
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+
+        self.tst_next_run_time_hour_end("Europe/London", 0)
+
+    def test_next_run_time_hour_end_katmandu(self):
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+
+        # 12:00 in Berlin is 15:45 in Kathmandu
+        # this test schedules runs at :10 minutes, so job runs at
+        # 16:10 in Kathmandu, which is 13:25 in Berlin
+        # in local time we don't run at :10, but at :25, offset of 15 minutes
+        self.tst_next_run_time_hour_end("Asia/Kathmandu", 15)
+
+    def tst_next_run_time_hour_end(self, tz, offsetMinutes):
         mock_job = make_mock_job()
+
+        # So a job scheduled to run at :10 in Kathmandu, runs always 25 minutes
         with mock_datetime(2010, 10, 10, 12, 0, 0):
-            job = every().hour.at(":10").do(mock_job)
+            job = every().hour.at(":10", tz).do(mock_job)
             assert job.next_run.hour == 12
-            assert job.next_run.minute == 10
+            assert job.next_run.minute == 10 + offsetMinutes
 
         with mock_datetime(2010, 10, 10, 13, 0, 0):
             job.run()
             assert job.next_run.hour == 13
-            assert job.next_run.minute == 10
+            assert job.next_run.minute == 10 + offsetMinutes
 
-        with mock_datetime(2010, 10, 10, 13, 15, 0):
+        with mock_datetime(2010, 10, 10, 13, 30, 0):
             job.run()
             assert job.next_run.hour == 14
-            assert job.next_run.minute == 10
+            assert job.next_run.minute == 10 + offsetMinutes
+
 
     def test_next_run_time_minute_end(self):
+        self.tst_next_run_time_minute_end(None)
+
+    def test_next_run_time_minute_end_london(self):
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+
+        self.tst_next_run_time_minute_end("Europe/London")
+
+    def test_next_run_time_minute_end_katmhandu(self):
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+
+        self.tst_next_run_time_minute_end("Asia/Kathmandu")
+
+    def tst_next_run_time_minute_end(self, tz):
         mock_job = make_mock_job()
         with mock_datetime(2010, 10, 10, 10, 10, 0):
-            job = every().minute.at(":15").do(mock_job)
+            job = every().minute.at(":15", tz).do(mock_job)
             assert job.next_run.minute == 10
             assert job.next_run.second == 15
 
