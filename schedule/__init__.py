@@ -803,7 +803,7 @@ class Job:
         normalized = self.at_time_zone.normalize(input)
         return normalized.replace(day=input.day, hour=input.hour, minute=input.minute, second=input.second, microsecond=input.microsecond)
 
-    def _to_at_timezone(self, input: datetime.datetime) -> datetime.datetime:
+    def _to_at_timezone(self, input: Optional[datetime.datetime]) -> datetime.datetime:
         if self.at_time_zone is None or input is None:
             return input
         return input.astimezone(self.at_time_zone)
