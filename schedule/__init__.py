@@ -810,7 +810,9 @@ class Job:
             microsecond=input.microsecond,
         )
 
-    def _to_at_timezone(self, input: Optional[datetime.datetime]) -> Optional[datetime.datetime]:
+    def _to_at_timezone(
+        self, input: Optional[datetime.datetime]
+    ) -> Optional[datetime.datetime]:
         if self.at_time_zone is None or input is None:
             return input
         return input.astimezone(self.at_time_zone)
