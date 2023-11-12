@@ -549,7 +549,6 @@ class SchedulerTests(unittest.TestCase):
             assert job.next_run.hour == 14
             assert job.next_run.minute == 10 + offsetMinutes
 
-
     def test_next_run_time_minute_end(self):
         self.tst_next_run_time_minute_end(None)
 
@@ -769,9 +768,6 @@ class SchedulerTests(unittest.TestCase):
             assert next.day == 29
             assert next.hour == 1
             assert next.minute == 0
-
-
-
 
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
             every().day.at("10:30", "FakeZone").do(mock_job)

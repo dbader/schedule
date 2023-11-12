@@ -470,7 +470,6 @@ class Job:
         return self
 
     def at(self, time_str: str, tz: Optional[str] = None):
-
         """
         Specify a particular time that the job should be run at.
 
@@ -797,11 +796,19 @@ class Job:
     # Usually when normalization of a timestamp causes the timestamp to change,
     # it preserves the moment in time and changes the local timestamp.
     # This method applies pytz normalization but preserves the local timestamp, in fact changing the moment in time.
-    def _normalize_preserve_timestamp(self, input: datetime.datetime) -> datetime.datetime:
+    def _normalize_preserve_timestamp(
+        self, input: datetime.datetime
+    ) -> datetime.datetime:
         if self.at_time_zone is None or input is None:
             return input
         normalized = self.at_time_zone.normalize(input)
-        return normalized.replace(day=input.day, hour=input.hour, minute=input.minute, second=input.second, microsecond=input.microsecond)
+        return normalized.replace(
+            day=input.day,
+            hour=input.hour,
+            minute=input.minute,
+            second=input.second,
+            microsecond=input.microsecond,
+        )
 
     def _to_at_timezone(self, input: Optional[datetime.datetime]) -> datetime.datetime:
         if self.at_time_zone is None or input is None:
