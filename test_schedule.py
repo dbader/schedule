@@ -769,6 +769,20 @@ class SchedulerTests(unittest.TestCase):
             assert next.hour == 1
             assert next.minute == 0
 
+        with mock_datetime(2023, 9, 18, 10, 00, 0, TZ_AUCKLAND):
+            schedule.clear()
+            # Testing issue #605
+            # Current time: Monday 18 September 10:00 NZST
+            # Current time UTC: Sunday 17 September 22:00
+            # We expect the job to run at 23:00 on Sunday 17 September NZST
+            # That is an expected idle time of 1 hour
+            # Expected next run in NZST: 2023-09-18 11:00:00
+            next = schedule.every().day.at("23:00", "UTC").do(mock_job).next_run
+            assert round(schedule.idle_seconds() / 3600) == 1
+            assert next.day == 18
+            assert next.hour == 11
+            assert next.minute == 0
+
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
             every().day.at("10:30", "FakeZone").do(mock_job)
 
