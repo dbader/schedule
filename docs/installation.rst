@@ -6,7 +6,7 @@ Python version support
 ######################
 
 We recommend using the latest version of Python.
-Schedule is tested on Python 3.7, 3.8, 3.9, 3.10 and 3.11.
+Schedule is tested on Python 3.7, 3.8, 3.9, 3.10, 3.11 and 3.12
 
 Want to use Schedule on earlier Python versions? See the History.
 
