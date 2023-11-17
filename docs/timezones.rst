@@ -29,18 +29,30 @@ This causes the ``next_run`` and ``last_run`` to always be in Pythons local time
 
 Daylight Saving Time
 ~~~~~~~~~~~~~~~~~~~~
-When scheduling jobs with relative time (that is when not using ``.at()``), daylight saving time (DST) is **not** taken into account.
-A job that is set to run every 4 hours might execute after 3 realtime hours when DST goes into effect.
-This is because schedule is timezone-unaware for relative times.
+Scheduling jobs that do not specify a timezone do **not** take clock-changes into account.
+Timezone unaware jobs will use naive local times to calculate the next run.
+For example, a job that is set to run every 4 hours might execute after 3 realtime hours when DST goes into effect.
 
-However, when using ``.at()``, DST **is** handed correctly: the job will always run at (or close after) the set timestamp.
-A job scheduled during a moment that is skipped, the job will execute after the clock is moved.
-For example, a job is scheduled ``.at("02:30")``, clock moves from ``02:00`` to ``03:00``, the job will run at ``03:00``.
+But when passing a timezone to ``.at()``, DST **is** taken into account.
+The job will run at the specified time, even when the clock changes.
 
-Example
-~~~~~~~
+Example clock moves forward:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A job is scheduled ``.at("02:30", "Europe/Berlin")``.
+When the clock moves from ``02:00`` to ``03:00``, the job will run once at ``03:30``.
+The day after it will return to normal and run at ``02:30``.
+
+Example clock moves backwards:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A job is scheduled ``.at("02:30", "Europe/Berlin")``.
+When the clock moves from ``02:00`` to ``03:00``, the job will run once at ``02:30``.
+It will run only at the first time the clock hits ``02:30``, but not the second time.
+The day after, it will return to normal and run at ``02:30``.
+
+Example scheduling across timezones
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Let's say we are in ``Europe/Berlin`` and local datetime is ``2022 march 20, 10:00:00``.
-At the moment daylight saving time is not in effect in Berlin (UTC+1).
+At this moment daylight saving time is not in effect in Berlin (UTC+1).
 
 We schedule a job to run every day at 10:30:00 in America/New_York.
 At this time, daylight saving time is in effect in New York (UTC-4).

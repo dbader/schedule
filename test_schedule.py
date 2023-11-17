@@ -58,8 +58,8 @@ class mock_datetime:
                 return cls(self.year, self.month, self.day)
 
             @classmethod
-            def now(cls):
-                return cls(
+            def now(cls, tz=None):
+                mock_date = cls(
                     self.year,
                     self.month,
                     self.day,
@@ -67,6 +67,9 @@ class mock_datetime:
                     self.minute,
                     self.second,
                 )
+                if tz:
+                    return mock_date.astimezone(tz)
+                return mock_date
 
         self.original_datetime = datetime.datetime
         datetime.datetime = MockDate
@@ -500,26 +503,75 @@ class SchedulerTests(unittest.TestCase):
             assert job.next_run.hour == 23
 
     def test_next_run_time_hour_end(self):
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+
+        self.tst_next_run_time_hour_end(None, 0)
+
+    def test_next_run_time_hour_end_london(self):
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+
+        self.tst_next_run_time_hour_end("Europe/London", 0)
+
+    def test_next_run_time_hour_end_katmandu(self):
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+
+        # 12:00 in Berlin is 15:45 in Kathmandu
+        # this test schedules runs at :10 minutes, so job runs at
+        # 16:10 in Kathmandu, which is 13:25 in Berlin
+        # in local time we don't run at :10, but at :25, offset of 15 minutes
+        self.tst_next_run_time_hour_end("Asia/Kathmandu", 15)
+
+    def tst_next_run_time_hour_end(self, tz, offsetMinutes):
         mock_job = make_mock_job()
+
+        # So a job scheduled to run at :10 in Kathmandu, runs always 25 minutes
         with mock_datetime(2010, 10, 10, 12, 0, 0):
-            job = every().hour.at(":10").do(mock_job)
+            job = every().hour.at(":10", tz).do(mock_job)
             assert job.next_run.hour == 12
-            assert job.next_run.minute == 10
+            assert job.next_run.minute == 10 + offsetMinutes
 
         with mock_datetime(2010, 10, 10, 13, 0, 0):
             job.run()
             assert job.next_run.hour == 13
-            assert job.next_run.minute == 10
+            assert job.next_run.minute == 10 + offsetMinutes
 
-        with mock_datetime(2010, 10, 10, 13, 15, 0):
+        with mock_datetime(2010, 10, 10, 13, 30, 0):
             job.run()
             assert job.next_run.hour == 14
-            assert job.next_run.minute == 10
+            assert job.next_run.minute == 10 + offsetMinutes
 
     def test_next_run_time_minute_end(self):
+        self.tst_next_run_time_minute_end(None)
+
+    def test_next_run_time_minute_end_london(self):
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+
+        self.tst_next_run_time_minute_end("Europe/London")
+
+    def test_next_run_time_minute_end_katmhandu(self):
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+
+        self.tst_next_run_time_minute_end("Asia/Kathmandu")
+
+    def tst_next_run_time_minute_end(self, tz):
         mock_job = make_mock_job()
         with mock_datetime(2010, 10, 10, 10, 10, 0):
-            job = every().minute.at(":15").do(mock_job)
+            job = every().minute.at(":15", tz).do(mock_job)
             assert job.next_run.minute == 10
             assert job.next_run.second == 15
 
@@ -585,6 +637,40 @@ class SchedulerTests(unittest.TestCase):
             assert next.hour == 15
             assert next.minute == 30
 
+        # Test the DST-case that is described in the documentation
+        with mock_datetime(2023, 3, 26, 1, 30):
+            # Current Berlin time: 01:30 (NOT during daylight saving)
+            # Expected to run: 02:30 - this time doesn't exist
+            #  because clock moves from 02:00 to 03:00
+            # Next run: 03:30
+            job = every().day.at("02:30", "Europe/Berlin").do(mock_job)
+            assert job.next_run.day == 26
+            assert job.next_run.hour == 3
+            assert job.next_run.minute == 30
+        with mock_datetime(2023, 3, 27, 1, 30):
+            # the next day the job shall again run at 02:30
+            job.run()
+            assert job.next_run.day == 27
+            assert job.next_run.hour == 2
+            assert job.next_run.minute == 30
+
+        # Test the DST-case that is described in the documentation
+        with mock_datetime(2023, 10, 29, 1, 30):
+            # Current Berlin time: 01:30 (during daylight saving)
+            # Expected to run: 02:30 - this time exists twice
+            #  because clock moves from 03:00 to 02:00
+            # Next run should be at the first occurrence of 02:30
+            job = every().day.at("02:30", "Europe/Berlin").do(mock_job)
+            assert job.next_run.day == 29
+            assert job.next_run.hour == 2
+            assert job.next_run.minute == 30
+        with mock_datetime(2023, 10, 29, 2, 35):
+            # After the job runs, the next run should be scheduled on the next day at 02:30
+            job.run()
+            assert job.next_run.day == 30
+            assert job.next_run.hour == 2
+            assert job.next_run.minute == 30
+
         with mock_datetime(2022, 3, 20, 10, 0):
             # Current Berlin time: 10:00 (local) (NOT during daylight saving)
             # Current Krasnoyarsk time: 16:00
@@ -627,6 +713,109 @@ class SchedulerTests(unittest.TestCase):
             assert next.day == 15
             assert next.hour == 13
             assert next.minute == 45
+
+        with mock_datetime(2023, 10, 19, 15, 0, 0, TZ_UTC):
+            # Testing issue #603
+            # Current UTC: oktober-19 15:00
+            # Current Amsterdam: oktober-19 17:00 (daylight saving active)
+            # Expected run Amsterdam: oktober-20 00:00:20 (daylight saving active)
+            # Next run UTC time: oktober-19 22:00:20
+            schedule.clear()
+            next = every().day.at("00:00:20", "Europe/Amsterdam").do(mock_job).next_run
+            assert next.day == 19
+            assert next.hour == 22
+            assert next.minute == 00
+            assert next.second == 20
+
+        with mock_datetime(2023, 10, 22, 23, 0, 0, TZ_UTC):
+            # Current UTC: sunday 22-okt 23:00
+            # Current Amsterdam: monday 23-okt 01:00 (daylight saving active)
+            # Expected run Amsterdam: sunday 29 oktober 23:00 (daylight saving NOT active)
+            # Next run UTC time: oktober-29 22:00
+            schedule.clear()
+            next = every().sunday.at("23:00", "Europe/Amsterdam").do(mock_job).next_run
+            assert next.day == 29
+            assert next.hour == 22
+            assert next.minute == 00
+
+        with mock_datetime(2023, 12, 31, 23, 0, 0):
+            # Current Berlin time: dec-31 23:00 (local)
+            # Current Sydney time: jan-1 09:00 (next day)
+            # Expected to run Sydney time: jan-1 12:00
+            # Next run Berlin time: jan-1 02:00
+            next = every().day.at("12:00", "Australia/Sydney").do(mock_job).next_run
+            assert next.day == 1
+            assert next.hour == 2
+            assert next.minute == 0
+
+        with mock_datetime(2023, 3, 26, 1, 30):
+            # Daylight Saving Time starts in Berlin
+            # Current Berlin time: march-26 01:30 (30 mintues before moving to 03:00 due to DST)
+            # Current London time: march-26 00:30 (30 mintues before moving to 02:00 due to DST)
+            # Expected to run London time: march-26 02:00 (which is equal to 01:00 due to DST)
+            # Next run Berlin time: march-26 03:00
+            next = every().day.at("01:00", "Europe/London").do(mock_job).next_run
+            assert next.day == 26
+            assert next.hour == 3
+            assert next.minute == 0
+
+        with mock_datetime(2023, 10, 29, 2, 30):
+            # Daylight Saving Time ends in Berlin
+            # Current Berlin time: oct-29 02:30 (after moving back to 02:00 due to DST end)
+            # Current Istanbul time: oct-29 04:30
+            # Expected to run Istanbul time: oct-29 06:00
+            # Next run Berlin time: oct-29 04:00
+            next = every().day.at("06:00", "Europe/Istanbul").do(mock_job).next_run
+            assert next.hour == 4
+            assert next.minute == 0
+
+        with mock_datetime(2023, 12, 31, 23, 50):
+            # End of the year in Berlin
+            # Current Berlin time: dec-31 23:50
+            # Current Tokyo time: jan-1 07:50 (next day)
+            # Expected to run Tokyo time: jan-1 09:00
+            # Next run Berlin time: jan-1 01:00
+            next = every().day.at("09:00", "Asia/Tokyo").do(mock_job).next_run
+            assert next.day == 1
+            assert next.hour == 1
+            assert next.minute == 0
+
+        with mock_datetime(2023, 2, 28, 23, 50):
+            # End of the month (non-leap year) in Berlin
+            # Current Berlin time: feb-28 23:50
+            # Current Sydney time: mar-1 09:50 (next day)
+            # Expected to run Sydney time: mar-1 10:00
+            # Next run Berlin time: mar-1 00:00
+            next = every().day.at("10:00", "Australia/Sydney").do(mock_job).next_run
+            assert next.day == 1
+            assert next.hour == 0
+            assert next.minute == 0
+
+        with mock_datetime(2024, 2, 28, 23, 50):
+            # End of the month (leap year) in Berlin
+            # Current Berlin time: feb-28 23:50
+            # Current Dubai time: feb-29 02:50
+            # Expected to run Dubai time: feb-29 04:00
+            # Next run Berlin time: feb-29 01:00
+            next = every().day.at("04:00", "Asia/Dubai").do(mock_job).next_run
+            assert next.month == 2
+            assert next.day == 29
+            assert next.hour == 1
+            assert next.minute == 0
+
+        with mock_datetime(2023, 9, 18, 10, 00, 0, TZ_AUCKLAND):
+            schedule.clear()
+            # Testing issue #605
+            # Current time: Monday 18 September 10:00 NZST
+            # Current time UTC: Sunday 17 September 22:00
+            # We expect the job to run at 23:00 on Sunday 17 September NZST
+            # That is an expected idle time of 1 hour
+            # Expected next run in NZST: 2023-09-18 11:00:00
+            next = schedule.every().day.at("23:00", "UTC").do(mock_job).next_run
+            assert round(schedule.idle_seconds() / 3600) == 1
+            assert next.day == 18
+            assert next.hour == 11
+            assert next.minute == 0
 
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
             every().day.at("10:30", "FakeZone").do(mock_job)
