@@ -42,6 +42,10 @@ Run a job every x minute
     schedule.every().monday.do(job)
     schedule.every().wednesday.at("13:15").do(job)
 
+    # Run job based on a crontab expression
+    schedule.every().crontab_expression("5 4 * * 2,5").do(job)
+    schedule.every().crontab_expression("5 4 * * 2,5", "Europe/Amsterdam").do(job)
+
     while True:
         schedule.run_pending()
         time.sleep(1)
