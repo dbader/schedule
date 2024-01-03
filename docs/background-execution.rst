@@ -53,4 +53,57 @@ This is an example of how you could do this:
     # Stop the background thread
     stop_run_continuously.set()
 
+This second example extends the Scheduler class and adds the ability to run the scheduler in its own thread.
+It exposes two simple functions to start and stop the threaded scheduler.
 
+.. code-block:: python
+
+    import schedule, threading, time
+
+    def job1():
+        print("Job 1 " + str(time.time()))
+
+    def job2():
+        print("Job 2 " + str(time.time()))
+
+    def job3():
+        print("Job 3 " + str(time.time()))
+
+
+    class SchedulerThread(schedule.Scheduler):
+        """Expansion of the scheduler class enabling a scheduler to run in the background.
+        The scheduler is run in a separate Thread.
+        Stopping of the thread is realized via an event. 
+        """
+
+        __cease_continuous_run = threading.Event()
+
+        def run_background(self, interval: int = 1):
+            self.__background_thread = threading.Thread(target=self.__background_executor, args=(interval,))
+            self.__background_thread.daemon = True
+            self.__background_thread.start()
+
+        def __background_executor(self, interval):
+            while not self.__cease_continuous_run.is_set():
+                self.run_pending()
+                time.sleep(interval)
+
+        def stop_background(self):
+            self.__cease_continuous_run.set()
+
+
+    s = SchedulerThread()
+
+    t1 = s.every(1).seconds.do(job1)
+    t2 = s.every(2).seconds.do(job2)
+
+    s.run_background()
+
+    time.sleep(7)
+    print("Starting job 3 and stopping job 1")
+    t3 = s.every(1).second.do(job3)
+    s.cancel_job(t1)
+
+    time.sleep(5)
+    print("Stopping the scheduler thread")
+    s.stop_background()
