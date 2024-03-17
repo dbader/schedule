@@ -44,4 +44,5 @@ Thanks to all the wonderful folks who have contributed to schedule over the year
 - sunpro108 <https://github.com/sunpro108>
 - kurtasov <https://github.com/kurtasov>
 - AnezeR <https://github.com/AnezeR>
+- Workbench3D <https://github.com/Workbench3D>
 

@@ -38,6 +38,7 @@ Usage:
 [3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
 from collections.abc import Hashable
+import calendar
 import datetime
 import functools
 import logging
@@ -379,6 +380,17 @@ class Job:
         return self
 
     @property
+    def month(self):
+        if self.interval != 1:
+            raise IntervalError("Use months instead of month")
+        return self.months
+
+    @property
+    def months(self):
+        self.unit = "months"
+        return self
+
+    @property
     def monday(self):
         if self.interval != 1:
             raise IntervalError(
@@ -491,9 +503,12 @@ class Job:
 
         :return: The invoked job instance
         """
-        if self.unit not in ("days", "hours", "minutes") and not self.start_day:
+        if (
+            self.unit not in ("months", "days", "hours", "minutes")
+            and not self.start_day
+        ):
             raise ScheduleValueError(
-                "Invalid unit (valid units are `days`, `hours`, and `minutes`)"
+                "Invalid unit (valid units are `months`, `days`, `hours` and `minutes`)"
             )
 
         if tz is not None:
@@ -510,6 +525,14 @@ class Job:
 
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string")
+        if self.unit == "months":
+            if not re.match(
+                r"^(?:[01][1-9]|2[0-8]) (?:[01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$", time_str
+            ):
+                raise ScheduleValueError(
+                    "Invalid time format for a monthly job (valid format is 'DD HH:MM(:SS)'?) " 
+                    "and day is between 0 and 28"
+                )
         if self.unit == "days" or self.start_day:
             if not re.match(r"^[0-2]\d:[0-5]\d(:[0-5]\d)?$", time_str):
                 raise ScheduleValueError(
@@ -526,11 +549,17 @@ class Job:
                 raise ScheduleValueError(
                     "Invalid time format for a minutely job (valid format is :SS)"
                 )
-        time_values = time_str.split(":")
+        time_values = re.split("[ :]", time_str)
+        day = Union[str, int]
         hour: Union[str, int]
         minute: Union[str, int]
         second: Union[str, int]
-        if len(time_values) == 3:
+        if len(time_values) == 4:
+            day, hour, minute, second = time_values
+        elif len(time_values) == 3 and self.unit == "months":
+            second = 0
+            day, hour, minute = time_values
+        elif len(time_values) == 3:
             hour, minute, second = time_values
         elif len(time_values) == 2 and self.unit == "minutes":
             hour = 0
@@ -556,7 +585,14 @@ class Job:
         hour = int(hour)
         minute = int(minute)
         second = int(second)
-        self.at_time = datetime.time(hour, minute, second)
+        if self.unit == "months":
+            now = datetime.datetime.now()
+            day = int(day)
+            self.at_time = datetime.datetime(
+                now.year, now.month, day, hour, minute, second
+            )
+        else:
+            self.at_time = datetime.time(hour, minute, second)
         return self
 
     def to(self, latest: int):
@@ -702,10 +738,10 @@ class Job:
         """
         Compute the instant when this job should run next.
         """
-        if self.unit not in ("seconds", "minutes", "hours", "days", "weeks"):
+        if self.unit not in ("seconds", "minutes", "hours", "days", "weeks", "months"):
             raise ScheduleValueError(
                 "Invalid unit (valid units are `seconds`, `minutes`, `hours`, "
-                "`days`, and `weeks`)"
+                "`days`, `weeks` and `months`)"
             )
 
         if self.latest is not None:
@@ -721,8 +757,26 @@ class Job:
         else:
             now = datetime.datetime.now()
 
-        self.period = datetime.timedelta(**{self.unit: interval})
-        self.next_run = now + self.period
+        if self.unit == "months":
+            month = now.month - 1 + interval
+            year = now.year + month // 12
+            month = month % 12 + 1
+            if self.at_time is not None:
+                day = self.at_time.day
+            else:
+                day = min(now.day, calendar.monthrange(year, month)[1])
+            self.next_run = datetime.datetime(
+                year,
+                month,
+                day,
+                now.hour,
+                now.minute,
+                now.second,
+                tzinfo=self.at_time_zone,
+            )
+        else:
+            self.period = datetime.timedelta(**{self.unit: interval})
+            self.next_run = now + self.period
         if self.start_day is not None:
             if self.unit != "weeks":
                 raise ScheduleValueError("`unit` should be 'weeks'")
@@ -751,12 +805,17 @@ class Job:
             self.next_run = self.at_time_zone.normalize(self.next_run)
 
         if self.at_time is not None:
-            if self.unit not in ("days", "hours", "minutes") and self.start_day is None:
+            if (
+                self.unit not in ("months", "days", "hours", "minutes")
+                and self.start_day is None
+            ):
                 raise ScheduleValueError("Invalid unit without specifying start day")
             kwargs = {"second": self.at_time.second, "microsecond": 0}
+            if self.unit == "months" or self.start_day is not None:
+                kwargs["hour"] = self.at_time.hour
             if self.unit == "days" or self.start_day is not None:
                 kwargs["hour"] = self.at_time.hour
-            if self.unit in ["days", "hours"] or self.start_day is not None:
+            if self.unit in ["months", "days", "hours"] or self.start_day is not None:
                 kwargs["minute"] = self.at_time.minute
 
             self.next_run = self.next_run.replace(**kwargs)  # type: ignore
