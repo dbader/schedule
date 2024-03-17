@@ -42,6 +42,16 @@ Run a job every x minute
     schedule.every().monday.do(job)
     schedule.every().wednesday.at("13:15").do(job)
 
+    # Run job every 3 months and every month
+    schedule.every(3).months.do(job)
+    schedule.every().month.do(job)
+
+    # Run job every month at specific "DD HH:MM" and next "DD HH:MM:SS"
+    # Supported days are 1-28
+    # Not supported are 29, 30, 31, due to the days in February.
+    schedule.every(3).months.at("28 12:30").do(job)
+    schedule.every().month.at("01 12:44:02", "UTC").do(job)
+
     while True:
         schedule.run_pending()
         time.sleep(1)
