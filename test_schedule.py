@@ -1,7 +1,7 @@
 """Unit tests for schedule.py"""
 import datetime
 import functools
-import mock
+from unittest import mock
 import unittest
 import os
 import time
