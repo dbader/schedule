@@ -1,5 +1,4 @@
 docutils
-mock
 Pygments
 pytest
 pytest-cov
