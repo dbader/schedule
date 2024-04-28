@@ -1160,3 +1160,73 @@ class SchedulerTests(unittest.TestCase):
         scheduler.every()
         scheduler.every(10).seconds
         scheduler.run_pending()
+
+    def test_time_month(self):
+        assert every().months.unit == "months"
+
+        # Test last day month
+        with mock_datetime(2010, 1, 31, 11, 20):
+            mock_job = make_mock_job()
+
+            assert every().month.do(mock_job).next_run.month == 2
+            assert every().month.do(mock_job).next_run.day == 28
+
+            assert every(3).months.do(mock_job).next_run.month == 4
+            assert every(3).months.do(mock_job).next_run.day == 30
+
+        with mock_datetime(2010, 1, 16, 11, 20):
+            mock_job = make_mock_job()
+
+            assert every().month.do(mock_job).next_run.year == 2010
+            assert every().month.do(mock_job).next_run.month == 2
+            assert every().month.do(mock_job).next_run.day == 16
+            assert every().month.do(mock_job).next_run.hour == 11
+            assert every().month.do(mock_job).next_run.minute == 20
+
+            assert every(3).months.do(mock_job).next_run.year == 2010
+            assert every(3).months.do(mock_job).next_run.month == 4
+            assert every(3).months.do(mock_job).next_run.day == 16
+            assert every(3).months.do(mock_job).next_run.hour == 11
+            assert every(3).months.do(mock_job).next_run.minute == 20
+
+            assert every().month.at("28 12:30").do(mock_job).next_run.year == 2010
+            assert every().month.at("28 12:30").do(mock_job).next_run.month == 2
+            assert every().month.at("28 12:30").do(mock_job).next_run.day == 28
+            assert every().month.at("28 12:30").do(mock_job).next_run.hour == 12
+            assert every().month.at("28 12:30").do(mock_job).next_run.minute == 30
+            assert every().month.at("28 12:30:15").do(mock_job).next_run.second == 15
+
+            assert every().month.at("19 12:10").do(mock_job).next_run.year == 2010
+            assert every().month.at("19 12:10").do(mock_job).next_run.month == 2
+            assert every().month.at("19 12:10").do(mock_job).next_run.day == 19
+            assert every().month.at("19 12:10").do(mock_job).next_run.hour == 12
+            assert every().month.at("19 12:10").do(mock_job).next_run.minute == 10
+            assert every().month.at("19 12:10:59").do(mock_job).next_run.second == 59
+
+            assert every(3).months.at("28 12:30").do(mock_job).next_run.year == 2010
+            assert every(3).months.at("28 12:30").do(mock_job).next_run.month == 4
+            assert every(3).months.at("28 12:30").do(mock_job).next_run.day == 28
+            assert every(3).months.at("28 12:30").do(mock_job).next_run.hour == 12
+            assert every(3).months.at("28 12:30").do(mock_job).next_run.minute == 30
+            assert every(3).months.at("28 12:30:15").do(mock_job).next_run.second == 15
+
+            assert every(3).months.at("19 12:10").do(mock_job).next_run.year == 2010
+            assert every(3).months.at("19 12:10").do(mock_job).next_run.month == 4
+            assert every(3).months.at("19 12:10").do(mock_job).next_run.day == 19
+            assert every(3).months.at("19 12:10").do(mock_job).next_run.hour == 12
+            assert every(3).months.at("19 12:10").do(mock_job).next_run.minute == 10
+            assert every(3).months.at("19 12:10:59").do(mock_job).next_run.second == 59
+
+            self.assertRaises(ScheduleValueError, every().month.at, "31 02:30:00")
+            self.assertRaises(ScheduleValueError, every().month.at, "30 02:30:00")
+            self.assertRaises(ScheduleValueError, every().month.at, "29 02:30:00")
+            self.assertRaises(ScheduleValueError, every().month.at, "9 02:30:00")
+            self.assertRaises(ScheduleValueError, every().month.at, "2:30:00")
+            self.assertRaises(ScheduleValueError, every().month.at, "::2")
+            self.assertRaises(ScheduleValueError, every().month.at, ".2")
+            self.assertRaises(ScheduleValueError, every().month.at, "2")
+            self.assertRaises(ScheduleValueError, every().month.at, " 2:30")
+            self.assertRaises(ScheduleValueError, every().month.at, "61:00")
+            self.assertRaises(ScheduleValueError, every().month.at, "00:61")
+            self.assertRaises(ScheduleValueError, every().month.at, "01:61")
+            self.assertRaises(TypeError, every().month.at, 2)
