@@ -633,6 +633,40 @@ class SchedulerTests(unittest.TestCase):
             assert next.hour == 15
             assert next.minute == 30
 
+        # Test the DST-case that is described in the documentation
+        with mock_datetime(2023, 3, 26, 1, 30):
+            # Current Berlin time: 01:30 (NOT during daylight saving)
+            # Expected to run: 02:30 - this time doesn't exist
+            #  because clock moves from 02:00 to 03:00
+            # Next run: 03:30
+            job = every().day.at("02:30", "Europe/Berlin").do(mock_job)
+            assert job.next_run.day == 26
+            assert job.next_run.hour == 3
+            assert job.next_run.minute == 30
+        with mock_datetime(2023, 3, 27, 1, 30):
+            # the next day the job shall again run at 02:30
+            job.run()
+            assert job.next_run.day == 27
+            assert job.next_run.hour == 2
+            assert job.next_run.minute == 30
+
+        # Test the DST-case that is described in the documentation
+        with mock_datetime(2023, 10, 29, 1, 30):
+            # Current Berlin time: 01:30 (during daylight saving)
+            # Expected to run: 02:30 - this time exists twice
+            #  because clock moves from 03:00 to 02:00
+            # Next run should be at the first occurrence of 02:30
+            job = every().day.at("02:30", "Europe/Berlin").do(mock_job)
+            assert job.next_run.day == 29
+            assert job.next_run.hour == 2
+            assert job.next_run.minute == 30
+        with mock_datetime(2023, 10, 29, 2, 35):
+            # After the job runs, the next run should be scheduled on the next day at 02:30
+            job.run()
+            assert job.next_run.day == 30
+            assert job.next_run.hour == 2
+            assert job.next_run.minute == 30
+
         with mock_datetime(2022, 3, 20, 10, 0):
             # Current Berlin time: 10:00 (local) (NOT during daylight saving)
             # Current Krasnoyarsk time: 16:00
@@ -835,40 +869,6 @@ class SchedulerTests(unittest.TestCase):
             assert next.hour == 12
             assert next.minute == 0
 
-        # Test the DST-case that is described in the documentation
-        with mock_datetime(2023, 3, 26, 1, 30):
-            # Current Berlin time: 01:30 (NOT during daylight saving)
-            # Expected to run: 02:30 - this time doesn't exist
-            #  because clock moves from 02:00 to 03:00
-            # Next run: 03:30
-            job = every().day.at("02:30", "Europe/Berlin").do(mock_job)
-            assert job.next_run.day == 26
-            assert job.next_run.hour == 3
-            assert job.next_run.minute == 30
-        with mock_datetime(2023, 3, 27, 1, 30):
-            # the next day the job shall again run at 02:30
-            job.run()
-            assert job.next_run.day == 27
-            assert job.next_run.hour == 2
-            assert job.next_run.minute == 30
-
-        # Test the DST-case that is described in the documentation
-        with mock_datetime(2023, 10, 29, 1, 30):
-            # Current Berlin time: 01:30 (during daylight saving)
-            # Expected to run: 02:30 - this time exists twice
-            #  because clock moves from 03:00 to 02:00
-            # Next run should be at the first occurrence of 02:30
-            job = every().day.at("02:30", "Europe/Berlin").do(mock_job)
-            assert job.next_run.day == 29
-            assert job.next_run.hour == 2
-            assert job.next_run.minute == 30
-        with mock_datetime(2023, 10, 29, 2, 35):
-            # After the job runs, the next run should be scheduled on the next day at 02:30
-            job.run()
-            assert job.next_run.day == 30
-            assert job.next_run.hour == 2
-            assert job.next_run.minute == 30
-
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
             every().day.at("10:30", "FakeZone").do(mock_job)
 
@@ -1042,7 +1042,7 @@ class SchedulerTests(unittest.TestCase):
     def test_run_every_weekday_at_specific_time_today(self):
         mock_job = make_mock_job()
         with mock_datetime(2010, 1, 6, 13, 16): # january 6 2010 == Wednesday
-            print(every().wednesday.at("14:12").do(mock_job).next_run)
+            every().wednesday.at("14:12").do(mock_job)
             schedule.run_pending()
             assert mock_job.call_count == 0
 

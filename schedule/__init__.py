@@ -706,7 +706,6 @@ class Job:
                 "Invalid unit (valid units are `seconds`, `minutes`, `hours`, "
                 "`days`, and `weeks`)"
             )
-        print("---")
         if self.latest is not None:
             if not (self.latest >= self.interval):
                 raise ScheduleError("`latest` is greater than `interval`")
@@ -734,18 +733,11 @@ class Job:
 
         while next_run <= now:
             next_run += period
-            # if self.at_time_zone is not None:
-            #     next_run = self.at_time_zone.normalize(next_run)
-
-
-        print("pre-magic ", next_run.strftime(fmt))
 
         # To keep the api consistent with older versions, we have to set the 'next_run' to a naive timestamp in the local timezone.
         # Because we want to stay backwards compatible with older versions.
         if self.at_time_zone is not None:
             next_run = next_run.astimezone()
-
-            print("post-magic ", next_run.strftime(fmt))
 
             # The local utc-offset might change between the current time and the next_run (Daylight Saving Time).
             # Thus, the next_run must be localized to the utc-offset *at the time of the next_run*.
@@ -800,10 +792,8 @@ class Job:
 
         moment = moment.replace(**kwargs)  # type: ignore
 
-        print("before", moment.strftime(fmt))
         if self.at_time_zone is not None:
             flag = self._get_dst_flag(moment)
-            print(flag)
 
             # When we set the time elements, we might end up in a different offset than the current offset.
             # This happens when we cross into or out of daylight saving time.
