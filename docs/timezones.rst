@@ -38,9 +38,14 @@ The job will run at the specified time, even when the clock changes.
 
 Example clock moves forward:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When a job is scheduled in the gap that occurs when the clock moves forward, the job is scheduled after the gap.
+
 A job is scheduled ``.at("02:30", "Europe/Berlin")``.
 When the clock moves from ``02:00`` to ``03:00``, the job will run once at ``03:30``.
 The day after it will return to normal and run at ``02:30``.
+
+A job is scheduled ``.at("01:00", "Europe/London")``.
+When the clock moves from ``01:00`` to ``02:00``, the job will run once at ``02:00``.
 
 Example clock moves backwards:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
