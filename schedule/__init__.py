@@ -47,7 +47,6 @@ import time
 from typing import Set, List, Optional, Callable, Union, Literal
 
 logger = logging.getLogger("schedule")
-fmt = '%Y-%m-%d %H:%M:%S %Z (%z)'
 
 
 class ScheduleError(Exception):
