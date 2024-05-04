@@ -22,6 +22,7 @@ from schedule import (
 # POSIX TZ string format
 TZ_BERLIN = "CET-1CEST,M3.5.0,M10.5.0/3"
 TZ_AUCKLAND = "NZST-12NZDT,M9.5.0,M4.1.0/3"
+TZ_CHATHAM = "<+1245>-12:45<+1345>,M9.5.0/2:45,M4.1.0/3:45"
 TZ_UTC = "UTC0"
 
 # Set timezone to Europe/Berlin (CEST) to ensure global reproducibility
@@ -868,6 +869,18 @@ class SchedulerTests(unittest.TestCase):
             assert next.day == 1
             assert next.hour == 12
             assert next.minute == 0
+
+        with mock_datetime(2024, 5, 4, 14, 37, 22, TZ_CHATHAM):
+            # Crurent time: 14:37:22  New Zealand, Chatham Islands (UTC +12:45)
+            # Current time: 3 may, 23:22:22 Canada, Newfoundland (UTC -2:30)
+            # Exected next run in Newfoundland: 4 may, 09:14:45
+            # Expected next run in Chatham: 5 may, 00:29:45
+            schedule.clear()
+            next = schedule.every(10).hours.at("14:45", "Canada/Newfoundland").do(mock_job).next_run
+            assert next.day == 5
+            assert next.hour == 0
+            assert next.minute == 29
+            assert next.second == 45
 
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
             every().day.at("10:30", "FakeZone").do(mock_job)
