@@ -831,10 +831,12 @@ class Job:
     def _get_dst_flag(self, timestamp: datetime.datetime) -> Literal["NONE", "FOLD", "GAP"]:
         """
         Figure out if the timestamp is in a DST gap, fold or none of them.
-        Thanks to https://stackoverflow.com/a/77310437/2328729
+        Returns 'FOLD' if the timestamp is the second occurrence of a moment where the clock is moved back.
+        Returns 'GAP if the timstamp is during a moment where the clock is moved forward,
+        or if the timestamp is the first occurrence of a moment, where the second occurance would return 'FOLD'.
         """
         u = timestamp.utcoffset()
-        v = self.at_time_zone.normalize(timestamp.replace(fold=not timestamp.fold)).utcoffset()
+        v = timestamp.tzinfo.normalize(timestamp.replace(fold=not timestamp.fold)).utcoffset()
         if u == v:
             return "NONE"
         if (u < v) == timestamp.fold:

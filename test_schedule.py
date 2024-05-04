@@ -882,17 +882,19 @@ class SchedulerTests(unittest.TestCase):
             assert next.minute == 29
             assert next.second == 45
 
-        # Test start of wintertime in southern hemisphere, while scheduling
-        # tasks in northern hemisphere
+        # Test a full year of scheduling across timezones, where one timezone
+        # is in the northern hemisphere and the other in the southern hemisphere
+        # These two timezones are also a bit exotic (not the usual UTC+1, UTC-1)
+        # Local timezone: Newfoundland, Canada: UTC-2:30 / DST UTC-3:30
+        # Remote timezone: Chatham Islands, New Zealand: UTC+12:45 / DST UTC+13:45
         schedule.clear()
         job = schedule.every(20).minutes.at(":13", "Canada/Newfoundland").do(mock_job)
         with mock_datetime(2024, 9, 29, 2, 20, 0, TZ_CHATHAM):
-            # first run, no utc-offset change
-            # On Sun, 29 Sep, 02:45 2024, in Chatham, the clock is moved 1 hour forward
-            # Current time: 29 sept, 02:20:00  New Zealand, Chatham Islands
-            # Current time: 28 sept, 11:05:00  Canada, Newfoundland
-            # Expected time: 28 sept, 11:20:13  Canada, Newfoundland
-            # Expected time: 29 sept, 02:40:13  New Zealand, Chatham Islands
+            # First run, nothing special, no utc-offset change
+            # Current time: 29 sept, 02:20:00  Chatham
+            # Current time: 28 sept, 11:05:00  Newfoundland
+            # Expected time: 28 sept, 11:20:13 Newfoundland
+            # Expected time: 29 sept, 02:40:13 Chatham
             job.run()
             assert job.next_run.day == 29
             assert job.next_run.hour == 2
@@ -901,14 +903,38 @@ class SchedulerTests(unittest.TestCase):
         with mock_datetime(2024, 9, 29, 2, 40, 14, TZ_CHATHAM):
             # next-schedule happens 1 second behind schedule
             job.run()
-            # Now, the next run happens AFTER the local timezone exits DST
-            # Current time: 29 sept, 02:40:14  New Zealand, Chatham Islands
-            # Current time: 28 sept, 11:25:14  Canada, Newfoundland
-            # Expected time: 28 sept, 11:45:13  Canada, Newfoundland
-            # Expected time: 29 sept, 04:00:13  New Zealand, Chatham Islands
+            # On 29 Sep, 02:45 2024, in Chatham, the clock is moved +1 hour
+            # Thus, the next run happens AFTER the local timezone exits DST
+            # Current time:  29 sept, 02:40:14 Chatham
+            # Current time:  28 sept, 11:25:14 Newfoundland
+            # Expected time: 28 sept, 11:45:13 Newfoundland
+            # Expected time: 29 sept, 04:00:13 Chatham
             assert job.next_run.day == 29
             assert job.next_run.hour == 4
             assert job.next_run.minute == 00
+            assert job.next_run.second == 13
+        with mock_datetime(2024, 11, 3, 2, 23, 55, TZ_CHATHAM, fold=0):
+            # Time is right before Newfoundland exits DST
+            # Local time will move 1 hour back at 03:00
+
+            job.run()
+            # There are no timezone switches yet, nothing special going on:
+            # Current time:  3 Nov, 02:23:55 Chatham
+            # Expected time: 3 Nov, 02:43:13 Chatham
+            assert job.next_run.day == 3
+            assert job.next_run.hour == 2
+            assert job.next_run.minute == 43 # Within the fold, first occurrence
+            assert job.next_run.second == 13
+        with mock_datetime(2024, 11, 3, 2, 23, 55, TZ_CHATHAM, fold=1):
+            # Time is during the fold. Local time has moved back 1 hour, this is
+            # the second occurrence of the 02:23 time.
+
+            job.run()
+            # Current time:  3 Nov, 02:23:55 Chatham
+            # Expected time: 3 Nov, 02:43:13 Chatham
+            assert job.next_run.day == 3
+            assert job.next_run.hour == 2
+            assert job.next_run.minute == 43
             assert job.next_run.second == 13
 
 
@@ -1255,3 +1281,34 @@ class SchedulerTests(unittest.TestCase):
         scheduler.every()
         scheduler.every(10).seconds
         scheduler.run_pending()
+
+    def test_get_dst_flags(self):
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+
+        job = schedule.Job(interval=1)
+
+        # When America/Santiago time is about to reach
+        # Sunday, 8 September 2024, 00:00:00 clocks are turned forward 1 hour to
+        # Sunday, 8 September 2024, 01:00:00 local daylight time instead
+        gap = datetime.datetime(2024, 9, 8, 0, 30, 0,
+                                tzinfo=pytz.timezone("America/Santiago"))
+
+        assert job._get_dst_flag(gap) == "GAP"
+
+        # When America/Santiago time is about to reach
+        # Sunday, 7 April 2024, 00:00:00 clocks were turned backward 1 hour to
+        # Saturday, 6 April 2024, 23:00:00 local standard time instead.
+        fold0 = datetime.datetime(2024, 4, 6, 23, 30, 0,
+                                tzinfo=pytz.timezone("America/Santiago"), fold=0)
+        assert job._get_dst_flag(fold0) == "GAP"
+        fold1 = datetime.datetime(2024, 4, 6, 23, 30, 0,
+                                tzinfo=pytz.timezone("America/Santiago"), fold=1)
+        assert job._get_dst_flag(fold1) == "FOLD"
+
+        # Test a timezone that doesn't have DST
+        no_dst = datetime.datetime(2024, 4, 6, 23, 30, 0,
+                                   tzinfo=pytz.timezone("UTC"))
+        assert job._get_dst_flag(no_dst) == "NONE"
