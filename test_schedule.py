@@ -882,6 +882,36 @@ class SchedulerTests(unittest.TestCase):
             assert next.minute == 29
             assert next.second == 45
 
+        # Test start of wintertime in southern hemisphere, while scheduling
+        # tasks in northern hemisphere
+        schedule.clear()
+        job = schedule.every(20).minutes.at(":13", "Canada/Newfoundland").do(mock_job)
+        with mock_datetime(2024, 9, 29, 2, 20, 0, TZ_CHATHAM):
+            # first run, no utc-offset change
+            # On Sun, 29 Sep, 02:45 2024, in Chatham, the clock is moved 1 hour forward
+            # Current time: 29 sept, 02:20:00  New Zealand, Chatham Islands
+            # Current time: 28 sept, 11:05:00  Canada, Newfoundland
+            # Expected time: 28 sept, 11:20:13  Canada, Newfoundland
+            # Expected time: 29 sept, 02:40:13  New Zealand, Chatham Islands
+            job.run()
+            assert job.next_run.day == 29
+            assert job.next_run.hour == 2
+            assert job.next_run.minute == 40
+            assert job.next_run.second == 13
+        with mock_datetime(2024, 9, 29, 2, 40, 14, TZ_CHATHAM):
+            # next-schedule happens 1 second behind schedule
+            job.run()
+            # Now, the next run happens AFTER the local timezone exits DST
+            # Current time: 29 sept, 02:40:14  New Zealand, Chatham Islands
+            # Current time: 28 sept, 11:25:14  Canada, Newfoundland
+            # Expected time: 28 sept, 11:45:13  Canada, Newfoundland
+            # Expected time: 29 sept, 04:00:13  New Zealand, Chatham Islands
+            assert job.next_run.day == 29
+            assert job.next_run.hour == 4
+            assert job.next_run.minute == 00
+            assert job.next_run.second == 13
+
+
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
             every().day.at("10:30", "FakeZone").do(mock_job)
 
