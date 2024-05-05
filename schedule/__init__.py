@@ -712,8 +712,6 @@ class Job:
         else:
             interval = self.interval
 
-        period = datetime.timedelta(**{self.unit: interval})
-
         # Do all computation in the context of the requested timezone
         now = datetime.datetime.now(self.at_time_zone)
 
@@ -727,29 +725,20 @@ class Job:
         if self.at_time is not None:
             next_run = self._move_to_time(next_run, self.at_time)
 
+        period = datetime.timedelta(**{self.unit: interval})
         if interval != 1:
             next_run += period
 
         while next_run <= now:
             next_run += period
 
+        next_run = self._fix_zones(next_run, fixate_time=(self.at_time is not None))
+
         # To keep the api consistent with older versions, we have to set the 'next_run' to a naive timestamp in the local timezone.
         # Because we want to stay backwards compatible with older versions.
         if self.at_time_zone is not None:
+            # Convert back to the local timezone
             next_run = next_run.astimezone()
-
-            # The local utc-offset might change between the current time and the next_run (Daylight Saving Time).
-            # Thus, the next_run must be localized to the utc-offset *at the time of the next_run*.
-            # For example, when the current time is in the summer and the next_run is in the winter,
-            # the 'next_run' should be localized to the winter utc-offset.
-
-            # Calculate difference in UTC offset between the current timezone, and the local timezone of when the next_run is scheduled.
-            now_next_utc_diff = next_run.utcoffset() - now.astimezone().utcoffset()
-
-            # If the clock is moved backwards, the difference will be negative and
-            # we need to adjust the next_run because th
-            if now_next_utc_diff < datetime.timedelta(0):
-                next_run = next_run - now_next_utc_diff
 
             next_run = next_run.replace(tzinfo=None)
 
@@ -791,57 +780,49 @@ class Job:
 
         moment = moment.replace(**kwargs)  # type: ignore
 
-        if self.at_time_zone is not None:
-            flag = self._get_dst_flag(self.at_time_zone, moment)
-
-            # When we set the time elements, we might end up in a different offset than the current offset.
-            # This happens when we cross into or out of daylight saving time.
-
-            offset_before = moment.utcoffset()
-            # Normalize adjusts the timezone to the correct offset at the given moment
-            # while keeping the moment in time the same.
-            moment = self.at_time_zone.normalize(moment)
-            offset_after = moment.utcoffset()
-
-            if offset_before != offset_after:
-                # If after normalization, the offset is different than before, then
-                # the time was moved. But we are tasked with keeping the time the same,
-                # so we need to adjust the time back to the original offset.
-                if flag == "NONE":
-                    # When we don't have to worry about ending up in a gap or fold, we can just adjust the time
-                    # back to the exact time as was requested.
-                    moment = moment + (offset_after - offset_before)
-                elif flag == "FOLD":
-                    # In a fold (clock moved back), the same timestamp happens twice. The normalization will move the timestamp
-                    # to the first occurrence of the timestamp. We need to move it to the second occurrence.
-                    # At the end of the next_run calculations, the next_run timestamp is made naive, and
-                    # when there is a fold, the next_run will be ambiguous to which instance of the fold it points to.
-                    # In practice the next_run will take place at the first occurrence of the fold, and when the
-                    # job is re-scheduled during the fold after the first occurrence, the next_run will be scheduled
-                    # past the fold, skipping the second occurrence.
-                    moment = moment + (offset_before - offset_after)
-                elif flag == "GAP":
-                    # When there is a gap (clock is moved forward), the normalization already moved the timestamp
-                    # forward by the amount that is the difference between utc-offsets. That is exactly how
-                    # the the documentation describes what should happen during scheduling of gaps, so we don't need to do anything.
-                    pass
+        # When we set the time elements, we might end up in a different UTC-offset than the current offset.
+        # This happens when we cross into or out of daylight saving time.
+        moment = self._fix_zones(moment, True)
 
         return moment
 
-    def _get_dst_flag(self, tz, timestamp: datetime.datetime) -> str:
-        """
-        Figure out if the timestamp is in a DST gap, fold or none of them.
-        Returns 'FOLD' if the timestamp is the second occurrence of a moment where the clock is moved back.
-        Returns 'GAP if the timstamp is during a moment where the clock is moved forward,
-        or if the timestamp is the first occurrence of a moment, where the second occurance would return 'FOLD'.
-        """
-        u = timestamp.utcoffset()
-        v = tz.normalize(timestamp.replace(fold=not timestamp.fold)).utcoffset()
-        if u == v:
-            return "NONE"
-        if (u < v) == timestamp.fold:
-            return "FOLD"
-        return "GAP"
+    def _fix_zones(self, moment: datetime.datetime, fixate_time: bool) -> datetime.datetime:
+        if self.at_time_zone is None:
+            return moment
+        # Normalize adjusts the timezone to the correct offset at the given moment
+        # while keeping the moment in time the same.
+        offset_before_normalize = moment.utcoffset()
+        moment = self.at_time_zone.normalize(moment)
+        offset_after_normalize = moment.utcoffset()
+
+        if offset_before_normalize == offset_after_normalize:
+            # There was no change in the utc-offset, so we don't need to do anything.
+            return moment
+
+        if not fixate_time:
+            # The time has changed, but we don't need to fixate the time to the new offset.
+            return moment
+
+        # There can be two cases in which we reach this point:
+        #   - Fold: The same timestamp happens twice, and the timestamp is in the second occurrence.
+        #           The normalization moved the timestamp to the correct timezone, thereby increasing the local time.
+        #   - Gap: The local time did not exist.
+        #          The normalization moved the timestamp forward by the amount that is the difference between utc-offsets.
+        # In either case, the timestamp was moved forward by the difference in utc-offsets.
+        # We correct this:
+        moment = moment - (offset_after_normalize - offset_before_normalize)
+
+        # Check if moving the timestamp back by the utc-offset made it end up at
+        # in a moment that does not exist within the current timezone/utc-offset
+        if self.at_time_zone.normalize(moment).utcoffset() == offset_before_normalize:
+            # We ended up in a DST Gap. The requested 'at' time does not exist
+            # within the current timezone/utc-offset. As a best effort, we will
+            # schedule the job 1 offset later than possible.
+            # For example, if 02:23 does not exist (because DST moves from 02:00
+            # to 03:00), this will schedule the job at 03:23.
+            moment = moment + (offset_after_normalize - offset_before_normalize)
+        return moment
+
 
 
     def _is_overdue(self, when: datetime.datetime):
@@ -939,3 +920,16 @@ def repeat(job, *args, **kwargs):
         return decorated_function
 
     return _schedule_decorator
+
+def _datetime_exists(dattim: datetime.datetime) -> bool:
+    """Check if a datetime exists."""
+    assert dattim.tzinfo is not None
+    original_tzinfo = dattim.tzinfo
+    # Check if we can round trip to UTC
+    return dattim == dattim.astimezone(datetime.UTC).astimezone(original_tzinfo)
+
+def _datetime_ambiguous(dattim: datetime.datetime) -> bool:
+    """Check whether a datetime is ambiguous."""
+    assert dattim.tzinfo is not None
+    opposite_fold = dattim.replace(fold=not dattim.fold)
+    return _datetime_exists(dattim) and dattim.utcoffset() != opposite_fold.utcoffset()
