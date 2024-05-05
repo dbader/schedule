@@ -44,7 +44,7 @@ import logging
 import random
 import re
 import time
-from typing import Set, List, Optional, Callable, Union, Literal
+from typing import Set, List, Optional, Callable, Union
 
 logger = logging.getLogger("schedule")
 
@@ -828,7 +828,7 @@ class Job:
 
         return moment
 
-    def _get_dst_flag(self, timestamp: datetime.datetime) -> Literal["NONE", "FOLD", "GAP"]:
+    def _get_dst_flag(self, timestamp: datetime.datetime) -> str:
         """
         Figure out if the timestamp is in a DST gap, fold or none of them.
         Returns 'FOLD' if the timestamp is the second occurrence of a moment where the clock is moved back.
