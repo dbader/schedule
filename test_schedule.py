@@ -936,7 +936,58 @@ class SchedulerTests(unittest.TestCase):
             assert job.next_run.hour == 2
             assert job.next_run.minute == 43
             assert job.next_run.second == 13
+        with mock_datetime(2025, 3, 9, 19, 00, 00, TZ_CHATHAM):
+            # Time is right before Newfoundland enters DST
+            # At 02:00, the remote clock will move forward 1 hour
 
+            job.run()
+            # Current time:  9 March, 19:00:00 Chatham
+            # Current time:  9 March, 01:45:00 Newfoundland
+            # Expected time: 9 March, 03:05:13 Newfoundland
+            # Expected time  9 March, 19:20:13 Chatham
+
+            assert job.next_run.day == 9
+            assert job.next_run.hour == 19
+            assert job.next_run.minute == 20
+            assert job.next_run.second == 13
+        with mock_datetime(2025, 4, 7, 17, 55, 00, TZ_CHATHAM):
+            # Time is within the few hours before Catham exits DST
+            # At 03:45, the local clock moves back 1 hour
+
+            job.run()
+            # Current time:  7 April, 17:55:00 Chatham
+            # Current time:  7 April, 02:40:00 Newfoundland
+            # Expected time: 7 April, 03:00:13 Newfoundland
+            # Expected time  7 April, 18:15:13 Chatham
+            assert job.next_run.day == 7
+            assert job.next_run.hour == 18
+            assert job.next_run.minute == 15
+            assert job.next_run.second == 13
+        with mock_datetime(2025, 4, 7, 18, 55, 00, TZ_CHATHAM):
+            # Schedule the next run exactly when the clock moved backwards
+            # Curren time is before the clock-move, next run is after the clock change
+
+            job.run()
+            # Current time:  7 April, 18:55:00 Chatham
+            # Current time:  7 April, 03:40:00 Newfoundland
+            # Expected time: 7 April, 03:00:13 Newfoundland (clock moved back)
+            # Expected time  7 April, 19:15:13 Chatham
+            assert job.next_run.day == 7
+            assert job.next_run.hour == 19
+            assert job.next_run.minute == 15
+            assert job.next_run.second == 13
+        with mock_datetime(2025, 4, 7, 19, 15, 13, TZ_CHATHAM):
+            # Schedule during the fold in the remote timezone
+
+            job.run()
+            # Current time:  7 April, 19:15:13 Chatham
+            # Current time:  7 April, 03:00:13 Newfoundland (fold)
+            # Expected time: 7 April, 03:20:13 Newfoundland (fold)
+            # Expected time: 7 April, 19:35:13 Chatham
+            assert job.next_run.day == 7
+            assert job.next_run.hour == 19
+            assert job.next_run.minute == 35
+            assert job.next_run.second == 13
 
         with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
             every().day.at("10:30", "FakeZone").do(mock_job)
