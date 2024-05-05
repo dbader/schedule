@@ -1347,19 +1347,19 @@ class SchedulerTests(unittest.TestCase):
         gap = datetime.datetime(2024, 9, 8, 0, 30, 0,
                                 tzinfo=pytz.timezone("America/Santiago"))
 
-        assert job._get_dst_flag(gap) == "GAP"
+        assert job._get_dst_flag(gap.tzinfo, gap) == "GAP"
 
         # When America/Santiago time is about to reach
         # Sunday, 7 April 2024, 00:00:00 clocks were turned backward 1 hour to
         # Saturday, 6 April 2024, 23:00:00 local standard time instead.
         fold0 = datetime.datetime(2024, 4, 6, 23, 30, 0,
                                 tzinfo=pytz.timezone("America/Santiago"), fold=0)
-        assert job._get_dst_flag(fold0) == "GAP"
+        assert job._get_dst_flag(fold0.tzinfo, fold0) == "GAP"
         fold1 = datetime.datetime(2024, 4, 6, 23, 30, 0,
                                 tzinfo=pytz.timezone("America/Santiago"), fold=1)
-        assert job._get_dst_flag(fold1) == "FOLD"
+        assert job._get_dst_flag(fold1.tzinfo, fold1) == "FOLD"
 
         # Test a timezone that doesn't have DST
         no_dst = datetime.datetime(2024, 4, 6, 23, 30, 0,
                                    tzinfo=pytz.timezone("UTC"))
-        assert job._get_dst_flag(no_dst) == "NONE"
+        assert job._get_dst_flag(no_dst.tzinfo, no_dst) == "NONE"

@@ -756,9 +756,9 @@ class Job:
         self.next_run = next_run
 
     def _move_to_next_weekday(self, moment: datetime.datetime, weekday: str):
-        weekday = self._weekday_index(self.start_day)
+        weekday_index = self._weekday_index(weekday)
 
-        days_ahead = weekday - moment.weekday()
+        days_ahead = weekday_index - moment.weekday()
         if days_ahead < 0:
             # Target day already happened this week, move to next week
             days_ahead += 7
@@ -792,7 +792,7 @@ class Job:
         moment = moment.replace(**kwargs)  # type: ignore
 
         if self.at_time_zone is not None:
-            flag = self._get_dst_flag(moment)
+            flag = self._get_dst_flag(self.at_time_zone, moment)
 
             # When we set the time elements, we might end up in a different offset than the current offset.
             # This happens when we cross into or out of daylight saving time.
@@ -828,7 +828,7 @@ class Job:
 
         return moment
 
-    def _get_dst_flag(self, timestamp: datetime.datetime) -> str:
+    def _get_dst_flag(self, tz, timestamp: datetime.datetime) -> str:
         """
         Figure out if the timestamp is in a DST gap, fold or none of them.
         Returns 'FOLD' if the timestamp is the second occurrence of a moment where the clock is moved back.
@@ -836,7 +836,7 @@ class Job:
         or if the timestamp is the first occurrence of a moment, where the second occurance would return 'FOLD'.
         """
         u = timestamp.utcoffset()
-        v = timestamp.tzinfo.normalize(timestamp.replace(fold=not timestamp.fold)).utcoffset()
+        v = tz.normalize(timestamp.replace(fold=not timestamp.fold)).utcoffset()
         if u == v:
             return "NONE"
         if (u < v) == timestamp.fold:
