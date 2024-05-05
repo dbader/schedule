@@ -921,15 +921,3 @@ def repeat(job, *args, **kwargs):
 
     return _schedule_decorator
 
-def _datetime_exists(dattim: datetime.datetime) -> bool:
-    """Check if a datetime exists."""
-    assert dattim.tzinfo is not None
-    original_tzinfo = dattim.tzinfo
-    # Check if we can round trip to UTC
-    return dattim == dattim.astimezone(datetime.UTC).astimezone(original_tzinfo)
-
-def _datetime_ambiguous(dattim: datetime.datetime) -> bool:
-    """Check whether a datetime is ambiguous."""
-    assert dattim.tzinfo is not None
-    opposite_fold = dattim.replace(fold=not dattim.fold)
-    return _datetime_exists(dattim) and dattim.utcoffset() != opposite_fold.utcoffset()
