@@ -37,6 +37,7 @@ Usage:
 [2] https://github.com/Rykian/clockwork
 [3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
+
 from collections.abc import Hashable
 import datetime
 import functools
@@ -732,7 +733,9 @@ class Job:
         while next_run <= now:
             next_run += period
 
-        next_run = self._fix_zones(next_run, fixate_time=(self.at_time is not None))
+        next_run = self._align_utc_offset(
+            next_run, fixate_time=(self.at_time is not None)
+        )
 
         # To keep the api consistent with older versions, we have to set the 'next_run' to a naive timestamp in the local timezone.
         # Because we want to stay backwards compatible with older versions.
@@ -769,7 +772,9 @@ class Job:
             )
         return weekdays.index(day)
 
-    def _move_to_time(self, moment: datetime.datetime, time: datetime.time) -> datetime.datetime:
+    def _move_to_time(
+        self, moment: datetime.datetime, time: datetime.time
+    ) -> datetime.datetime:
         kwargs = {"second": time.second, "microsecond": 0}
 
         if self.unit == "days" or self.start_day is not None:
@@ -782,15 +787,17 @@ class Job:
 
         # When we set the time elements, we might end up in a different UTC-offset than the current offset.
         # This happens when we cross into or out of daylight saving time.
-        moment = self._fix_zones(moment, True)
+        moment = self._align_utc_offset(moment, fixate_time=True)
 
         return moment
 
-    def _fix_zones(self, moment: datetime.datetime, fixate_time: bool) -> datetime.datetime:
+    def _align_utc_offset(
+        self, moment: datetime.datetime, fixate_time: bool
+    ) -> datetime.datetime:
         if self.at_time_zone is None:
             return moment
-        # Normalize adjusts the timezone to the correct offset at the given moment
-        # while keeping the moment in time the same.
+        # Normalize adjusts the timezone to the correct offset at the given
+        # moment while keeping the moment in time the same.
         offset_before_normalize = moment.utcoffset()
         moment = self.at_time_zone.normalize(moment)
         offset_after_normalize = moment.utcoffset()
@@ -822,8 +829,6 @@ class Job:
             # to 03:00), this will schedule the job at 03:23.
             moment = moment + (offset_after_normalize - offset_before_normalize)
         return moment
-
-
 
     def _is_overdue(self, when: datetime.datetime):
         return self.cancel_after is not None and when > self.cancel_after
@@ -920,4 +925,3 @@ def repeat(job, *args, **kwargs):
         return decorated_function
 
     return _schedule_decorator
-

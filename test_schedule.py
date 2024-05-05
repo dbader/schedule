@@ -1,4 +1,5 @@
 """Unit tests for schedule.py"""
+
 import datetime
 import functools
 import mock
@@ -34,6 +35,7 @@ def make_mock_job(name=None):
     job = mock.Mock()
     job.__name__ = name or "job"
     return job
+
 
 class mock_datetime:
     """
@@ -618,7 +620,6 @@ class SchedulerTests(unittest.TestCase):
             assert next.hour == 7
             assert next.minute == 0
 
-
     def test_tz_daily_half_hour_offset(self):
         mock_job = self.make_tz_mock_job()
         with mock_datetime(2022, 4, 8, 10, 0):
@@ -630,10 +631,10 @@ class SchedulerTests(unittest.TestCase):
             assert next.hour == 16
             assert next.minute == 30
 
-
     def test_tz_daily_dst(self):
         mock_job = self.make_tz_mock_job()
         import pytz
+
         with mock_datetime(2022, 3, 20, 10, 0):
             # Current Berlin time: 10:00 (local) (NOT during daylight saving)
             # Current NY time: 04:00 (during daylight saving)
@@ -643,7 +644,6 @@ class SchedulerTests(unittest.TestCase):
             next = every().day.at("10:30", tz).do(mock_job).next_run
             assert next.hour == 15
             assert next.minute == 30
-
 
     def test_tz_daily_dst_skip_hour(self):
         mock_job = self.make_tz_mock_job()
@@ -664,7 +664,6 @@ class SchedulerTests(unittest.TestCase):
             assert job.next_run.hour == 2
             assert job.next_run.minute == 30
 
-
     def test_tz_daily_dst_overlap_hour(self):
         mock_job = self.make_tz_mock_job()
         # Test the DST-case that is described in the documentation
@@ -684,7 +683,6 @@ class SchedulerTests(unittest.TestCase):
             assert job.next_run.hour == 2
             assert job.next_run.minute == 30
 
-
     def test_tz_daily_exact_future_scheduling(self):
         mock_job = self.make_tz_mock_job()
         with mock_datetime(2022, 3, 20, 10, 0):
@@ -699,7 +697,6 @@ class SchedulerTests(unittest.TestCase):
                 datetime.datetime(2022, 3, 21, 5, 0) - datetime.datetime.now()
             )
             assert schedule.idle_seconds() == expected_delta.total_seconds()
-
 
     def test_tz_daily_utc(self):
         mock_job = self.make_tz_mock_job()
@@ -722,7 +719,6 @@ class SchedulerTests(unittest.TestCase):
             assert next.hour == 12
             assert next.minute == 0
 
-
     def test_tz_daily_issue_592(self):
         mock_job = self.make_tz_mock_job()
         with mock_datetime(2023, 7, 15, 13, 0, 0, TZ_UTC):
@@ -735,7 +731,6 @@ class SchedulerTests(unittest.TestCase):
             assert next.day == 15
             assert next.hour == 13
             assert next.minute == 45
-
 
     def test_tz_daily_exact_seconds_precision(self):
         mock_job = self.make_tz_mock_job()
@@ -751,7 +746,6 @@ class SchedulerTests(unittest.TestCase):
             assert next.hour == 22
             assert next.minute == 00
             assert next.second == 20
-
 
     def test_tz_weekly_sunday_conversion(self):
         mock_job = self.make_tz_mock_job()
@@ -804,7 +798,6 @@ class SchedulerTests(unittest.TestCase):
             assert next.hour == 0
             assert next.minute == 0
 
-
     def test_tz_daily_leap_year(self):
         mock_job = self.make_tz_mock_job()
         with mock_datetime(2024, 2, 28, 23, 50):
@@ -849,7 +842,6 @@ class SchedulerTests(unittest.TestCase):
             assert next.day == 26
             assert next.hour == 3
             assert next.minute == 0
-
 
     def test_tz_daily_dst_ending_point(self):
         mock_job = self.make_tz_mock_job()
@@ -931,7 +923,12 @@ class SchedulerTests(unittest.TestCase):
             # Exected next run in Newfoundland: 4 may, 09:14:45
             # Expected next run in Chatham: 5 may, 00:29:45
             schedule.clear()
-            next = schedule.every(10).hours.at("14:45", "Canada/Newfoundland").do(mock_job).next_run
+            next = (
+                schedule.every(10)
+                .hours.at("14:45", "Canada/Newfoundland")
+                .do(mock_job)
+                .next_run
+            )
             assert next.day == 5
             assert next.hour == 0
             assert next.minute == 29
@@ -980,7 +977,7 @@ class SchedulerTests(unittest.TestCase):
             # Expected time: 3 Nov, 02:43:13 Chatham
             assert job.next_run.day == 3
             assert job.next_run.hour == 2
-            assert job.next_run.minute == 43 # Within the fold, first occurrence
+            assert job.next_run.minute == 43  # Within the fold, first occurrence
             assert job.next_run.second == 13
         with mock_datetime(2024, 11, 3, 2, 23, 55, TZ_CHATHAM, fold=1):
             # Time is during the fold. Local time has moved back 1 hour, this is
@@ -1052,7 +1049,12 @@ class SchedulerTests(unittest.TestCase):
         with mock_datetime(2024, 3, 28, 11, 0, 0, TZ_BERLIN):
             # At March 31st 2024, 02:00:00 clocks were turned forward 1 hour
             schedule.clear()
-            next = schedule.every(7).days.at("11:00", "Europe/Berlin").do(mock_job).next_run
+            next = (
+                schedule.every(7)
+                .days.at("11:00", "Europe/Berlin")
+                .do(mock_job)
+                .next_run
+            )
             assert next.month == 4
             assert next.day == 4
             assert next.hour == 11
@@ -1062,11 +1064,17 @@ class SchedulerTests(unittest.TestCase):
     def test_tz_weekly_large_interval_backward(self):
         mock_job = self.make_tz_mock_job()
         import pytz
+
         # Testing scheduling large intervals that skip over clock move back
         with mock_datetime(2024, 10, 25, 11, 0, 0, TZ_BERLIN):
             # At March 31st 2024, 02:00:00 clocks were turned forward 1 hour
             schedule.clear()
-            next = schedule.every(7).days.at("11:00", "Europe/Berlin").do(mock_job).next_run
+            next = (
+                schedule.every(7)
+                .days.at("11:00", "Europe/Berlin")
+                .do(mock_job)
+                .next_run
+            )
             assert next.month == 11
             assert next.day == 1
             assert next.hour == 11
@@ -1083,7 +1091,12 @@ class SchedulerTests(unittest.TestCase):
             # Expected time Anchorage: 3 Nov, 14:00 (UTC-09:00)
             # Expected time Berlin:    4 Nov, 00:00
             schedule.clear()
-            next = schedule.every().day.at("14:00", "America/Anchorage").do(mock_job).next_run
+            next = (
+                schedule.every()
+                .day.at("14:00", "America/Anchorage")
+                .do(mock_job)
+                .next_run
+            )
             assert next.day == 4
             assert next.hour == 0
             assert next.minute == 00
@@ -1103,7 +1116,9 @@ class SchedulerTests(unittest.TestCase):
             # Expected time Berlin:       31 Mar, 10:00 (UTC+02:00)
             # Expected time Berlin Extra: 31 Mar, 11:00 (UTC+03:00)
             schedule.clear()
-            next = schedule.every().day.at("10:00", "Europe/Berlin").do(mock_job).next_run
+            next = (
+                schedule.every().day.at("10:00", "Europe/Berlin").do(mock_job).next_run
+            )
             assert next.day == 31
             assert next.hour == 11
             assert next.minute == 00
@@ -1122,7 +1137,9 @@ class SchedulerTests(unittest.TestCase):
             # Expected time Berlin:          31 Mar, 10:00 (UTC+02:00) +9 hour
             # Expected time Berlin Inverted: 31 Mar, 09:00 (UTC+01:00)
             schedule.clear()
-            next = schedule.every().day.at("10:00", "Europe/Berlin").do(mock_job).next_run
+            next = (
+                schedule.every().day.at("10:00", "Europe/Berlin").do(mock_job).next_run
+            )
             assert next.day == 31
             assert next.hour == 9
             assert next.minute == 00
@@ -1303,7 +1320,7 @@ class SchedulerTests(unittest.TestCase):
 
     def test_run_every_weekday_at_specific_time_today(self):
         mock_job = make_mock_job()
-        with mock_datetime(2010, 1, 6, 13, 16): # january 6 2010 == Wednesday
+        with mock_datetime(2010, 1, 6, 13, 16):  # january 6 2010 == Wednesday
             every().wednesday.at("14:12").do(mock_job)
             schedule.run_pending()
             assert mock_job.call_count == 0
