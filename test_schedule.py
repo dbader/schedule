@@ -2,8 +2,8 @@
 
 import datetime
 import functools
-import mock
-import unittest
+from unittest import mock
+import unittest.mock
 import os
 import time
 
@@ -1153,6 +1153,86 @@ class SchedulerTests(unittest.TestCase):
 
         with self.assertRaises(ScheduleValueError):
             every().day.at("10:30", 43).do(mock_job)
+
+    def test_align_utc_offset_no_timezone(self):
+        job = schedule.every().day.at("10:00").do(make_mock_job())
+        now = datetime.datetime(2024, 5, 11, 10, 30, 55, 0)
+        aligned_time = job._align_utc_offset(now, fixate_time=True)
+        self.assertEqual(now, aligned_time)
+
+    def setup_utc_offset_test(self):
+        try:
+            import pytz
+        except ModuleNotFoundError:
+            self.skipTest("pytz unavailable")
+        job = schedule.every().day.at("10:00", "Europe/Berlin").do(make_mock_job("tz-test"))
+        tz = pytz.timezone("Europe/Berlin")
+        return (job, tz)
+
+    def test_align_utc_offset_no_change(self):
+        (job, tz) = self.setup_utc_offset_test()
+        now = tz.localize(datetime.datetime(2023, 3, 26, 1, 30))
+        aligned_time = job._align_utc_offset(now, fixate_time=False)
+        self.assertEqual(now, aligned_time)
+
+    def test_align_utc_offset_with_dst_gap(self):
+        (job, tz) = self.setup_utc_offset_test()
+        # Non-existent time in Berlin timezone
+        gap_time = tz.localize(datetime.datetime(2024, 3, 31, 2, 30, 0))
+        aligned_time = job._align_utc_offset(gap_time, fixate_time=True)
+
+        assert aligned_time.utcoffset() == datetime.timedelta(hours=2)
+        assert aligned_time.day == 31
+        assert aligned_time.hour == 3
+        assert aligned_time.minute == 30
+
+    def test_align_utc_offset_with_dst_fold(self):
+        (job, tz) = self.setup_utc_offset_test()
+        # This time exists twice, this is the first occurance
+        overlap_time = tz.localize(datetime.datetime(2024, 10, 27, 2, 30))
+        aligned_time = job._align_utc_offset(overlap_time, fixate_time=False)
+        # Since the time exists twice, no fixate_time flag should yield the first occurrence
+        first_occurrence = tz.localize(datetime.datetime(2024, 10, 27, 2, 30, fold=0))
+        self.assertEqual(first_occurrence, aligned_time)
+
+    def test_align_utc_offset_with_dst_fold_fixate_1(self):
+        (job, tz) = self.setup_utc_offset_test()
+        # This time exists twice, this is the 1st occurance
+        overlap_time = tz.localize(datetime.datetime(2024, 10, 27, 1, 30), is_dst=True)
+        overlap_time += datetime.timedelta(hours=1)  # puts it at 02:30+02:00 (Which exists once)
+
+        aligned_time = job._align_utc_offset(overlap_time, fixate_time=True)
+        # The time should not have moved, because the original time is valid
+        assert aligned_time.utcoffset() == datetime.timedelta(hours=2)
+        assert aligned_time.hour == 2
+        assert aligned_time.minute == 30
+        assert aligned_time.day == 27
+
+    def test_align_utc_offset_with_dst_fold_fixate_2(self):
+        (job, tz) = self.setup_utc_offset_test()
+        # 02:30 exists twice, this is the 2nd occurance
+        overlap_time = tz.localize(datetime.datetime(2024, 10, 27, 2, 30), is_dst=False)
+        # The time 2024-10-27 02:30:00+01:00 exists once
+
+        aligned_time = job._align_utc_offset(overlap_time, fixate_time=True)
+        # The time was valid, should not have been moved
+        assert aligned_time.utcoffset() == datetime.timedelta(hours=1)
+        assert aligned_time.hour == 2
+        assert aligned_time.minute == 30
+        assert aligned_time.day == 27
+
+    def test_align_utc_offset_after_fold_fixate(self):
+        (job, tz) = self.setup_utc_offset_test()
+        # This time is 30 minutes after a folded hour.
+        duplicate_time = tz.localize(datetime.datetime(2024, 10, 27, 2, 30))
+        duplicate_time += datetime.timedelta(hours=1)
+
+        aligned_time = job._align_utc_offset(duplicate_time, fixate_time=False)
+
+        assert aligned_time.utcoffset() == datetime.timedelta(hours=1)
+        assert aligned_time.hour == 3
+        assert aligned_time.minute == 30
+        assert aligned_time.day == 27
 
     def test_daylight_saving_time(self):
         mock_job = make_mock_job()
