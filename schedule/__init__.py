@@ -724,7 +724,7 @@ class Job:
             next_run = self._move_to_next_weekday(next_run, self.start_day)
 
         if self.at_time is not None:
-            next_run = self._move_to_time(next_run, self.at_time)
+            next_run = self._move_to_time(next_run)
 
         period = datetime.timedelta(**{self.unit: interval})
         if interval != 1:
@@ -772,16 +772,17 @@ class Job:
             )
         return weekdays.index(day)
 
-    def _move_to_time(
-        self, moment: datetime.datetime, time: datetime.time
-    ) -> datetime.datetime:
-        kwargs = {"second": time.second, "microsecond": 0}
+    def _move_to_time(self, moment: datetime.datetime) -> datetime.datetime:
+        if self.at_time is None:
+            return moment
+
+        kwargs = {"second": self.at_time.second, "microsecond": 0}
 
         if self.unit == "days" or self.start_day is not None:
-            kwargs["hour"] = time.hour
+            kwargs["hour"] = self.at_time.hour
 
         if self.unit in ["days", "hours"] or self.start_day is not None:
-            kwargs["minute"] = time.minute
+            kwargs["minute"] = self.at_time.minute
 
         moment = moment.replace(**kwargs)  # type: ignore
 
@@ -819,7 +820,6 @@ class Job:
 
         # Adjust the time to reset the date-time to have the same HH:mm components
         moment -= offset_diff
-
 
         # Check if moving the timestamp back by the utc-offset-difference made it end up
         # in a moment that does not exist within the current timezone/utc-offset
