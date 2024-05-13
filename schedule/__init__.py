@@ -919,6 +919,7 @@ def _move_to_next_weekday(moment: datetime.datetime, weekday: str):
         days_ahead += 7
     return moment + datetime.timedelta(days=days_ahead)
 
+
 def _weekday_index(day: str) -> int:
     weekdays = (
         "monday",
