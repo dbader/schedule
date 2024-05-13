@@ -2,8 +2,7 @@
 
 import datetime
 import functools
-from unittest import mock
-import unittest.mock
+from unittest import mock, TestCase
 import os
 import time
 
@@ -94,7 +93,7 @@ class mock_datetime:
             time.tzset()
 
 
-class SchedulerTests(unittest.TestCase):
+class SchedulerTests(TestCase):
     def setUp(self):
         schedule.clear()
 
