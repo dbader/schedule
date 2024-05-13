@@ -721,7 +721,7 @@ class Job:
         if self.start_day is not None:
             if self.unit != "weeks":
                 raise ScheduleValueError("`unit` should be 'weeks'")
-            next_run = self._move_to_next_weekday(next_run, self.start_day)
+            next_run = _move_to_next_weekday(next_run, self.start_day)
 
         if self.at_time is not None:
             next_run = self._move_to_time(next_run)
@@ -746,31 +746,6 @@ class Job:
             next_run = next_run.replace(tzinfo=None)
 
         self.next_run = next_run
-
-    def _move_to_next_weekday(self, moment: datetime.datetime, weekday: str):
-        weekday_index = self._weekday_index(weekday)
-
-        days_ahead = weekday_index - moment.weekday()
-        if days_ahead < 0:
-            # Target day already happened this week, move to next week
-            days_ahead += 7
-        return moment + datetime.timedelta(days=days_ahead)
-
-    def _weekday_index(self, day: str) -> int:
-        weekdays = (
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        )
-        if day not in weekdays:
-            raise ScheduleValueError(
-                "Invalid start day (valid start days are {})".format(weekdays)
-            )
-        return weekdays.index(day)
 
     def _move_to_time(self, moment: datetime.datetime) -> datetime.datetime:
         if self.at_time is None:
@@ -928,3 +903,34 @@ def repeat(job, *args, **kwargs):
         return decorated_function
 
     return _schedule_decorator
+
+
+def _move_to_next_weekday(moment: datetime.datetime, weekday: str):
+    """
+    Move the given timestamp to the nearest given weekday. May be this week
+    or next week. If the timestamp is already at the given weekday, it is not
+    moved.
+    """
+    weekday_index = _weekday_index(weekday)
+
+    days_ahead = weekday_index - moment.weekday()
+    if days_ahead < 0:
+        # Target day already happened this week, move to next week
+        days_ahead += 7
+    return moment + datetime.timedelta(days=days_ahead)
+
+def _weekday_index(day: str) -> int:
+    weekdays = (
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    )
+    if day not in weekdays:
+        raise ScheduleValueError(
+            "Invalid start day (valid start days are {})".format(weekdays)
+        )
+    return weekdays.index(day)

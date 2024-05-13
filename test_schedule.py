@@ -1244,6 +1244,28 @@ class SchedulerTests(unittest.TestCase):
         with mock_datetime(2022, 10, 30, 0, 0):
             assert every(4).hours.do(mock_job).next_run.hour == 4
 
+    def test_move_to_next_weekday_today(self):
+        monday = datetime.datetime(2024, 5, 13, 10, 27, 54)
+        tuesday = schedule._move_to_next_weekday(monday, "monday")
+        assert tuesday.day == 13 # today! Time didn't change.
+        assert tuesday.hour == 10
+        assert tuesday.minute == 27
+
+    def test_move_to_next_weekday_tommorrow(self):
+        monday = datetime.datetime(2024, 5, 13, 10, 27, 54)
+        tuesday = schedule._move_to_next_weekday(monday, "tuesday")
+        assert tuesday.day == 14 # 1 day ahead
+        assert tuesday.hour == 10
+        assert tuesday.minute == 27
+
+    def test_move_to_next_weekday_nextweek(self):
+        wednesday = datetime.datetime(2024, 5, 15, 10, 27, 54)
+        tuesday = schedule._move_to_next_weekday(wednesday, "tuesday")
+        assert tuesday.day == 21 # next week monday
+        assert tuesday.hour == 10
+        assert tuesday.minute == 27
+
+
     def test_run_all(self):
         mock_job = make_mock_job()
         every().minute.do(mock_job)
