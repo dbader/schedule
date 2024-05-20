@@ -37,6 +37,7 @@ Usage:
 [2] https://github.com/Rykian/clockwork
 [3] https://adam.herokuapp.com/past/2010/6/30/replace_cron_with_clockwork/
 """
+
 from collections.abc import Hashable
 import datetime
 import functools
@@ -243,10 +244,8 @@ class Job:
         # datetime of the next run
         self.next_run: Optional[datetime.datetime] = None
 
-        # timedelta between runs, only valid for
-        self.period: Optional[datetime.timedelta] = None
-
-        # Specific day of the week to start on
+        # Weekday to run the job at. Only relevant when unit is 'weeks'.
+        # For example, when asking 'every week on tuesday' the start_day is 'tuesday'.
         self.start_day: Optional[str] = None
 
         # optional time of final run
@@ -707,7 +706,6 @@ class Job:
                 "Invalid unit (valid units are `seconds`, `minutes`, `hours`, "
                 "`days`, and `weeks`)"
             )
-
         if self.latest is not None:
             if not (self.latest >= self.interval):
                 raise ScheduleError("`latest` is greater than `interval`")
@@ -716,106 +714,107 @@ class Job:
             interval = self.interval
 
         # Do all computation in the context of the requested timezone
-        if self.at_time_zone is not None:
-            now = datetime.datetime.now(self.at_time_zone)
-        else:
-            now = datetime.datetime.now()
+        now = datetime.datetime.now(self.at_time_zone)
 
-        self.period = datetime.timedelta(**{self.unit: interval})
-        self.next_run = now + self.period
+        next_run = now
+
         if self.start_day is not None:
             if self.unit != "weeks":
                 raise ScheduleValueError("`unit` should be 'weeks'")
-            weekdays = (
-                "monday",
-                "tuesday",
-                "wednesday",
-                "thursday",
-                "friday",
-                "saturday",
-                "sunday",
-            )
-            if self.start_day not in weekdays:
-                raise ScheduleValueError(
-                    "Invalid start day (valid start days are {})".format(weekdays)
-                )
-            weekday = weekdays.index(self.start_day)
-            days_ahead = weekday - self.next_run.weekday()
-            if days_ahead <= 0:  # Target day already happened this week
-                days_ahead += 7
-            self.next_run += datetime.timedelta(days_ahead) - self.period
-
-        # before we apply the .at() time, we need to normalize the timestamp
-        # to ensure we change the time elements in the new timezone
-        if self.at_time_zone is not None:
-            self.next_run = self.at_time_zone.normalize(self.next_run)
+            next_run = _move_to_next_weekday(next_run, self.start_day)
 
         if self.at_time is not None:
-            if self.unit not in ("days", "hours", "minutes") and self.start_day is None:
-                raise ScheduleValueError("Invalid unit without specifying start day")
-            kwargs = {"second": self.at_time.second, "microsecond": 0}
-            if self.unit == "days" or self.start_day is not None:
-                kwargs["hour"] = self.at_time.hour
-            if self.unit in ["days", "hours"] or self.start_day is not None:
-                kwargs["minute"] = self.at_time.minute
+            next_run = self._move_to_at_time(next_run)
 
-            self.next_run = self.next_run.replace(**kwargs)  # type: ignore
+        period = datetime.timedelta(**{self.unit: interval})
+        if interval != 1:
+            next_run += period
 
-            # Make sure we run at the specified time *today* (or *this hour*)
-            # as well. This accounts for when a job takes so long it finished
-            # in the next period.
-            last_run_tz = self._to_at_timezone(self.last_run)
-            if not last_run_tz or (self.next_run - last_run_tz) > self.period:
-                if (
-                    self.unit == "days"
-                    and self.next_run.time() > now.time()
-                    and self.interval == 1
-                ):
-                    self.next_run = self.next_run - datetime.timedelta(days=1)
-                elif self.unit == "hours" and (
-                    self.at_time.minute > now.minute
-                    or (
-                        self.at_time.minute == now.minute
-                        and self.at_time.second > now.second
-                    )
-                ):
-                    self.next_run = self.next_run - datetime.timedelta(hours=1)
-                elif self.unit == "minutes" and self.at_time.second > now.second:
-                    self.next_run = self.next_run - datetime.timedelta(minutes=1)
-        if self.start_day is not None and self.at_time is not None:
-            # Let's see if we will still make that time we specified today
-            if (self.next_run - now).days >= 7:
-                self.next_run -= self.period
+        while next_run <= now:
+            next_run += period
 
-        # Calculations happen in the configured timezone, but to execute the schedule we
-        # need to know the next_run time in the system time. So we convert back to naive local
-        if self.at_time_zone is not None:
-            self.next_run = self._normalize_preserve_timestamp(self.next_run)
-            self.next_run = self.next_run.astimezone().replace(tzinfo=None)
-
-    # Usually when normalization of a timestamp causes the timestamp to change,
-    # it preserves the moment in time and changes the local timestamp.
-    # This method applies pytz normalization but preserves the local timestamp, in fact changing the moment in time.
-    def _normalize_preserve_timestamp(
-        self, input: datetime.datetime
-    ) -> datetime.datetime:
-        if self.at_time_zone is None or input is None:
-            return input
-        normalized = self.at_time_zone.normalize(input)
-        return normalized.replace(
-            day=input.day,
-            hour=input.hour,
-            minute=input.minute,
-            second=input.second,
-            microsecond=input.microsecond,
+        next_run = self._correct_utc_offset(
+            next_run, fixate_time=(self.at_time is not None)
         )
 
-    def _to_at_timezone(
-        self, input: Optional[datetime.datetime]
-    ) -> Optional[datetime.datetime]:
-        if self.at_time_zone is None or input is None:
-            return input
-        return input.astimezone(self.at_time_zone)
+        # To keep the api consistent with older versions, we have to set the 'next_run' to a naive timestamp in the local timezone.
+        # Because we want to stay backwards compatible with older versions.
+        if self.at_time_zone is not None:
+            # Convert back to the local timezone
+            next_run = next_run.astimezone()
+
+            next_run = next_run.replace(tzinfo=None)
+
+        self.next_run = next_run
+
+    def _move_to_at_time(self, moment: datetime.datetime) -> datetime.datetime:
+        """
+        Takes a datetime and moves the time-component to the job's at_time.
+        """
+        if self.at_time is None:
+            return moment
+
+        kwargs = {"second": self.at_time.second, "microsecond": 0}
+
+        if self.unit == "days" or self.start_day is not None:
+            kwargs["hour"] = self.at_time.hour
+
+        if self.unit in ["days", "hours"] or self.start_day is not None:
+            kwargs["minute"] = self.at_time.minute
+
+        moment = moment.replace(**kwargs)  # type: ignore
+
+        # When we set the time elements, we might end up in a different UTC-offset than the current offset.
+        # This happens when we cross into or out of daylight saving time.
+        moment = self._correct_utc_offset(moment, fixate_time=True)
+
+        return moment
+
+    def _correct_utc_offset(
+        self, moment: datetime.datetime, fixate_time: bool
+    ) -> datetime.datetime:
+        """
+        Given a datetime, corrects any mistakes in the utc offset.
+        This is similar to pytz' normalize, but adds the ability to attempt
+        keeping the time-component at the same hour/minute/second.
+        """
+        if self.at_time_zone is None:
+            return moment
+        # Normalize corrects the utc-offset to match the timezone
+        # For example: When a date&time&offset does not exist within a timezone,
+        # the normalization will change the utc-offset to where it is valid.
+        # It does this while keeping the moment in time the same, by moving the
+        # time component opposite of the utc-change.
+        offset_before_normalize = moment.utcoffset()
+        moment = self.at_time_zone.normalize(moment)
+        offset_after_normalize = moment.utcoffset()
+
+        if offset_before_normalize == offset_after_normalize:
+            # There was no change in the utc-offset, datetime didn't change.
+            return moment
+
+        # The utc-offset and time-component has changed
+
+        if not fixate_time:
+            # No need to fixate the time.
+            return moment
+
+        offset_diff = offset_after_normalize - offset_before_normalize
+
+        # Adjust the time to reset the date-time to have the same HH:mm components
+        moment -= offset_diff
+
+        # Check if moving the timestamp back by the utc-offset-difference made it end up
+        # in a moment that does not exist within the current timezone/utc-offset
+        re_normalized_offset = self.at_time_zone.normalize(moment).utcoffset()
+        if re_normalized_offset != offset_after_normalize:
+            # We ended up in a DST Gap. The requested 'at' time does not exist
+            # within the current timezone/utc-offset. As a best effort, we will
+            # schedule the job 1 offset later than possible.
+            # For example, if 02:23 does not exist (because DST moves from 02:00
+            # to 03:00), this will schedule the job at 03:23.
+            moment += offset_diff
+        return moment
 
     def _is_overdue(self, when: datetime.datetime):
         return self.cancel_after is not None and when > self.cancel_after
@@ -912,3 +911,35 @@ def repeat(job, *args, **kwargs):
         return decorated_function
 
     return _schedule_decorator
+
+
+def _move_to_next_weekday(moment: datetime.datetime, weekday: str):
+    """
+    Move the given timestamp to the nearest given weekday. May be this week
+    or next week. If the timestamp is already at the given weekday, it is not
+    moved.
+    """
+    weekday_index = _weekday_index(weekday)
+
+    days_ahead = weekday_index - moment.weekday()
+    if days_ahead < 0:
+        # Target day already happened this week, move to next week
+        days_ahead += 7
+    return moment + datetime.timedelta(days=days_ahead)
+
+
+def _weekday_index(day: str) -> int:
+    weekdays = (
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+    )
+    if day not in weekdays:
+        raise ScheduleValueError(
+            "Invalid start day (valid start days are {})".format(weekdays)
+        )
+    return weekdays.index(day)
