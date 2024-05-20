@@ -6,7 +6,9 @@ History
 1.2.2 (2024-05-20)
 ++++++++++++++++++
 
-- Fix bug where
+- Fix bugs in cross-timezone scheduling (#601, #602, #604, #623)
+- Add support for python 3.12 (#606)
+- Remove dependency on old mock (#622) Thanks @a-detiste!
 
 
 1.2.1 (2023-11-01)
