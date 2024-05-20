@@ -59,7 +59,7 @@ Merge these changes into master. Finally:
     git push --tags
 
     pip install --upgrade setuptools twine wheel
-    python setup.py sdist bdist_wheel --universal
+    python3 -m build --wheel
     twine upload --repository schedule dist/*
 
 This project follows `semantic versioning <https://semver.org/>`_.`
