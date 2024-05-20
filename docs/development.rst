@@ -60,6 +60,9 @@ Merge these changes into master. Finally:
 
     pip install --upgrade setuptools twine wheel
     python3 -m build --wheel
+    # For https://test.pypi.org/project/schedule/
+    twine upload --repository schedule-test dist/*
+    # For https://pypi.org/project/schedule/
     twine upload --repository schedule dist/*
 
 This project follows `semantic versioning <https://semver.org/>`_.`
