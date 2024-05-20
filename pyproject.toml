@@ -7,7 +7,7 @@ name = "schedule"
 description = "Job scheduling for humans."
 dynamic = ["version", "classifiers", "keywords", "authors"]
 readme = "README.rst"
-license = {file = "LICENSE.txt"}
+license = {text = "MIT License"}
 
 requires-python = ">= 3.7"
 dependencies = []
