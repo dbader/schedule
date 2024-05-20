@@ -724,7 +724,7 @@ class Job:
             next_run = _move_to_next_weekday(next_run, self.start_day)
 
         if self.at_time is not None:
-            next_run = self._move_to_time(next_run)
+            next_run = self._move_to_at_time(next_run)
 
         period = datetime.timedelta(**{self.unit: interval})
         if interval != 1:
@@ -733,7 +733,7 @@ class Job:
         while next_run <= now:
             next_run += period
 
-        next_run = self._align_utc_offset(
+        next_run = self._correct_utc_offset(
             next_run, fixate_time=(self.at_time is not None)
         )
 
@@ -747,7 +747,10 @@ class Job:
 
         self.next_run = next_run
 
-    def _move_to_time(self, moment: datetime.datetime) -> datetime.datetime:
+    def _move_to_at_time(self, moment: datetime.datetime) -> datetime.datetime:
+        """
+        Takes a datetime and moves the time-component to the job's at_time.
+        """
         if self.at_time is None:
             return moment
 
@@ -763,13 +766,18 @@ class Job:
 
         # When we set the time elements, we might end up in a different UTC-offset than the current offset.
         # This happens when we cross into or out of daylight saving time.
-        moment = self._align_utc_offset(moment, fixate_time=True)
+        moment = self._correct_utc_offset(moment, fixate_time=True)
 
         return moment
 
-    def _align_utc_offset(
+    def _correct_utc_offset(
         self, moment: datetime.datetime, fixate_time: bool
     ) -> datetime.datetime:
+        """
+        Given a datetime, corrects any mistakes in the utc offset.
+        This is similar to pytz' normalize, but adds the ability to attempt
+        keeping the time-component at the same hour/minute/second.
+        """
         if self.at_time_zone is None:
             return moment
         # Normalize corrects the utc-offset to match the timezone

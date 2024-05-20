@@ -1156,7 +1156,7 @@ class SchedulerTests(TestCase):
     def test_align_utc_offset_no_timezone(self):
         job = schedule.every().day.at("10:00").do(make_mock_job())
         now = datetime.datetime(2024, 5, 11, 10, 30, 55, 0)
-        aligned_time = job._align_utc_offset(now, fixate_time=True)
+        aligned_time = job._correct_utc_offset(now, fixate_time=True)
         self.assertEqual(now, aligned_time)
 
     def setup_utc_offset_test(self):
@@ -1175,14 +1175,14 @@ class SchedulerTests(TestCase):
     def test_align_utc_offset_no_change(self):
         (job, tz) = self.setup_utc_offset_test()
         now = tz.localize(datetime.datetime(2023, 3, 26, 1, 30))
-        aligned_time = job._align_utc_offset(now, fixate_time=False)
+        aligned_time = job._correct_utc_offset(now, fixate_time=False)
         self.assertEqual(now, aligned_time)
 
     def test_align_utc_offset_with_dst_gap(self):
         (job, tz) = self.setup_utc_offset_test()
         # Non-existent time in Berlin timezone
         gap_time = tz.localize(datetime.datetime(2024, 3, 31, 2, 30, 0))
-        aligned_time = job._align_utc_offset(gap_time, fixate_time=True)
+        aligned_time = job._correct_utc_offset(gap_time, fixate_time=True)
 
         assert aligned_time.utcoffset() == datetime.timedelta(hours=2)
         assert aligned_time.day == 31
@@ -1193,7 +1193,7 @@ class SchedulerTests(TestCase):
         (job, tz) = self.setup_utc_offset_test()
         # This time exists twice, this is the first occurance
         overlap_time = tz.localize(datetime.datetime(2024, 10, 27, 2, 30))
-        aligned_time = job._align_utc_offset(overlap_time, fixate_time=False)
+        aligned_time = job._correct_utc_offset(overlap_time, fixate_time=False)
         # Since the time exists twice, no fixate_time flag should yield the first occurrence
         first_occurrence = tz.localize(datetime.datetime(2024, 10, 27, 2, 30, fold=0))
         self.assertEqual(first_occurrence, aligned_time)
@@ -1206,7 +1206,7 @@ class SchedulerTests(TestCase):
             hours=1
         )  # puts it at 02:30+02:00 (Which exists once)
 
-        aligned_time = job._align_utc_offset(overlap_time, fixate_time=True)
+        aligned_time = job._correct_utc_offset(overlap_time, fixate_time=True)
         # The time should not have moved, because the original time is valid
         assert aligned_time.utcoffset() == datetime.timedelta(hours=2)
         assert aligned_time.hour == 2
@@ -1219,7 +1219,7 @@ class SchedulerTests(TestCase):
         overlap_time = tz.localize(datetime.datetime(2024, 10, 27, 2, 30), is_dst=False)
         # The time 2024-10-27 02:30:00+01:00 exists once
 
-        aligned_time = job._align_utc_offset(overlap_time, fixate_time=True)
+        aligned_time = job._correct_utc_offset(overlap_time, fixate_time=True)
         # The time was valid, should not have been moved
         assert aligned_time.utcoffset() == datetime.timedelta(hours=1)
         assert aligned_time.hour == 2
@@ -1232,7 +1232,7 @@ class SchedulerTests(TestCase):
         duplicate_time = tz.localize(datetime.datetime(2024, 10, 27, 2, 30))
         duplicate_time += datetime.timedelta(hours=1)
 
-        aligned_time = job._align_utc_offset(duplicate_time, fixate_time=False)
+        aligned_time = job._correct_utc_offset(duplicate_time, fixate_time=False)
 
         assert aligned_time.utcoffset() == datetime.timedelta(hours=1)
         assert aligned_time.hour == 3
