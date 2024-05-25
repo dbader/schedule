@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "schedule"
+description = "Job scheduling for humans."
+dynamic = ["version", "classifiers", "keywords", "authors"]
+readme = "README.rst"
+license = {text = "MIT License"}
+
+requires-python = ">= 3.7"
+dependencies = []
+
+maintainers = [
+  {name = "Sijmen Huizenga"}
+]
+
+[project.optional-dependencies]
+timezone = ["pytz"]
+
+[project.urls]
+Documentation = "https://schedule.readthedocs.io"
+Repository = "https://github.com/dbader/schedule.git"
+Issues = "https://github.com/dbader/schedule/issues"
+Changelog = "https://github.com/dbader/schedule/blob/master/HISTORY.rst"
