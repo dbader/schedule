@@ -154,10 +154,10 @@ class Scheduler:
         :param job: The job to be unscheduled
         """
         try:
-            logger.debug('Cancelling job "%s"', str(job))
+            logger.debug('Cancelling job "%s"', job)
             self.jobs.remove(job)
         except ValueError:
-            logger.debug('Cancelling not-scheduled job "%s"', str(job))
+            logger.debug('Cancelling not-scheduled job "%s"', job)
 
     def every(self, interval: int = 1) -> "Job":
         """
