@@ -663,6 +663,13 @@ class Job:
         self.scheduler.jobs.append(self)
         return self
 
+    def add_time_to_next_run(self, seconds=0, minutes=0, hours=0, days=0, weeks=0, months=0, years=0):
+        """
+        function to add time to the next_run of a job and ONLY the next run
+        """
+        time_in_seconds = seconds + (minutes * 60) + (hours * 3600) + (days * 86400) + (weeks * 604800) + (months * 259200) + (years * 31536000)
+        self.next_run = self.next_run + datetime.timedelta(seconds=time_in_seconds)
+
     @property
     def should_run(self) -> bool:
         """
