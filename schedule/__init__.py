@@ -468,6 +468,24 @@ class Job:
         self.tags.update(tags)
         return self
 
+    def with_time_zone(self, tz: str):
+        import pytz
+
+        if self.unit != "seconds":
+            raise ScheduleValueError(
+                "Timezone should be defined in at()"
+            )
+
+        if isinstance(tz, str):
+            self.at_time_zone = pytz.timezone(tz)
+        elif isinstance(tz, pytz.BaseTzInfo):
+            self.at_time_zone = tz
+        else:
+            raise ScheduleValueError(
+                "Timezone must be string or pytz.timezone object"
+            )
+        return self
+
     def at(self, time_str: str, tz: Optional[str] = None):
         """
         Specify a particular time that the job should be run at.
@@ -689,7 +707,7 @@ class Job:
 
         logger.debug("Running job %s", self)
         ret = self.job_func()
-        self.last_run = datetime.datetime.now()
+        self.last_run = datetime.datetime.now(self.at_time_zone)
         self._schedule_next_run()
 
         if self._is_overdue(self.next_run):
@@ -788,6 +806,15 @@ class Job:
         offset_before_normalize = moment.utcoffset()
         moment = self.at_time_zone.normalize(moment)
         offset_after_normalize = moment.utcoffset()
+
+        # Check fall back for DST
+        if self.last_run is not None:
+            last_execution_dst = self.last_run.dst()
+            moment_dst = moment.dst()
+            if last_execution_dst > moment_dst:
+                if self.unit in ["minutes", "hours"]:
+                    moment -= last_execution_dst - moment_dst
+                    return moment
 
         if offset_before_normalize == offset_after_normalize:
             # There was no change in the utc-offset, datetime didn't change.
