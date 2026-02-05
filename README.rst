@@ -141,6 +141,23 @@ Define scheduled jobs using a decorator.
     while True:
         run_pending()
 
+Automated Tests
+---------------
+
+Tests are written using ``unittest`` from the Python standard library and are contained in a single file: ``test_schedule.py``. They verify the behavior of the public API (scheduling, execution, tagging, cancellation, timezone handling).
+
+Run tests with the built-in runner:
+
+.. code-block:: bash
+
+    $ python -m unittest test_schedule
+
+Or use ``pytest`` as an alternative runner (not required):
+
+.. code-block:: bash
+
+    $ pytest test_schedule.py
+
 Documentation
 -------------
 
