@@ -53,6 +53,25 @@ Usage
         schedule.run_pending()
         time.sleep(1)
 
+Project Structure
+-----------------
+
+The library consists of a single module:
+
+- ``schedule/__init__.py``: 945 lines containing all scheduling logic (``Scheduler``, ``Job`` classes and module-level functions)
+- ``test_schedule.py``: single test file covering the entire codebase
+
+**Dependencies:**
+
+- Core: none (standard library only)
+- Optional: ``pytz`` (required only for timezone-aware scheduling via ``.at("HH:MM", "Timezone")``)
+
+Install with timezone support:
+
+.. code-block:: bash
+
+    $ pip install schedule[timezone]
+
 Documentation
 -------------
 
