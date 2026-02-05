@@ -11,6 +11,11 @@ All required tooling and libraries can be installed using the ``requirements-dev
 
     pip install -r requirements-dev.txt
 
+.. note::
+
+    On WSL/Ubuntu, run ``sudo apt update`` before installing ``python3-pip``.
+    The package index must be refreshed to resolve dependencies correctly.
+
 
 Running tests
 -------------
