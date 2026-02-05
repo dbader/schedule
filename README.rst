@@ -53,6 +53,111 @@ Usage
         schedule.run_pending()
         time.sleep(1)
 
+Project Structure
+-----------------
+
+The library consists of a single module:
+
+- ``schedule/__init__.py``: 945 lines containing all scheduling logic (``Scheduler``, ``Job`` classes and module-level functions)
+- ``test_schedule.py``: single test file covering the entire codebase
+
+**Dependencies:**
+
+- Core: none (standard library only)
+- Optional: ``pytz`` (required only for timezone-aware scheduling via ``.at("HH:MM", "Timezone")``)
+
+Install with timezone support:
+
+.. code-block:: bash
+
+    $ pip install schedule[timezone]
+
+Key API Concepts
+----------------
+
+**Default Scheduler**
+
+The module provides a default ``Scheduler`` instance. Functions like ``every()``, ``run_pending()``, ``clear()``, and ``get_jobs()`` operate on this shared instance.
+
+.. code-block:: python
+
+    import schedule
+
+    schedule.every(10).seconds.do(lambda: print("tick"))
+    schedule.run_pending()      # execute jobs that are due
+    schedule.get_jobs()         # list all scheduled jobs
+    schedule.clear()            # remove all jobs
+
+**Job Tagging**
+
+Jobs can be tagged for selective retrieval or cancellation.
+
+.. code-block:: python
+
+    schedule.every().day.do(send_report).tag("daily", "reports")
+    schedule.every().hour.do(cleanup).tag("maintenance")
+
+    schedule.get_jobs("reports")    # jobs tagged "reports"
+    schedule.clear("maintenance")   # cancel jobs tagged "maintenance"
+
+**Randomized Intervals with** ``.to()``
+
+Run a job at random intervals within a range.
+
+.. code-block:: python
+
+    # Executes every N minutes where 5 <= N <= 10
+    schedule.every(5).to(10).minutes.do(refresh_cache)
+
+**Job Expiration with** ``.until()``
+
+Schedule a job to stop running after a given time.
+
+.. code-block:: python
+
+    from datetime import datetime, timedelta
+
+    # Stop after a specific datetime
+    schedule.every(1).hour.do(task).until(datetime(2024, 12, 31, 23, 59))
+
+    # Stop after a duration
+    schedule.every(30).seconds.do(task).until(timedelta(hours=2))
+
+    # Stop at a specific time today
+    schedule.every(5).minutes.do(task).until("18:00")
+
+**Decorator Syntax with** ``@repeat``
+
+Define scheduled jobs using a decorator.
+
+.. code-block:: python
+
+    from schedule import every, repeat, run_pending
+
+    @repeat(every(10).seconds)
+    def heartbeat():
+        print("alive")
+
+    while True:
+        run_pending()
+
+Automated Tests
+---------------
+
+Tests are written using ``unittest`` from the Python standard library and are contained in a single file: ``test_schedule.py``. They verify the behavior of the public API (scheduling, execution, tagging, cancellation, timezone handling).
+
+Run tests with the built-in runner:
+
+.. code-block:: bash
+
+    $ python -m unittest test_schedule
+
+Or use ``pytest`` as an alternative runner (not required):
+
+.. code-block:: bash
+
+    $ pytest test_schedule.py
+
 Documentation
 -------------
 

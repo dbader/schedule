@@ -11,6 +11,11 @@ All required tooling and libraries can be installed using the ``requirements-dev
 
     pip install -r requirements-dev.txt
 
+.. note::
+
+    On WSL/Ubuntu, run ``sudo apt update`` before installing ``python3-pip``.
+    The package index must be refreshed to resolve dependencies correctly.
+
 
 Running tests
 -------------
@@ -20,6 +25,18 @@ Running tests
 .. code-block:: bash
 
     py.test test_schedule.py --flake8 schedule -v --cov schedule --cov-report term-missing
+
+Platform requirements for timezone tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Tests involving timezone manipulation rely on ``time.tzset()``, which is only available on Unix-like systems.
+On Windows, ``time.tzset()`` is not implemented, and some timezone-related tests may fail or be skipped.
+
+If you are developing on Windows, consider the following alternatives:
+
+- **WSL (Windows Subsystem for Linux)**: Run the test suite inside a WSL distribution.
+- **Docker**: Use a Linux-based container to execute the tests.
+- **CI with Linux runners**: Rely on continuous integration pipelines configured with Linux environments.
 
 Formatting the code
 -------------------
