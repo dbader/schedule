@@ -6,7 +6,7 @@ Python version support
 ######################
 
 We recommend using the latest version of Python.
-Schedule is tested on Python 3.7, 3.8, 3.9, 3.10, 3.11 and 3.12
+Schedule is tested on Python 3.10, 3.11, 3.12 and 3.13
 
 Want to use Schedule on earlier Python versions? See the History.
 
@@ -14,9 +14,7 @@ Want to use Schedule on earlier Python versions? See the History.
 Dependencies
 ############
 
-Schedule has 1 optional dependency:
-
-Only when you use ``.at()`` with a timezone, you must have `pytz <https://pypi.org/project/pytz/>`_ installed.
+Schedule has no external dependencies. Timezone support uses Python's built-in :mod:`zoneinfo` module.
 
 Installation instructions
 #########################

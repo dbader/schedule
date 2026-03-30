@@ -10,6 +10,8 @@ import time
 # "class already defined", and "too many public methods" messages:
 # pylint: disable-msg=R0201,C0111,E0102,R0904,R0901
 
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
 import schedule
 from schedule import (
     every,
@@ -98,11 +100,6 @@ class SchedulerTests(TestCase):
         schedule.clear()
 
     def make_tz_mock_job(self, name=None):
-        try:
-            import pytz
-        except ModuleNotFoundError:
-            self.skipTest("pytz unavailable")
-            return
         return make_mock_job(name)
 
     def test_time_units(self):
@@ -508,27 +505,12 @@ class SchedulerTests(TestCase):
             assert job.next_run.hour == 23
 
     def test_next_run_time_hour_end(self):
-        try:
-            import pytz
-        except ModuleNotFoundError:
-            self.skipTest("pytz unavailable")
-
         self.tst_next_run_time_hour_end(None, 0)
 
     def test_next_run_time_hour_end_london(self):
-        try:
-            import pytz
-        except ModuleNotFoundError:
-            self.skipTest("pytz unavailable")
-
         self.tst_next_run_time_hour_end("Europe/London", 0)
 
     def test_next_run_time_hour_end_katmandu(self):
-        try:
-            import pytz
-        except ModuleNotFoundError:
-            self.skipTest("pytz unavailable")
-
         # 12:00 in Berlin is 15:45 in Kathmandu
         # this test schedules runs at :10 minutes, so job runs at
         # 16:10 in Kathmandu, which is 13:25 in Berlin
@@ -558,19 +540,9 @@ class SchedulerTests(TestCase):
         self.tst_next_run_time_minute_end(None)
 
     def test_next_run_time_minute_end_london(self):
-        try:
-            import pytz
-        except ModuleNotFoundError:
-            self.skipTest("pytz unavailable")
-
         self.tst_next_run_time_minute_end("Europe/London")
 
     def test_next_run_time_minute_end_katmhandu(self):
-        try:
-            import pytz
-        except ModuleNotFoundError:
-            self.skipTest("pytz unavailable")
-
         self.tst_next_run_time_minute_end("Asia/Kathmandu")
 
     def tst_next_run_time_minute_end(self, tz):
@@ -632,14 +604,13 @@ class SchedulerTests(TestCase):
 
     def test_tz_daily_dst(self):
         mock_job = self.make_tz_mock_job()
-        import pytz
 
         with mock_datetime(2022, 3, 20, 10, 0):
             # Current Berlin time: 10:00 (local) (NOT during daylight saving)
             # Current NY time: 04:00 (during daylight saving)
             # Expected to run NY time: 10:30
             # Next run Berlin time: 15:30
-            tz = pytz.timezone("America/New_York")
+            tz = ZoneInfo("America/New_York")
             next = every().day.at("10:30", tz).do(mock_job).next_run
             assert next.hour == 15
             assert next.minute == 30
@@ -1062,7 +1033,6 @@ class SchedulerTests(TestCase):
 
     def test_tz_weekly_large_interval_backward(self):
         mock_job = self.make_tz_mock_job()
-        import pytz
 
         # Testing scheduling large intervals that skip over clock move back
         with mock_datetime(2024, 10, 25, 11, 0, 0, TZ_BERLIN):
@@ -1145,9 +1115,8 @@ class SchedulerTests(TestCase):
 
     def test_tz_invalid_timezone_exceptions(self):
         mock_job = self.make_tz_mock_job()
-        import pytz
 
-        with self.assertRaises(pytz.exceptions.UnknownTimeZoneError):
+        with self.assertRaises(ZoneInfoNotFoundError):
             every().day.at("10:30", "FakeZone").do(mock_job)
 
         with self.assertRaises(ScheduleValueError):
@@ -1156,33 +1125,29 @@ class SchedulerTests(TestCase):
     def test_align_utc_offset_no_timezone(self):
         job = schedule.every().day.at("10:00").do(make_mock_job())
         now = datetime.datetime(2024, 5, 11, 10, 30, 55, 0)
-        aligned_time = job._correct_utc_offset(now, fixate_time=True)
+        aligned_time = job._correct_utc_offset(now)
         self.assertEqual(now, aligned_time)
 
     def setup_utc_offset_test(self):
-        try:
-            import pytz
-        except ModuleNotFoundError:
-            self.skipTest("pytz unavailable")
         job = (
             schedule.every()
             .day.at("10:00", "Europe/Berlin")
             .do(make_mock_job("tz-test"))
         )
-        tz = pytz.timezone("Europe/Berlin")
+        tz = ZoneInfo("Europe/Berlin")
         return (job, tz)
 
     def test_align_utc_offset_no_change(self):
         (job, tz) = self.setup_utc_offset_test()
-        now = tz.localize(datetime.datetime(2023, 3, 26, 1, 30))
-        aligned_time = job._correct_utc_offset(now, fixate_time=False)
+        now = datetime.datetime(2023, 3, 26, 1, 30, tzinfo=tz)
+        aligned_time = job._correct_utc_offset(now)
         self.assertEqual(now, aligned_time)
 
     def test_align_utc_offset_with_dst_gap(self):
         (job, tz) = self.setup_utc_offset_test()
         # Non-existent time in Berlin timezone
-        gap_time = tz.localize(datetime.datetime(2024, 3, 31, 2, 30, 0))
-        aligned_time = job._correct_utc_offset(gap_time, fixate_time=True)
+        gap_time = datetime.datetime(2024, 3, 31, 2, 30, 0, tzinfo=tz)
+        aligned_time = job._correct_utc_offset(gap_time)
 
         assert aligned_time.utcoffset() == datetime.timedelta(hours=2)
         assert aligned_time.day == 31
@@ -1192,21 +1157,21 @@ class SchedulerTests(TestCase):
     def test_align_utc_offset_with_dst_fold(self):
         (job, tz) = self.setup_utc_offset_test()
         # This time exists twice, this is the first occurance
-        overlap_time = tz.localize(datetime.datetime(2024, 10, 27, 2, 30))
-        aligned_time = job._correct_utc_offset(overlap_time, fixate_time=False)
-        # Since the time exists twice, no fixate_time flag should yield the first occurrence
-        first_occurrence = tz.localize(datetime.datetime(2024, 10, 27, 2, 30, fold=0))
+        overlap_time = datetime.datetime(2024, 10, 27, 2, 30, fold=0, tzinfo=tz)
+        aligned_time = job._correct_utc_offset(overlap_time)
+        # Since the time exists twice, normalizing should yield the first occurrence
+        first_occurrence = datetime.datetime(2024, 10, 27, 2, 30, fold=0, tzinfo=tz)
         self.assertEqual(first_occurrence, aligned_time)
 
     def test_align_utc_offset_with_dst_fold_fixate_1(self):
         (job, tz) = self.setup_utc_offset_test()
         # This time exists twice, this is the 1st occurance
-        overlap_time = tz.localize(datetime.datetime(2024, 10, 27, 1, 30), is_dst=True)
+        overlap_time = datetime.datetime(2024, 10, 27, 1, 30, fold=0, tzinfo=tz)
         overlap_time += datetime.timedelta(
             hours=1
         )  # puts it at 02:30+02:00 (Which exists once)
 
-        aligned_time = job._correct_utc_offset(overlap_time, fixate_time=True)
+        aligned_time = job._correct_utc_offset(overlap_time)
         # The time should not have moved, because the original time is valid
         assert aligned_time.utcoffset() == datetime.timedelta(hours=2)
         assert aligned_time.hour == 2
@@ -1216,10 +1181,10 @@ class SchedulerTests(TestCase):
     def test_align_utc_offset_with_dst_fold_fixate_2(self):
         (job, tz) = self.setup_utc_offset_test()
         # 02:30 exists twice, this is the 2nd occurance
-        overlap_time = tz.localize(datetime.datetime(2024, 10, 27, 2, 30), is_dst=False)
+        overlap_time = datetime.datetime(2024, 10, 27, 2, 30, fold=1, tzinfo=tz)
         # The time 2024-10-27 02:30:00+01:00 exists once
 
-        aligned_time = job._correct_utc_offset(overlap_time, fixate_time=True)
+        aligned_time = job._correct_utc_offset(overlap_time)
         # The time was valid, should not have been moved
         assert aligned_time.utcoffset() == datetime.timedelta(hours=1)
         assert aligned_time.hour == 2
@@ -1229,10 +1194,10 @@ class SchedulerTests(TestCase):
     def test_align_utc_offset_after_fold_fixate(self):
         (job, tz) = self.setup_utc_offset_test()
         # This time is 30 minutes after a folded hour.
-        duplicate_time = tz.localize(datetime.datetime(2024, 10, 27, 2, 30))
+        duplicate_time = datetime.datetime(2024, 10, 27, 2, 30, fold=0, tzinfo=tz)
         duplicate_time += datetime.timedelta(hours=1)
 
-        aligned_time = job._correct_utc_offset(duplicate_time, fixate_time=False)
+        aligned_time = job._correct_utc_offset(duplicate_time)
 
         assert aligned_time.utcoffset() == datetime.timedelta(hours=1)
         assert aligned_time.hour == 3

@@ -15,7 +15,7 @@ Features:
     - A simple to use API for scheduling jobs.
     - Very lightweight and no external dependencies.
     - Excellent test coverage.
-    - Tested on Python 3.7, 3.8, 3.9, 3.10, 3.11 and 3.12
+    - Tested on Python 3.10, 3.11, 3.12 and 3.13
 
 Usage:
     >>> import schedule
@@ -46,6 +46,7 @@ import random
 import re
 import time
 from typing import Set, List, Optional, Callable, Union
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 logger = logging.getLogger("schedule")
 
@@ -486,7 +487,7 @@ class Job:
             `every().minute.at(':30')`).
 
         :param tz: The timezone that this timestamp refers to. Can be
-            a string that can be parsed by pytz.timezone(), or a pytz.BaseTzInfo object
+            a string accepted by zoneinfo.ZoneInfo(), or a ZoneInfo object
 
         :return: The invoked job instance
         """
@@ -496,16 +497,12 @@ class Job:
             )
 
         if tz is not None:
-            import pytz
-
             if isinstance(tz, str):
-                self.at_time_zone = pytz.timezone(tz)  # type: ignore
-            elif isinstance(tz, pytz.BaseTzInfo):
+                self.at_time_zone = ZoneInfo(tz)  # type: ignore
+            elif isinstance(tz, ZoneInfo):
                 self.at_time_zone = tz
             else:
-                raise ScheduleValueError(
-                    "Timezone must be string or pytz.timezone object"
-                )
+                raise ScheduleValueError("Timezone must be a string or ZoneInfo object")
 
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string")
@@ -733,9 +730,7 @@ class Job:
         while next_run <= now:
             next_run += period
 
-        next_run = self._correct_utc_offset(
-            next_run, fixate_time=(self.at_time is not None)
-        )
+        next_run = self._correct_utc_offset(next_run)
 
         # To keep the api consistent with older versions, we have to set the 'next_run' to a naive timestamp in the local timezone.
         # Because we want to stay backwards compatible with older versions.
@@ -766,55 +761,18 @@ class Job:
 
         # When we set the time elements, we might end up in a different UTC-offset than the current offset.
         # This happens when we cross into or out of daylight saving time.
-        moment = self._correct_utc_offset(moment, fixate_time=True)
+        moment = self._correct_utc_offset(moment)
 
         return moment
 
-    def _correct_utc_offset(
-        self, moment: datetime.datetime, fixate_time: bool
-    ) -> datetime.datetime:
+    def _correct_utc_offset(self, moment: datetime.datetime) -> datetime.datetime:
         """
         Given a datetime, corrects any mistakes in the utc offset.
-        This is similar to pytz' normalize, but adds the ability to attempt
-        keeping the time-component at the same hour/minute/second.
         """
         if self.at_time_zone is None:
             return moment
-        # Normalize corrects the utc-offset to match the timezone
-        # For example: When a date&time&offset does not exist within a timezone,
-        # the normalization will change the utc-offset to where it is valid.
-        # It does this while keeping the moment in time the same, by moving the
-        # time component opposite of the utc-change.
-        offset_before_normalize = moment.utcoffset()
-        moment = self.at_time_zone.normalize(moment)
-        offset_after_normalize = moment.utcoffset()
 
-        if offset_before_normalize == offset_after_normalize:
-            # There was no change in the utc-offset, datetime didn't change.
-            return moment
-
-        # The utc-offset and time-component has changed
-
-        if not fixate_time:
-            # No need to fixate the time.
-            return moment
-
-        offset_diff = offset_after_normalize - offset_before_normalize
-
-        # Adjust the time to reset the date-time to have the same HH:mm components
-        moment -= offset_diff
-
-        # Check if moving the timestamp back by the utc-offset-difference made it end up
-        # in a moment that does not exist within the current timezone/utc-offset
-        re_normalized_offset = self.at_time_zone.normalize(moment).utcoffset()
-        if re_normalized_offset != offset_after_normalize:
-            # We ended up in a DST Gap. The requested 'at' time does not exist
-            # within the current timezone/utc-offset. As a best effort, we will
-            # schedule the job 1 offset later than possible.
-            # For example, if 02:23 does not exist (because DST moves from 02:00
-            # to 03:00), this will schedule the job at 03:23.
-            moment += offset_diff
-        return moment
+        return moment.astimezone(datetime.timezone.utc).astimezone(self.at_time_zone)
 
     def _is_overdue(self, when: datetime.datetime):
         return self.cancel_after is not None and when > self.cancel_after

@@ -9,15 +9,13 @@ dynamic = ["version", "classifiers", "keywords", "authors"]
 readme = "README.rst"
 license = {text = "MIT License"}
 
-requires-python = ">= 3.7"
+requires-python = ">= 3.10"
 dependencies = []
 
 maintainers = [
   {name = "Sijmen Huizenga"}
 ]
 
-[project.optional-dependencies]
-timezone = ["pytz"]
 
 [project.urls]
 Documentation = "https://schedule.readthedocs.io"

@@ -42,12 +42,6 @@ It might be that your IDE uses a different Python interpreter installation.
 
 Still having problems? Use Google and StackOverflow before submitting an issue.
 
-ModuleNotFoundError: ModuleNotFoundError: No module named 'pytz'
-----------------------------------------------------------------
-
-This error happens when you try to set a timezone in ``.at()`` without having the `pytz <https://pypi.org/project/pytz/>`_ package installed.
-Pytz is a required dependency when working with timezones.
-To resolve this issue, install the ``pytz`` module by running ``pip install pytz``.
 
 Does schedule support time zones?
 ---------------------------------

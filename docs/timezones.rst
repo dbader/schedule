@@ -6,12 +6,6 @@ Timezone in .at()
 
 Schedule supports setting the job execution time in another timezone using the ``.at`` method.
 
-**To work with timezones** `pytz <https://pypi.org/project/pytz/>`_ **must be installed!** Get it:
-
-.. code-block:: bash
-
-    pip install pytz
-
 Timezones are only available in the ``.at`` function, like so:
 
 .. code-block:: python
@@ -19,9 +13,9 @@ Timezones are only available in the ``.at`` function, like so:
     # Pass a timezone as a string
     schedule.every().day.at("12:42", "Europe/Amsterdam").do(job)
 
-    # Pass an pytz timezone object
-    from pytz import timezone
-    schedule.every().friday.at("12:42", timezone("Africa/Lagos")).do(job)
+    # Pass a ZoneInfo object
+    from zoneinfo import ZoneInfo
+    schedule.every().friday.at("12:42", ZoneInfo("Africa/Lagos")).do(job)
 
 Schedule uses the timezone to calculate the next runtime in local time.
 All datetimes inside the library are stored `naive <https://docs.python.org/3/library/datetime.html>`_.
