@@ -300,9 +300,10 @@ class Job:
             call_repr = "[None]"
 
         if self.at_time is not None:
+            unit_str = (self.unit[:-1] if self.interval == 1 else self.unit) if self.unit else "[unit not set]"
             return "Every %s %s at %s do %s %s" % (
                 self.interval,
-                self.unit[:-1] if self.interval == 1 else self.unit,
+                unit_str,
                 self.at_time,
                 call_repr,
                 timestats,
@@ -317,7 +318,7 @@ class Job:
             return fmt % dict(
                 interval=self.interval,
                 latest=self.latest,
-                unit=(self.unit[:-1] if self.interval == 1 else self.unit),
+                unit=(self.unit[:-1] if self.interval == 1 else self.unit) if self.unit else "[unit not set]",
                 call_repr=call_repr,
                 timestats=timestats,
             )
