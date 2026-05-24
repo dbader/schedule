@@ -248,6 +248,9 @@ class Job:
         # For example, when asking 'every week on tuesday' the start_day is 'tuesday'.
         self.start_day: Optional[str] = None
 
+        # a set of integer weekdays, where 0=monday, 1=tuesday, ...
+        self.weekday_constraints: Optional[Set[int]] = None
+
         # optional time of final run
         self.cancel_after: Optional[datetime.datetime] = None
 
@@ -453,6 +456,28 @@ class Job:
             )
         self.start_day = "sunday"
         return self.weeks
+
+    @property
+    def workday(self):
+        if self.interval != 1:
+            raise IntervalError(
+                "Scheduling .workday() jobs is only allowed for daily jobs. "
+                "Using .workday() on a job scheduled to run every 2 or more days "
+                "is not supported."
+            )
+        self.weekday_constraints = set(range(5))
+        return self.days
+
+    @property
+    def weekend(self):
+        if self.interval != 1:
+            raise IntervalError(
+                "Scheduling .weekend() jobs is only allowed for daily jobs. "
+                "Using .weekend() on a job scheduled to run every 2 or more days "
+                "is not supported."
+            )
+        self.weekday_constraints = {5, 6}
+        return self.days
 
     def tag(self, *tags: Hashable):
         """
@@ -732,6 +757,14 @@ class Job:
 
         while next_run <= now:
             next_run += period
+
+        if self.weekday_constraints:
+            if self.unit != "days":
+                raise ScheduleValueError(
+                    "`workday`/`weekend` is only supported for daily jobs"
+                )
+            while next_run.weekday() not in self.weekday_constraints:
+                next_run += datetime.timedelta(days=1)
 
         next_run = self._correct_utc_offset(
             next_run, fixate_time=(self.at_time is not None)
