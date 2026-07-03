@@ -635,7 +635,12 @@ class Job:
                 "until() takes a string, datetime.datetime, datetime.timedelta, "
                 "datetime.time parameter"
             )
-        if self.cancel_after < datetime.datetime.now():
+        now = (
+            datetime.datetime.now(tz=self.cancel_after.tzinfo)
+            if self.cancel_after.tzinfo is not None
+            else datetime.datetime.now()
+        )
+        if self.cancel_after < now:
             raise ScheduleValueError(
                 "Cannot schedule a job to run until a time in the past"
             )
@@ -817,7 +822,13 @@ class Job:
         return moment
 
     def _is_overdue(self, when: datetime.datetime):
-        return self.cancel_after is not None and when > self.cancel_after
+        if self.cancel_after is None:
+            return False
+        # When cancel_after is timezone-aware but `when` is naive, localize `when`
+        # so the comparison does not raise TypeError.
+        if self.cancel_after.tzinfo is not None and when.tzinfo is None:
+            when = when.astimezone(self.cancel_after.tzinfo)
+        return when > self.cancel_after
 
     def _decode_datetimestr(
         self, datetime_str: str, formats: List[str]
