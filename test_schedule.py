@@ -97,6 +97,18 @@ class SchedulerTests(TestCase):
     def setUp(self):
         schedule.clear()
 
+    def test_non_positive_interval(self):
+        for interval in (0, -1):
+            with self.subTest(interval=interval):
+                with self.assertRaises(ScheduleValueError):
+                    every(interval)
+
+    def test_job_non_positive_interval(self):
+        for interval in (0, -1):
+            with self.subTest(interval=interval):
+                with self.assertRaises(ScheduleValueError):
+                    schedule.Job(interval)
+
     def make_tz_mock_job(self, name=None):
         try:
             import pytz
