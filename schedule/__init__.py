@@ -225,6 +225,8 @@ class Job:
     """
 
     def __init__(self, interval: int, scheduler: Optional[Scheduler] = None):
+        if interval <= 0:
+            raise ScheduleValueError("Interval must be greater than zero")
         self.interval: int = interval  # pause interval * unit between runs
         self.latest: Optional[int] = None  # upper limit to the interval
         self.job_func: Optional[functools.partial] = None  # the job job_func to run
