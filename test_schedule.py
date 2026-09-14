@@ -1597,3 +1597,31 @@ class SchedulerTests(TestCase):
         scheduler.every()
         scheduler.every(10).seconds
         scheduler.run_pending()
+
+
+class ConfigurationFailureTests(TestCase):
+    def test_rejected_at_preserves_existing_timezone(self):
+        try:
+            import pytz
+        except ImportError:
+            self.skipTest("pytz is not installed")
+        job = schedule.Scheduler().every().day.at("12:00", "UTC")
+        original_time = job.at_time
+        with self.assertRaises(ScheduleValueError):
+            job.at("25:00", "Europe/Amsterdam")
+        self.assertEqual(job.at_time, original_time)
+        self.assertEqual(job.at_time_zone, pytz.UTC)
+
+    def test_rejected_until_preserves_existing_deadline(self):
+        job = schedule.Scheduler().every().day
+        deadline = datetime.datetime.now() + datetime.timedelta(days=2)
+        job.until(deadline)
+        with self.assertRaises(ScheduleValueError):
+            job.until(datetime.datetime.now() - datetime.timedelta(days=1))
+        self.assertEqual(job.cancel_after, deadline)
+
+    def test_rejected_until_does_not_set_initial_deadline(self):
+        job = schedule.Scheduler().every().day
+        with self.assertRaises(ScheduleValueError):
+            job.until(datetime.timedelta(days=-1))
+        self.assertIsNone(job.cancel_after)

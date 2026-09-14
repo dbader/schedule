@@ -495,18 +495,6 @@ class Job:
                 "Invalid unit (valid units are `days`, `hours`, and `minutes`)"
             )
 
-        if tz is not None:
-            import pytz
-
-            if isinstance(tz, str):
-                self.at_time_zone = pytz.timezone(tz)  # type: ignore
-            elif isinstance(tz, pytz.BaseTzInfo):
-                self.at_time_zone = tz
-            else:
-                raise ScheduleValueError(
-                    "Timezone must be string or pytz.timezone object"
-                )
-
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string")
         if self.unit == "days" or self.start_day:
@@ -555,7 +543,20 @@ class Job:
         hour = int(hour)
         minute = int(minute)
         second = int(second)
-        self.at_time = datetime.time(hour, minute, second)
+        at_time = datetime.time(hour, minute, second)
+        if tz is not None:
+            import pytz
+
+            if isinstance(tz, str):
+                self.at_time_zone = pytz.timezone(tz)  # type: ignore
+            elif isinstance(tz, pytz.BaseTzInfo):
+                self.at_time_zone = tz
+            else:
+                raise ScheduleValueError(
+                    "Timezone must be string or pytz.timezone object"
+                )
+
+        self.at_time = at_time
         return self
 
     def to(self, latest: int):
@@ -602,12 +603,13 @@ class Job:
         :return: The invoked job instance
         """
 
+        cancel_after: Optional[datetime.datetime]
         if isinstance(until_time, datetime.datetime):
-            self.cancel_after = until_time
+            cancel_after = until_time
         elif isinstance(until_time, datetime.timedelta):
-            self.cancel_after = datetime.datetime.now() + until_time
+            cancel_after = datetime.datetime.now() + until_time
         elif isinstance(until_time, datetime.time):
-            self.cancel_after = datetime.datetime.combine(
+            cancel_after = datetime.datetime.combine(
                 datetime.datetime.now(), until_time
             )
         elif isinstance(until_time, str):
@@ -629,16 +631,16 @@ class Job:
                 cancel_after = cancel_after.replace(
                     year=now.year, month=now.month, day=now.day
                 )
-            self.cancel_after = cancel_after
         else:
             raise TypeError(
                 "until() takes a string, datetime.datetime, datetime.timedelta, "
                 "datetime.time parameter"
             )
-        if self.cancel_after < datetime.datetime.now():
+        if cancel_after < datetime.datetime.now():
             raise ScheduleValueError(
                 "Cannot schedule a job to run until a time in the past"
             )
+        self.cancel_after = cancel_after
         return self
 
     def do(self, job_func: Callable, *args, **kwargs):
