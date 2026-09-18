@@ -1597,3 +1597,33 @@ class SchedulerTests(TestCase):
         scheduler.every()
         scheduler.every(10).seconds
         scheduler.run_pending()
+
+    def test_every_rejects_bool_interval(self):
+        """bool subclasses int; every(True) must not silently become interval 1."""
+        scheduler = schedule.Scheduler()
+        with self.assertRaises(TypeError) as ctx:
+            scheduler.every(True)
+        self.assertIn("bool", str(ctx.exception))
+        with self.assertRaises(TypeError):
+            scheduler.every(False)
+        with self.assertRaises(TypeError):
+            every(True)
+
+    def test_to_rejects_bool_latest(self):
+        """bool subclasses int; to(True) must not silently become latest 1."""
+        scheduler = schedule.Scheduler()
+        with self.assertRaises(TypeError) as ctx:
+            scheduler.every(5).to(True)
+        self.assertIn("bool", str(ctx.exception))
+        with self.assertRaises(TypeError):
+            scheduler.every(5).to(False)
+
+    def test_run_all_rejects_bool_delay_seconds(self):
+        """bool subclasses int; delay_seconds=True must not silently sleep 1s."""
+        scheduler = schedule.Scheduler()
+        scheduler.every().seconds.do(make_mock_job())
+        with self.assertRaises(TypeError) as ctx:
+            scheduler.run_all(delay_seconds=True)
+        self.assertIn("bool", str(ctx.exception))
+        with self.assertRaises(TypeError):
+            scheduler.run_all(delay_seconds=False)

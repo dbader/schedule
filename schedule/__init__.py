@@ -110,6 +110,12 @@ class Scheduler:
 
         :param delay_seconds: A delay added between every executed job
         """
+        # bool subclasses int; delay_seconds=True would silently sleep 1s
+        if isinstance(delay_seconds, bool):
+            raise TypeError(
+                "delay_seconds must be an int or float, not bool "
+                f"(got {delay_seconds!r})"
+            )
         logger.debug(
             "Running *all* %i jobs with %is delay in between",
             len(self.jobs),
@@ -166,6 +172,11 @@ class Scheduler:
         :param interval: A quantity of a certain time unit
         :return: An unconfigured :class:`Job <Job>`
         """
+        # bool subclasses int; every(True) would silently become interval 1
+        if isinstance(interval, bool):
+            raise TypeError(
+                f"interval must be an int, not bool (got {interval!r})"
+            )
         job = Job(interval, self)
         return job
 
@@ -570,6 +581,11 @@ class Job:
         :param latest: Maximum interval between randomized job runs
         :return: The invoked job instance
         """
+        # bool subclasses int; to(True) would silently become latest 1
+        if isinstance(latest, bool):
+            raise TypeError(
+                f"latest must be an int, not bool (got {latest!r})"
+            )
         self.latest = latest
         return self
 
