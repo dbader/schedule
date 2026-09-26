@@ -1360,6 +1360,11 @@ class SchedulerTests(TestCase):
         s3 = repr(schedule.every(10))
         assert s3 == "Every 10 None do [None] (last run: [never], next run: [never])"
 
+        # Same check, but for the default interval of 1, which used to crash
+        # because the unit-pluralization slicing assumed self.unit was a string.
+        s4 = repr(schedule.every())
+        assert s4 == "Every 1 None do [None] (last run: [never], next run: [never])"
+
     def test_to_string_lambda_job_func(self):
         assert len(str(every().minute.do(lambda: 1))) > 1
         assert len(str(every().day.at("10:30").do(lambda: 1))) > 1

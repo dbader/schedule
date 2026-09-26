@@ -282,6 +282,11 @@ class Job:
         def is_repr(j):
             return not isinstance(j, Job)
 
+        def format_unit(unit):
+            if unit is None:
+                return unit
+            return unit[:-1] if self.interval == 1 else unit
+
         timestats = "(last run: %s, next run: %s)" % (
             format_time(self.last_run),
             format_time(self.next_run),
@@ -302,7 +307,7 @@ class Job:
         if self.at_time is not None:
             return "Every %s %s at %s do %s %s" % (
                 self.interval,
-                self.unit[:-1] if self.interval == 1 else self.unit,
+                format_unit(self.unit),
                 self.at_time,
                 call_repr,
                 timestats,
@@ -317,7 +322,7 @@ class Job:
             return fmt % dict(
                 interval=self.interval,
                 latest=self.latest,
-                unit=(self.unit[:-1] if self.interval == 1 else self.unit),
+                unit=format_unit(self.unit),
                 call_repr=call_repr,
                 timestats=timestats,
             )
