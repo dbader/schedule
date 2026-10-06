@@ -1335,6 +1335,33 @@ class SchedulerTests(TestCase):
         assert "foo" in s
         assert "{'bar': 23}" in s
 
+    def test_to_string_distinguishes_hourly_at_times(self):
+        job = make_mock_job()
+        for minute in range(0, 60, 10):
+            every().hour.at(":{:02d}".format(minute)).do(job)
+
+        descriptions = [str(job) for job in schedule.get_jobs()]
+        assert len(set(descriptions)) == 6
+        for minute, description in zip(range(0, 60, 10), descriptions):
+            assert description == (
+                "Job(interval=1, unit=hours, at=00:{:02d}:00, "
+                "do=job, args=(), kwargs={{}})"
+            ).format(minute)
+
+    def test_to_string_with_at_time(self):
+        job = make_mock_job()
+        for unit, at_time, expected in (
+            ("days", "10:30", "10:30:00"),
+            ("hours", ":10", "00:10:00"),
+            ("minutes", ":10", "00:00:10"),
+        ):
+            with self.subTest(unit=unit):
+                scheduled = getattr(every(), unit).at(at_time).do(job, "foo", bar=23)
+                assert str(scheduled) == (
+                    "Job(interval=1, unit={}, at={}, do=job, "
+                    "args=('foo',), kwargs={{'bar': 23}})"
+                ).format(unit, expected)
+
     def test_to_repr(self):
         def job_fun():
             pass
