@@ -267,9 +267,10 @@ class Job:
         else:
             job_func_name = repr(self.job_func)
 
-        return ("Job(interval={}, unit={}, do={}, args={}, kwargs={})").format(
+        return ("Job(interval={}, unit={}, {}do={}, args={}, kwargs={})").format(
             self.interval,
             self.unit,
+            "" if self.at_time is None else "at={}, ".format(self.at_time),
             job_func_name,
             "()" if self.job_func is None else self.job_func.args,
             "{}" if self.job_func is None else self.job_func.keywords,
