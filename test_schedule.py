@@ -731,6 +731,39 @@ class SchedulerTests(TestCase):
             assert next.hour == 13
             assert next.minute == 45
 
+    def test_tz_daily_midnight_does_not_run_on_every_poll(self):
+        # Issue #609: the host is UTC, but the job runs just after midnight
+        # in a timezone ahead of UTC. Its next_run must stay in the future.
+        for month, utc_hour in [(12, 23), (7, 22)]:
+            for zone in ["Europe/Berlin", "Europe/Amsterdam"]:
+                for minute in [0, 5, 30]:
+                    with self.subTest(month=month, zone=zone, minute=minute):
+                        schedule.clear()
+                        mock_job = make_mock_job()
+                        with mock_datetime(2023, month, 8, 14, 16, 12, TZ_UTC):
+                            job = every().day.at("00:%02d" % minute, zone).do(mock_job)
+                            self.assertEqual(
+                                job.next_run,
+                                datetime.datetime(2023, month, 8, utc_hour, minute),
+                            )
+                            schedule.run_pending()
+                            mock_job.assert_not_called()
+
+                        for second in range(5):
+                            with mock_datetime(
+                                2023, month, 8, utc_hour, minute, second, TZ_UTC
+                            ):
+                                schedule.run_pending()
+                                self.assertEqual(mock_job.call_count, 1)
+                                self.assertEqual(
+                                    job.next_run,
+                                    datetime.datetime(2023, month, 9, utc_hour, minute),
+                                )
+
+                        with mock_datetime(2023, month, 9, utc_hour, minute, 0, TZ_UTC):
+                            schedule.run_pending()
+                            self.assertEqual(mock_job.call_count, 2)
+
     def test_tz_daily_exact_seconds_precision(self):
         mock_job = self.make_tz_mock_job()
         with mock_datetime(2023, 10, 19, 15, 0, 0, TZ_UTC):
