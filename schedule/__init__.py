@@ -708,7 +708,7 @@ class Job:
             )
         if self.latest is not None:
             if not (self.latest >= self.interval):
-                raise ScheduleError("`latest` is greater than `interval`")
+                raise ScheduleError("`latest` is smaller than `interval`")
             interval = random.randint(self.interval, self.latest)
         else:
             interval = self.interval

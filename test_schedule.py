@@ -215,7 +215,11 @@ class SchedulerTests(TestCase):
 
         # test self.latest >= self.interval
         job_instance.latest = 1
-        self.assertRaises(ScheduleError, job_instance._schedule_next_run)
+        self.assertRaisesRegex(
+            ScheduleError,
+            "`latest` is smaller than `interval`",
+            job_instance._schedule_next_run,
+        )
         job_instance.latest = 3
         self.assertRaises(ScheduleError, job_instance._schedule_next_run)
 
