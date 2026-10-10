@@ -460,6 +460,18 @@ class SchedulerTests(TestCase):
             self.assertRaises(ScheduleValueError, every().minute.at, " :30")
             self.assertRaises(TypeError, every().minute.at, 2)
 
+    def test_at_time_rejects_trailing_newline(self):
+        for job, time_str in (
+            (every().day, "12:30\n"),
+            (every().day, "12:30:45\n"),
+            (every().monday, "12:30\n"),
+            (every().hour, "30:45\n"),
+            (every().hour, ":45\n"),
+            (every().minute, ":45\n"),
+        ):
+            with self.subTest(unit=job.unit, time_str=time_str):
+                self.assertRaises(ScheduleValueError, job.at, time_str)
+
     def test_next_run_time(self):
         with mock_datetime(2010, 1, 6, 12, 15):
             mock_job = make_mock_job()
