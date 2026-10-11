@@ -1597,3 +1597,21 @@ class SchedulerTests(TestCase):
         scheduler.every()
         scheduler.every(10).seconds
         scheduler.run_pending()
+
+
+class TagValidationTests(TestCase):
+    def test_nested_unhashable_tag_does_not_add_other_tags(self):
+        job = schedule.Scheduler().every().second.do(lambda: None).tag("existing")
+        with self.assertRaisesRegex(TypeError, "Tags must be hashable"):
+            job.tag("new", ([],))
+        assert job.tags == {"existing"}
+
+    def test_failing_hash_does_not_add_other_tags(self):
+        class UnhashableTag:
+            def __hash__(self):
+                raise TypeError("not hashable")
+
+        job = schedule.Scheduler().every().second.do(lambda: None).tag("existing")
+        with self.assertRaisesRegex(TypeError, "Tags must be hashable"):
+            job.tag("new", UnhashableTag())
+        assert job.tags == {"existing"}

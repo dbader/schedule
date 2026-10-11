@@ -463,8 +463,11 @@ class Job:
         :param tags: A unique list of ``Hashable`` tags.
         :return: The invoked job instance
         """
-        if not all(isinstance(tag, Hashable) for tag in tags):
-            raise TypeError("Tags must be hashable")
+        try:
+            for tag in tags:
+                hash(tag)
+        except TypeError:
+            raise TypeError("Tags must be hashable") from None
         self.tags.update(tags)
         return self
 
