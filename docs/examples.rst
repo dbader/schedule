@@ -46,6 +46,13 @@ Run a job every x minute
         schedule.run_pending()
         time.sleep(1)
 
+Weekday properties such as ``.monday`` only support an interval of one week.
+Combining them with ``every(2)`` or a larger interval raises ``IntervalError``;
+``schedule.every(2).weeks.monday.do(job)`` is therefore not supported.
+Use ``schedule.every(2).weeks.do(job)`` to run every two weeks starting two
+weeks from registration, without selecting a specific weekday.
+
+
 Use a decorator to schedule a job
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
