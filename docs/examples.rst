@@ -213,7 +213,12 @@ Run a job at random intervals
     # Run every 5 to 10 seconds.
     schedule.every(5).to(10).seconds.do(my_job)
 
+    # Fractional bounds allow randomized sub-second intervals.
+    schedule.every(0.25).to(0.5).seconds.do(my_job)
+
 ``every(A).to(B).seconds`` executes the job function every N seconds such that A <= N <= B.
+Integer bounds produce integer intervals. If either bound is a float, floating-point
+intervals are sampled uniformly within the range.
 
 
 Run a job until a certain time

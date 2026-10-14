@@ -1597,3 +1597,54 @@ class SchedulerTests(TestCase):
         scheduler.every()
         scheduler.every(10).seconds
         scheduler.run_pending()
+
+
+class TestFractionalRandomIntervals(TestCase):
+    def test_fractional_bounds(self):
+        for lower, upper in ((0.25, 0.5), (1, 1.5), (0.5, 1), (1.0, 1.0)):
+            chosen = (lower + upper) / 2
+            with self.subTest(lower=lower, upper=upper):
+                with mock_datetime(2020, 1, 1, 12, 0):
+                    with mock.patch(
+                        "schedule.random.uniform", return_value=chosen
+                    ) as draw:
+                        job = (
+                            schedule.Scheduler()
+                            .every(lower)
+                            .to(upper)
+                            .seconds.do(make_mock_job())
+                        )
+                        expected = datetime.datetime.now() + datetime.timedelta(
+                            seconds=chosen
+                        )
+                        self.assertEqual(job.next_run, expected)
+                        job.run()
+                        self.assertEqual(job.next_run, expected)
+                        self.assertEqual(draw.call_count, 2)
+                        draw.assert_called_with(lower, upper)
+
+    def test_integer_bounds_keep_integer_sampling(self):
+        with mock_datetime(2020, 1, 1, 12, 0):
+            with mock.patch("schedule.random.randint", return_value=2) as randint:
+                with mock.patch("schedule.random.uniform") as uniform:
+                    job = (
+                        schedule.Scheduler().every(1).to(3).seconds.do(make_mock_job())
+                    )
+                    self.assertEqual(
+                        job.next_run,
+                        datetime.datetime.now() + datetime.timedelta(seconds=2),
+                    )
+                    randint.assert_called_once_with(1, 3)
+                    uniform.assert_not_called()
+
+    def test_fractional_unit_conversion(self):
+        for unit in ("seconds", "minutes", "hours", "days", "weeks"):
+            with self.subTest(unit=unit), mock_datetime(2020, 1, 1, 12, 0):
+                with mock.patch("schedule.random.uniform", return_value=0.15):
+                    job = getattr(schedule.Scheduler().every(0.1).to(0.2), unit).do(
+                        make_mock_job()
+                    )
+                    self.assertEqual(
+                        job.next_run,
+                        datetime.datetime.now() + datetime.timedelta(**{unit: 0.15}),
+                    )
