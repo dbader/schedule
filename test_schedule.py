@@ -1278,6 +1278,23 @@ class SchedulerTests(TestCase):
         schedule.run_all()
         assert mock_job.call_count == 3
 
+    def test_run_all_delays_only_between_jobs(self):
+        for count in (0, 1, 3):
+            schedule.clear()
+            events = []
+            for index in range(count):
+                every().second.do(events.append, index)
+            with mock.patch(
+                "schedule.time.sleep", side_effect=lambda delay: events.append("sleep")
+            ):
+                schedule.run_all(delay_seconds=2)
+            expected = []
+            for index in range(count):
+                if index:
+                    expected.append("sleep")
+                expected.append(index)
+            assert events == expected
+
     def test_run_all_with_decorator(self):
         mock_job = make_mock_job()
 

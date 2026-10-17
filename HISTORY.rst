@@ -3,6 +3,11 @@
 History
 -------
 
+Unreleased
+++++++++++
+
+- Apply ``run_all`` delays only between jobs, without waiting after the final job.
+
 1.2.2 (2024-05-25)
 ++++++++++++++++++
 
