@@ -72,3 +72,51 @@ This outputs:
     LOG: Running job "job"
     Hello, Logs
     LOG: Job "job" completed in 5 seconds
+
+
+Hide sensitive job arguments
+----------------------------
+
+Schedule's debug messages include job arguments and keyword arguments. If these
+contain passwords or tokens, use a custom job representation that omits them.
+Override both ``__str__`` (used by Schedule's logs) and ``__repr__`` (used when
+inspecting jobs), then have a scheduler create that job type:
+
+.. code-block:: python
+
+    import logging
+    import schedule
+
+    class PrivateJob(schedule.Job):
+        def __str__(self):
+            return (
+                "Job(interval={!r}, unit={!r}, args=<hidden>, kwargs=<hidden>, "
+                "last_run={!r}, next_run={!r})"
+            ).format(self.interval, self.unit, self.last_run, self.next_run)
+
+        __repr__ = __str__
+
+    class PrivateScheduler(schedule.Scheduler):
+        def every(self, interval=1):
+            return PrivateJob(interval, self)
+
+    def refresh_data(username, password):
+        # Use the credentials here without logging them.
+        print("Refreshing data")
+
+    logging.basicConfig(level=logging.DEBUG)
+    scheduler = PrivateScheduler()
+    job = scheduler.every(10).minutes.do(
+        refresh_data, "example-user", password="example-password"
+    )
+    scheduler.run_all()
+    scheduler.cancel_job(job)
+
+The job still receives its original arguments, but running and cancelling it
+logs ``args=<hidden>, kwargs=<hidden>`` along with its interval and run times.
+The callable's representation is also omitted, since it can contain sensitive
+values. Register jobs through this scheduler rather than the module-level
+``schedule.every()`` to use the custom representation.
+
+This only changes job representations. Avoid secrets in job tags, application
+log messages, or exception messages; those are not hidden by this example.
