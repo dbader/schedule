@@ -723,15 +723,17 @@ class Job:
                 raise ScheduleValueError("`unit` should be 'weeks'")
             next_run = _move_to_next_weekday(next_run, self.start_day)
 
-        if self.at_time is not None:
-            next_run = self._move_to_at_time(next_run)
-
         period = datetime.timedelta(**{self.unit: interval})
         if interval != 1:
             next_run += period
 
+        if self.at_time is not None:
+            next_run = self._move_to_at_time(next_run)
+
         while next_run <= now:
             next_run += period
+            if self.at_time is not None:
+                next_run = self._move_to_at_time(next_run)
 
         next_run = self._correct_utc_offset(
             next_run, fixate_time=(self.at_time is not None)
@@ -813,7 +815,12 @@ class Job:
             # schedule the job 1 offset later than possible.
             # For example, if 02:23 does not exist (because DST moves from 02:00
             # to 03:00), this will schedule the job at 03:23.
-            moment += offset_diff
+            if offset_diff > datetime.timedelta(0):
+                moment += offset_diff
+            else:
+                # Moving back into the gap used the post-transition offset.
+                # Normalize with the pre-transition offset to move forward.
+                moment = self.at_time_zone.normalize(moment)
         return moment
 
     def _is_overdue(self, when: datetime.datetime):
