@@ -663,6 +663,46 @@ class SchedulerTests(TestCase):
             assert job.next_run.hour == 2
             assert job.next_run.minute == 30
 
+    def test_tz_daily_dst_gap_after_clock_moves_forward(self):
+        self.make_tz_mock_job()
+        runs = []
+
+        with mock_datetime(2024, 3, 31, 3, 10):
+            job = (
+                every()
+                .day.at("02:30", "Europe/Berlin")
+                .do(lambda: runs.append(datetime.datetime.now()))
+            )
+            assert job.next_run == datetime.datetime(2024, 3, 31, 3, 30)
+            schedule.run_pending()
+            assert runs == []
+
+        with mock_datetime(2024, 3, 31, 3, 30):
+            schedule.run_pending()
+            assert runs == [datetime.datetime(2024, 3, 31, 3, 30)]
+            assert job.next_run == datetime.datetime(2024, 4, 1, 2, 30)
+            schedule.run_pending()
+            assert len(runs) == 1
+
+        with mock_datetime(2024, 4, 1, 2, 30):
+            schedule.run_pending()
+            assert runs == [
+                datetime.datetime(2024, 3, 31, 3, 30),
+                datetime.datetime(2024, 4, 1, 2, 30),
+            ]
+
+    def test_tz_daily_dst_gap_skipped_by_interval(self):
+        mock_job = self.make_tz_mock_job()
+        with mock_datetime(2024, 3, 31, 3, 10):
+            job = every(2).days.at("02:30", "Europe/Berlin").do(mock_job)
+            assert job.next_run == datetime.datetime(2024, 4, 2, 2, 30)
+
+    def test_tz_daily_dst_gap_already_passed(self):
+        mock_job = self.make_tz_mock_job()
+        with mock_datetime(2024, 3, 31, 4, 0):
+            job = every().day.at("02:30", "Europe/Berlin").do(mock_job)
+            assert job.next_run == datetime.datetime(2024, 4, 1, 2, 30)
+
     def test_tz_daily_dst_overlap_hour(self):
         mock_job = self.make_tz_mock_job()
         # Test the DST-case that is described in the documentation
