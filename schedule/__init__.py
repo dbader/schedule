@@ -545,7 +545,9 @@ class Job:
             hour = int(hour)
             if not (0 <= hour <= 23):
                 raise ScheduleValueError(
-                    "Invalid number of hours ({} is not between 0 and 23)"
+                    "Invalid number of hours ({} is not between 0 and 23)".format(
+                        hour
+                    )
                 )
         elif self.unit == "hours":
             hour = 0

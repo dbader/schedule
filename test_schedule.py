@@ -279,6 +279,10 @@ class SchedulerTests(TestCase):
         self.assertRaises(ScheduleValueError, every().day.at, ":2")
         self.assertRaises(ScheduleValueError, every().day.at, " 2:30:00")
         self.assertRaises(ScheduleValueError, every().day.at, "59:59")
+        with self.assertRaisesRegex(
+            ScheduleValueError, "Invalid number of hours \\(29 is not between 0 and 23\\)"
+        ):
+            every().day.at("29:30")
         self.assertRaises(ScheduleValueError, every().do, lambda: 0)
         self.assertRaises(TypeError, every().day.at, 2)
 
