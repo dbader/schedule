@@ -1334,6 +1334,11 @@ class SchedulerTests(TestCase):
         assert "job_fun" in s
         assert "foo" in s
         assert "{'bar': 23}" in s
+        def test_job_str_includes_at_time(self):
+            def job_fun(): pass
+                job = every().day.at("10:30").do(job_fun)
+            assert str(job) == "Job(interval=1, unit=days, do=job_fun, args=(), kwargs={}, at=10:30:00)"
+            assert ", at=" not in str(every().day.do(job_fun))
 
     def test_to_repr(self):
         def job_fun():
