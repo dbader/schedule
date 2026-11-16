@@ -180,6 +180,53 @@ You can retrieve a group of jobs from the scheduler, selecting them by a unique 
 Will return a list of every job tagged as ``friend``.
 
 
+Find the next job, optionally by tag
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``Scheduler.get_jobs()`` returns a list of jobs, and jobs are ordered by their ``next_run``, so ``min()`` finds the job that is due first.
+This example uses its own ``Scheduler`` so that it does not touch the default scheduler used by the ``schedule`` module.
+
+.. code-block:: python
+
+    import schedule
+
+    def send_report():
+        print('Sending report')
+
+    def refresh_cache():
+        print('Refreshing cache')
+
+    scheduler = schedule.Scheduler()
+    scheduler.every(10).minutes.do(send_report).tag('reports')
+    scheduler.every(5).minutes.do(refresh_cache).tag('cache')
+
+    def show_next_job(scheduler, tag=None):
+        # get_jobs() returns a new list; min() picks the job with the
+        # earliest next_run, or None if the list is empty.
+        next_job = min(scheduler.get_jobs(tag), default=None)
+        if next_job is None:
+            print('No matching jobs are scheduled')
+        else:
+            print(next_job.next_run, sorted(next_job.tags))
+        return next_job
+
+    next_job = show_next_job(scheduler)
+
+``next_job`` is a ``Job`` object, not a time.
+Its ``next_run`` attribute is a ``datetime``. In this unfiltered example, where the earliest job overall is selected, it is the same value as ``scheduler.next_run``. If you select by tag, the earliest job with that tag can be later than the earliest job overall, so its ``next_run`` can differ from ``scheduler.next_run``. To get the filtered equivalent, use ``scheduler.get_next_run(tag)``.
+``None`` is returned (and ``No matching jobs are scheduled`` is printed) when the scheduler has no jobs, or none of them carry the requested tag.
+
+Pass a tag to look only at the jobs that carry it, for example ``show_next_job(scheduler, 'reports')``.
+Tags are not unique identifiers, so several jobs can share one; you get the one that is due first.
+If several jobs have exactly the same ``next_run``, ``min()`` returns the first of them in the order in which ``get_jobs()`` lists them.
+A job's ``tags`` is a set, so the example uses ``sorted()`` to print it in a stable order. This assumes the tags can be compared with each other, as plain strings can.
+
+With the default scheduler, use ``min(schedule.get_jobs(), default=None)``, or ``min(schedule.get_jobs('cache'), default=None)`` to filter by a tag.
+
+``get_jobs()`` returns a shallow snapshot: the list is a new list, so which jobs it contains is fixed at the moment you call it, but the ``Job`` objects inside are the same live objects the scheduler uses, not copies. Adding or cancelling a job later does not change a list you already hold. Attributes of a job you hold can still change, though. For example, ``Job.run`` updates ``next_run`` after the job runs. Because the held list can be out of date, call ``show_next_job()`` again after adding, cancelling or running jobs, so that the selection is recomputed and a different job may be picked as due first.
+Finding the next job does not run it and does not wait for it.
+
+
 Cancel several jobs, filtered by tags
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
