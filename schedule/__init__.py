@@ -236,7 +236,7 @@ class Job:
         self.at_time: Optional[datetime.time] = None
 
         # optional time zone of the self.at_time field. Only relevant when at_time is not None
-        self.at_time_zone = None
+        self.at_time_zone: Optional[datetime.tzinfo] = None
 
         # datetime of the last run
         self.last_run: Optional[datetime.datetime] = None
@@ -468,7 +468,7 @@ class Job:
         self.tags.update(tags)
         return self
 
-    def at(self, time_str: str, tz: Optional[str] = None):
+    def at(self, time_str: str, tz: Optional[Union[str, datetime.tzinfo]] = None):
         """
         Specify a particular time that the job should be run at.
 
@@ -486,7 +486,10 @@ class Job:
             `every().minute.at(':30')`).
 
         :param tz: The timezone that this timestamp refers to. Can be
-            a string that can be parsed by pytz.timezone(), or a pytz.BaseTzInfo object
+            a timezone name string (resolved via pytz when installed, or
+            stdlib zoneinfo on Python 3.9+), a pytz.BaseTzInfo object, or
+            any datetime.tzinfo object such as zoneinfo.ZoneInfo or
+            datetime.timezone.utc.
 
         :return: The invoked job instance
         """
@@ -496,16 +499,7 @@ class Job:
             )
 
         if tz is not None:
-            import pytz
-
-            if isinstance(tz, str):
-                self.at_time_zone = pytz.timezone(tz)  # type: ignore
-            elif isinstance(tz, pytz.BaseTzInfo):
-                self.at_time_zone = tz
-            else:
-                raise ScheduleValueError(
-                    "Timezone must be string or pytz.timezone object"
-                )
+            self.at_time_zone = _resolve_timezone(tz)
 
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string")
@@ -727,11 +721,33 @@ class Job:
             next_run = self._move_to_at_time(next_run)
 
         period = datetime.timedelta(**{self.unit: interval})
-        if interval != 1:
-            next_run += period
+        use_elapsed_utc = (
+            self.at_time_zone is not None
+            and not hasattr(self.at_time_zone, "normalize")
+            and self.unit in ("seconds", "minutes", "hours")
+        )
 
-        while next_run <= now:
-            next_run += period
+        def _advance(moment: datetime.datetime) -> datetime.datetime:
+            if use_elapsed_utc:
+                return (moment.astimezone(datetime.timezone.utc) + period).astimezone(
+                    self.at_time_zone
+                )
+            return moment + period
+
+        def _is_not_after_now(moment: datetime.datetime) -> bool:
+            if self.at_time_zone is not None and not hasattr(
+                self.at_time_zone, "normalize"
+            ):
+                return moment.astimezone(datetime.timezone.utc) <= now.astimezone(
+                    datetime.timezone.utc
+                )
+            return moment <= now
+
+        if interval != 1:
+            next_run = _advance(next_run)
+
+        while _is_not_after_now(next_run):
+            next_run = _advance(next_run)
 
         next_run = self._correct_utc_offset(
             next_run, fixate_time=(self.at_time is not None)
@@ -780,16 +796,29 @@ class Job:
         """
         if self.at_time_zone is None:
             return moment
+
+        # PEP 495 tzinfo (such as stdlib zoneinfo.ZoneInfo or datetime.timezone)
+        # computes offsets dynamically from wall time and fold. A round-trip via
+        # UTC detects and resolves non-existent times inside a spring DST gap.
+        if not hasattr(self.at_time_zone, "normalize"):
+            return moment.astimezone(datetime.timezone.utc).astimezone(
+                self.at_time_zone
+            )
+
         # Normalize corrects the utc-offset to match the timezone
         # For example: When a date&time&offset does not exist within a timezone,
         # the normalization will change the utc-offset to where it is valid.
         # It does this while keeping the moment in time the same, by moving the
         # time component opposite of the utc-change.
         offset_before_normalize = moment.utcoffset()
-        moment = self.at_time_zone.normalize(moment)
+        moment = self.at_time_zone.normalize(moment)  # type: ignore[attr-defined]
         offset_after_normalize = moment.utcoffset()
 
-        if offset_before_normalize == offset_after_normalize:
+        if (
+            offset_before_normalize is None
+            or offset_after_normalize is None
+            or offset_before_normalize == offset_after_normalize
+        ):
             # There was no change in the utc-offset, datetime didn't change.
             return moment
 
@@ -806,7 +835,7 @@ class Job:
 
         # Check if moving the timestamp back by the utc-offset-difference made it end up
         # in a moment that does not exist within the current timezone/utc-offset
-        re_normalized_offset = self.at_time_zone.normalize(moment).utcoffset()
+        re_normalized_offset = self.at_time_zone.normalize(moment).utcoffset()  # type: ignore[attr-defined]
         if re_normalized_offset != offset_after_normalize:
             # We ended up in a DST Gap. The requested 'at' time does not exist
             # within the current timezone/utc-offset. As a best effort, we will
@@ -926,6 +955,30 @@ def _move_to_next_weekday(moment: datetime.datetime, weekday: str):
         # Target day already happened this week, move to next week
         days_ahead += 7
     return moment + datetime.timedelta(days=days_ahead)
+
+
+def _resolve_timezone(tz: Union[str, datetime.tzinfo]) -> datetime.tzinfo:
+    """
+    Resolve a timezone specification to a datetime.tzinfo instance.
+
+    Accepts any datetime.tzinfo object (including zoneinfo.ZoneInfo,
+    datetime.timezone, and pytz.BaseTzInfo) or an IANA timezone name string.
+    For string names, pytz is used when available to preserve backward
+    compatibility, falling back to stdlib zoneinfo on Python 3.9+.
+    """
+    if isinstance(tz, datetime.tzinfo):
+        return tz
+    if isinstance(tz, str):
+        try:
+            import pytz
+        except ModuleNotFoundError as exc:
+            try:
+                from zoneinfo import ZoneInfo
+            except ImportError:
+                raise exc
+            return ZoneInfo(tz)
+        return pytz.timezone(tz)
+    raise ScheduleValueError("Timezone must be string or datetime.tzinfo object")
 
 
 def _weekday_index(day: str) -> int:

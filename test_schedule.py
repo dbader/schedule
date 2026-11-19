@@ -1173,13 +1173,13 @@ class SchedulerTests(TestCase):
         return (job, tz)
 
     def test_align_utc_offset_no_change(self):
-        (job, tz) = self.setup_utc_offset_test()
+        job, tz = self.setup_utc_offset_test()
         now = tz.localize(datetime.datetime(2023, 3, 26, 1, 30))
         aligned_time = job._correct_utc_offset(now, fixate_time=False)
         self.assertEqual(now, aligned_time)
 
     def test_align_utc_offset_with_dst_gap(self):
-        (job, tz) = self.setup_utc_offset_test()
+        job, tz = self.setup_utc_offset_test()
         # Non-existent time in Berlin timezone
         gap_time = tz.localize(datetime.datetime(2024, 3, 31, 2, 30, 0))
         aligned_time = job._correct_utc_offset(gap_time, fixate_time=True)
@@ -1190,7 +1190,7 @@ class SchedulerTests(TestCase):
         assert aligned_time.minute == 30
 
     def test_align_utc_offset_with_dst_fold(self):
-        (job, tz) = self.setup_utc_offset_test()
+        job, tz = self.setup_utc_offset_test()
         # This time exists twice, this is the first occurance
         overlap_time = tz.localize(datetime.datetime(2024, 10, 27, 2, 30))
         aligned_time = job._correct_utc_offset(overlap_time, fixate_time=False)
@@ -1199,7 +1199,7 @@ class SchedulerTests(TestCase):
         self.assertEqual(first_occurrence, aligned_time)
 
     def test_align_utc_offset_with_dst_fold_fixate_1(self):
-        (job, tz) = self.setup_utc_offset_test()
+        job, tz = self.setup_utc_offset_test()
         # This time exists twice, this is the 1st occurance
         overlap_time = tz.localize(datetime.datetime(2024, 10, 27, 1, 30), is_dst=True)
         overlap_time += datetime.timedelta(
@@ -1214,7 +1214,7 @@ class SchedulerTests(TestCase):
         assert aligned_time.day == 27
 
     def test_align_utc_offset_with_dst_fold_fixate_2(self):
-        (job, tz) = self.setup_utc_offset_test()
+        job, tz = self.setup_utc_offset_test()
         # 02:30 exists twice, this is the 2nd occurance
         overlap_time = tz.localize(datetime.datetime(2024, 10, 27, 2, 30), is_dst=False)
         # The time 2024-10-27 02:30:00+01:00 exists once
@@ -1227,7 +1227,7 @@ class SchedulerTests(TestCase):
         assert aligned_time.day == 27
 
     def test_align_utc_offset_after_fold_fixate(self):
-        (job, tz) = self.setup_utc_offset_test()
+        job, tz = self.setup_utc_offset_test()
         # This time is 30 minutes after a folded hour.
         duplicate_time = tz.localize(datetime.datetime(2024, 10, 27, 2, 30))
         duplicate_time += datetime.timedelta(hours=1)
@@ -1597,3 +1597,112 @@ class SchedulerTests(TestCase):
         scheduler.every()
         scheduler.every(10).seconds
         scheduler.run_pending()
+
+    def test_tz_zoneinfo_daily_and_dst_transitions(self):
+        try:
+            from zoneinfo import ZoneInfo
+        except ImportError:
+            self.skipTest("zoneinfo unavailable")
+
+        mock_job = make_mock_job("zoneinfo-daily")
+        berlin = ZoneInfo("Europe/Berlin")
+
+        # Cross spring forward DST boundary (2024-03-31 02:00 -> 03:00)
+        with mock_datetime(2024, 3, 28, 11, 0, 0, TZ_BERLIN):
+            schedule.clear()
+            next_run = schedule.every(7).days.at("11:00", berlin).do(mock_job).next_run
+            assert (next_run.month, next_run.day, next_run.hour, next_run.minute) == (
+                4,
+                4,
+                11,
+                0,
+            )
+
+        # Cross fall back DST boundary (2024-10-27 03:00 -> 02:00)
+        with mock_datetime(2024, 10, 25, 11, 0, 0, TZ_BERLIN):
+            schedule.clear()
+            next_run = schedule.every(7).days.at("11:00", berlin).do(mock_job).next_run
+            assert (next_run.month, next_run.day, next_run.hour, next_run.minute) == (
+                11,
+                1,
+                11,
+                0,
+            )
+
+        # Spring DST gap (02:30 does not exist on 2024-03-31 in Europe/Berlin)
+        with mock_datetime(2024, 3, 31, 1, 0, 0, TZ_BERLIN):
+            schedule.clear()
+            next_run = schedule.every().day.at("02:30", berlin).do(mock_job).next_run
+            assert (next_run.month, next_run.day, next_run.hour, next_run.minute) == (
+                3,
+                31,
+                3,
+                30,
+            )
+
+    def test_tz_zoneinfo_minutes_across_dst_gap_and_fold(self):
+        try:
+            from zoneinfo import ZoneInfo
+        except ImportError:
+            self.skipTest("zoneinfo unavailable")
+
+        mock_job = make_mock_job("zoneinfo-minutes")
+        newfoundland = ZoneInfo("America/St_Johns")
+        job = schedule.every(20).minutes.at(":13", newfoundland).do(mock_job)
+
+        # Right before Newfoundland spring forward (02:00 -> 03:00)
+        with mock_datetime(2025, 3, 9, 19, 0, 0, TZ_CHATHAM):
+            job.run()
+            assert (
+                job.next_run.day,
+                job.next_run.hour,
+                job.next_run.minute,
+                job.next_run.second,
+            ) == (9, 19, 20, 13)
+
+        # During fall back fold in Berlin (02:40+02:00 fold=0 -> +20m = 02:00+01:00 fold=1)
+        berlin = ZoneInfo("Europe/Berlin")
+        schedule.clear()
+        fold_job = schedule.every(20).minutes.at(":13", berlin).do(mock_job)
+        with mock_datetime(2024, 10, 27, 2, 40, 0, TZ_BERLIN, fold=0):
+            fold_job.run()
+            assert (
+                fold_job.next_run.day,
+                fold_job.next_run.hour,
+                fold_job.next_run.minute,
+                fold_job.next_run.second,
+            ) == (27, 2, 0, 13)
+
+    def test_tz_stdlib_fixed_offset_timezone(self):
+        mock_job = make_mock_job("fixed-offset")
+        utc_plus_2 = datetime.timezone(datetime.timedelta(hours=2))
+        with mock_datetime(2024, 1, 15, 8, 0, 0, TZ_UTC):
+            schedule.clear()
+            next_run = (
+                schedule.every().day.at("12:30", utc_plus_2).do(mock_job).next_run
+            )
+            assert (next_run.day, next_run.hour, next_run.minute) == (15, 10, 30)
+
+    def test_tz_string_fallback_to_zoneinfo_without_pytz(self):
+        import sys
+
+        try:
+            from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+        except ImportError:
+            self.skipTest("zoneinfo unavailable")
+
+        mock_job = make_mock_job("zoneinfo-fallback")
+        with mock.patch.dict(sys.modules, {"pytz": None}):
+            with mock_datetime(2024, 4, 1, 10, 0, 0, TZ_AUCKLAND):
+                schedule.clear()
+                job = schedule.every().day.at("23:00", "UTC").do(mock_job)
+                assert isinstance(job.at_time_zone, ZoneInfo)
+                assert (
+                    job.next_run.month,
+                    job.next_run.day,
+                    job.next_run.hour,
+                    job.next_run.minute,
+                ) == (4, 1, 12, 0)
+
+            with self.assertRaises(ZoneInfoNotFoundError):
+                schedule.every().day.at("10:30", "FakeZone").do(mock_job)
