@@ -23,6 +23,7 @@ from schedule import (
 TZ_BERLIN = "CET-1CEST,M3.5.0,M10.5.0/3"
 TZ_AUCKLAND = "NZST-12NZDT,M9.5.0,M4.1.0/3"
 TZ_CHATHAM = "<+1245>-12:45<+1345>,M9.5.0/2:45,M4.1.0/3:45"
+TZ_LORD_HOWE = "<+1030>-10:30<+11>-11,M10.1.0/2,M4.1.0/2"
 TZ_UTC = "UTC0"
 
 # Set timezone to Europe/Berlin (CEST) to ensure global reproducibility
@@ -1706,3 +1707,95 @@ class SchedulerTests(TestCase):
 
             with self.assertRaises(ZoneInfoNotFoundError):
                 schedule.every().day.at("10:30", "FakeZone").do(mock_job)
+
+    def test_tz_zoneinfo_hourly_across_dst_transitions(self):
+        import sys
+
+        try:
+            from zoneinfo import ZoneInfo
+        except ImportError:
+            self.skipTest("zoneinfo unavailable")
+
+        mock_job = make_mock_job("zoneinfo-hourly")
+        lord_howe = ZoneInfo("Australia/Lord_Howe")
+        berlin = ZoneInfo("Europe/Berlin")
+
+        # Half-hour spring forward in Australia/Lord_Howe (2026-10-04 02:00 -> 02:30):
+        # 02:45+11:00 exists after the jump and must keep :45 rather than shifting to 03:15.
+        with mock_datetime(2026, 10, 4, 1, 50, 0, TZ_LORD_HOWE):
+            schedule.clear()
+            next_run = schedule.every().hour.at(":45", lord_howe).do(mock_job).next_run
+            assert (next_run.day, next_run.hour, next_run.minute) == (4, 2, 45)
+
+            schedule.clear()
+            next_run_2h = (
+                schedule.every(2).hours.at(":45", lord_howe).do(mock_job).next_run
+            )
+            assert (next_run_2h.day, next_run_2h.hour, next_run_2h.minute) == (4, 3, 45)
+
+            # 02:15 falls inside the 30-minute gap (02:00..02:30) -> shifted to 02:45+11:00.
+            schedule.clear()
+            next_run_gap = (
+                schedule.every().hour.at(":15", lord_howe).do(mock_job).next_run
+            )
+            assert (next_run_gap.day, next_run_gap.hour, next_run_gap.minute) == (
+                4,
+                2,
+                45,
+            )
+
+            with mock.patch.dict(sys.modules, {"pytz": None}):
+                schedule.clear()
+                fallback_run = (
+                    schedule.every()
+                    .hour.at(":45", "Australia/Lord_Howe")
+                    .do(mock_job)
+                    .next_run
+                )
+                assert (fallback_run.day, fallback_run.hour, fallback_run.minute) == (
+                    4,
+                    2,
+                    45,
+                )
+
+        # Verify exact UTC instant (2026-10-03 15:20 UTC == 2026-10-04 01:50+10:30 -> 15:45 UTC == 02:45+11:00)
+        with mock_datetime(2026, 10, 3, 15, 20, 0, TZ_UTC):
+            schedule.clear()
+            utc_run = schedule.every().hour.at(":45", lord_howe).do(mock_job).next_run
+            assert (utc_run.day, utc_run.hour, utc_run.minute) == (3, 15, 45)
+
+        # Half-hour fall back in Australia/Lord_Howe (2026-04-05 02:00 -> 01:30)
+        with mock_datetime(2026, 4, 5, 1, 50, 0, TZ_LORD_HOWE, fold=0):
+            schedule.clear()
+            next_run = schedule.every().hour.at(":45", lord_howe).do(mock_job).next_run
+            assert (next_run.day, next_run.hour, next_run.minute) == (5, 2, 45)
+
+            schedule.clear()
+            next_run_15 = (
+                schedule.every().hour.at(":15", lord_howe).do(mock_job).next_run
+            )
+            assert (next_run_15.day, next_run_15.hour, next_run_15.minute) == (5, 2, 15)
+
+        # Inside second pass of fall-back fold (2026-04-04 15:05 UTC == 2026-04-05 01:35+10:30 fold=1)
+        with mock_datetime(2026, 4, 4, 15, 5, 0, TZ_UTC):
+            schedule.clear()
+            fold_utc = schedule.every().hour.at(":45", lord_howe).do(mock_job).next_run
+            assert (fold_utc.day, fold_utc.hour, fold_utc.minute) == (4, 15, 15)
+
+        # Full-hour spring forward in Europe/Berlin (2024-03-31 02:00 -> 03:00)
+        with mock_datetime(2024, 3, 31, 1, 50, 0, TZ_BERLIN):
+            schedule.clear()
+            next_run = schedule.every().hour.at(":45", berlin).do(mock_job).next_run
+            assert (next_run.day, next_run.hour, next_run.minute) == (31, 3, 45)
+
+        with mock_datetime(2024, 3, 31, 1, 10, 0, TZ_BERLIN):
+            schedule.clear()
+            next_run = schedule.every(2).hours.at(":45", berlin).do(mock_job).next_run
+            assert (next_run.day, next_run.hour, next_run.minute) == (31, 3, 45)
+
+        # Full-hour fall back in Europe/Berlin (2024-10-27 03:00 -> 02:00)
+        with mock_datetime(2024, 10, 27, 0, 50, 0, TZ_UTC):
+            # 00:50 UTC == 02:50+02:00 (fold=0) -> next valid is 03:45+01:00 == 02:45 UTC
+            schedule.clear()
+            next_run = schedule.every().hour.at(":45", berlin).do(mock_job).next_run
+            assert (next_run.day, next_run.hour, next_run.minute) == (27, 2, 45)

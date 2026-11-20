@@ -721,10 +721,15 @@ class Job:
             next_run = self._move_to_at_time(next_run)
 
         period = datetime.timedelta(**{self.unit: interval})
+        # Hourly .at() targets a wall-clock minute/second, so only sub-hourly
+        # units (or hourly jobs without .at()) advance in elapsed UTC time.
         use_elapsed_utc = (
             self.at_time_zone is not None
             and not hasattr(self.at_time_zone, "normalize")
-            and self.unit in ("seconds", "minutes", "hours")
+            and (
+                self.unit in ("seconds", "minutes")
+                or (self.unit == "hours" and self.at_time is None)
+            )
         )
 
         def _advance(moment: datetime.datetime) -> datetime.datetime:
