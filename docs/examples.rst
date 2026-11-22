@@ -46,6 +46,12 @@ Run a job every x minute
         schedule.run_pending()
         time.sleep(1)
 
+Fixed intervals also accept fractional values, such as
+``schedule.every(0.5).seconds.do(job)``. Results depend on how often you call
+``run_pending()``: a loop that sleeps for one second cannot run a job every
+half second. Schedule does not provide exact timing or subsecond precision
+guarantees. Randomized ``.to()`` intervals still require integer bounds.
+
 Use a decorator to schedule a job
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
