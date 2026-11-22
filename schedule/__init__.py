@@ -45,7 +45,7 @@ import logging
 import random
 import re
 import time
-from typing import Set, List, Optional, Callable, Union
+from typing import Set, List, Optional, Callable, Union, cast
 
 logger = logging.getLogger("schedule")
 
@@ -159,7 +159,7 @@ class Scheduler:
         except ValueError:
             logger.debug('Cancelling not-scheduled job "%s"', str(job))
 
-    def every(self, interval: int = 1) -> "Job":
+    def every(self, interval: float = 1) -> "Job":
         """
         Schedule a new periodic job.
 
@@ -224,8 +224,8 @@ class Job:
     method, which also defines its `interval`.
     """
 
-    def __init__(self, interval: int, scheduler: Optional[Scheduler] = None):
-        self.interval: int = interval  # pause interval * unit between runs
+    def __init__(self, interval: float, scheduler: Optional[Scheduler] = None):
+        self.interval: float = interval  # pause interval * unit between runs
         self.latest: Optional[int] = None  # upper limit to the interval
         self.job_func: Optional[functools.partial] = None  # the job job_func to run
 
@@ -706,10 +706,13 @@ class Job:
                 "Invalid unit (valid units are `seconds`, `minutes`, `hours`, "
                 "`days`, and `weeks`)"
             )
+        interval: float
         if self.latest is not None:
             if not (self.latest >= self.interval):
                 raise ScheduleError("`latest` is greater than `interval`")
-            interval = random.randint(self.interval, self.latest)
+            # Randomized intervals still require integer bounds; cast only
+            # informs the type checker and does not coerce runtime values.
+            interval = random.randint(cast(int, self.interval), self.latest)
         else:
             interval = self.interval
 
@@ -840,7 +843,7 @@ default_scheduler = Scheduler()
 jobs = default_scheduler.jobs  # todo: should this be a copy, e.g. jobs()?
 
 
-def every(interval: int = 1) -> Job:
+def every(interval: float = 1) -> Job:
     """Calls :meth:`every <Scheduler.every>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """
