@@ -474,7 +474,8 @@ class Job:
 
         :param time_str: A string in one of the following formats:
 
-            - For daily jobs -> `HH:MM:SS` or `HH:MM`
+            - For daily jobs -> `HH:MM:SS` or `HH:MM` (the leading zero
+              of the hour may be omitted, e.g. `9:30`)
             - For hourly jobs -> `MM:SS` or `:MM`
             - For minute jobs -> `:SS`
 
@@ -510,9 +511,9 @@ class Job:
         if not isinstance(time_str, str):
             raise TypeError("at() should be passed a string")
         if self.unit == "days" or self.start_day:
-            if not re.match(r"^[0-2]\d:[0-5]\d(:[0-5]\d)?$", time_str):
+            if not re.match(r"^[0-2]?\d:[0-5]\d(:[0-5]\d)?$", time_str):
                 raise ScheduleValueError(
-                    "Invalid time format for a daily job (valid format is HH:MM(:SS)?)"
+                    "Invalid time format for a daily job (valid format is (H)H:MM(:SS)?)"
                 )
         if self.unit == "hours":
             if not re.match(r"^([0-5]\d)?:[0-5]\d$", time_str):

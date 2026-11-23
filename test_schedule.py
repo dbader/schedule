@@ -279,6 +279,10 @@ class SchedulerTests(TestCase):
         self.assertRaises(ScheduleValueError, every().day.at, ":2")
         self.assertRaises(ScheduleValueError, every().day.at, " 2:30:00")
         self.assertRaises(ScheduleValueError, every().day.at, "59:59")
+        self.assertRaises(ScheduleValueError, every().day.at, "24:00")
+        self.assertRaises(ScheduleValueError, every().day.at, "9:5")
+        self.assertRaises(ScheduleValueError, every().day.at, "9:59:5")
+        self.assertRaises(ScheduleValueError, every().day.at, "009:59")
         self.assertRaises(ScheduleValueError, every().do, lambda: 0)
         self.assertRaises(TypeError, every().day.at, 2)
 
@@ -407,6 +411,33 @@ class SchedulerTests(TestCase):
             assert job.next_run.year == 2020
             assert job.next_run.month == 11
             assert job.next_run.day == 25
+
+    def test_at_time_single_digit_hour(self):
+        # Regression test for #514: a daily or weekday job should accept an
+        # hour without a leading zero, e.g. "9:59" as well as "09:59".
+        mock_job = make_mock_job()
+        with mock_datetime(2010, 1, 6, 8, 0):
+            job = every().day.at("9:59").do(mock_job)
+            assert job.at_time == datetime.time(9, 59)
+            assert job.next_run == datetime.datetime(2010, 1, 6, 9, 59)
+
+            job = every().day.at("9:59:30").do(mock_job)
+            assert job.at_time == datetime.time(9, 59, 30)
+            assert job.next_run == datetime.datetime(2010, 1, 6, 9, 59, 30)
+
+            job = every().day.at("0:05").do(mock_job)
+            assert job.at_time == datetime.time(0, 5)
+            assert job.next_run == datetime.datetime(2010, 1, 7, 0, 5)
+
+            # 2010-01-06 is a Wednesday, so the next Monday is 2010-01-11
+            job = every().monday.at("7:35").do(mock_job)
+            assert job.at_time == datetime.time(7, 35)
+            assert job.next_run == datetime.datetime(2010, 1, 11, 7, 35)
+
+            assert (
+                every().day.at("9:59").do(mock_job).next_run
+                == every().day.at("09:59").do(mock_job).next_run
+            )
 
     def test_at_time_hour(self):
         with mock_datetime(2010, 1, 6, 12, 20):
