@@ -3,6 +3,11 @@
 History
 -------
 
+Unreleased
+++++++++++
+
+- Accept a single-digit hour in ``.at()`` for daily and weekday jobs, e.g. ``every().day.at("9:30")`` (#514)
+
 1.2.2 (2024-05-25)
 ++++++++++++++++++
 
