@@ -159,7 +159,7 @@ class Scheduler:
         except ValueError:
             logger.debug('Cancelling not-scheduled job "%s"', str(job))
 
-    def every(self, interval: int = 1) -> "Job":
+    def every(self, interval: float = 1) -> "Job":
         """
         Schedule a new periodic job.
 
@@ -224,9 +224,9 @@ class Job:
     method, which also defines its `interval`.
     """
 
-    def __init__(self, interval: int, scheduler: Optional[Scheduler] = None):
-        self.interval: int = interval  # pause interval * unit between runs
-        self.latest: Optional[int] = None  # upper limit to the interval
+    def __init__(self, interval: float, scheduler: Optional[Scheduler] = None):
+        self.interval: float = interval  # pause interval * unit between runs
+        self.latest: Optional[float] = None  # upper limit to the interval
         self.job_func: Optional[functools.partial] = None  # the job job_func to run
 
         # time units, e.g. 'minutes', 'hours', ...
@@ -558,7 +558,7 @@ class Job:
         self.at_time = datetime.time(hour, minute, second)
         return self
 
-    def to(self, latest: int):
+    def to(self, latest: float):
         """
         Schedule the job to run at an irregular (randomized) interval.
 
@@ -566,6 +566,10 @@ class Job:
         to  `every` to `latest`. The range defined is inclusive on
         both ends. For example, `every(A).to(B).seconds` executes
         the job function every N seconds such that A <= N <= B.
+
+        If both bounds are integers, N is a whole number. If either
+        bound is a float, N can be any value in that range, e.g.
+        `every(0.5).to(1.5).seconds`.
 
         :param latest: Maximum interval between randomized job runs
         :return: The invoked job instance
@@ -709,7 +713,11 @@ class Job:
         if self.latest is not None:
             if not (self.latest >= self.interval):
                 raise ScheduleError("`latest` is greater than `interval`")
-            interval = random.randint(self.interval, self.latest)
+            interval: float
+            if isinstance(self.interval, int) and isinstance(self.latest, int):
+                interval = random.randint(self.interval, self.latest)
+            else:
+                interval = random.uniform(self.interval, self.latest)
         else:
             interval = self.interval
 
@@ -840,7 +848,7 @@ default_scheduler = Scheduler()
 jobs = default_scheduler.jobs  # todo: should this be a copy, e.g. jobs()?
 
 
-def every(interval: int = 1) -> Job:
+def every(interval: float = 1) -> Job:
     """Calls :meth:`every <Scheduler.every>` on the
     :data:`default scheduler instance <default_scheduler>`.
     """

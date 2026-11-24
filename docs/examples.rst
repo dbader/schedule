@@ -213,7 +213,11 @@ Run a job at random intervals
     # Run every 5 to 10 seconds.
     schedule.every(5).to(10).seconds.do(my_job)
 
+    # Run every 0.5 to 1.5 seconds.
+    schedule.every(0.5).to(1.5).seconds.do(my_job)
+
 ``every(A).to(B).seconds`` executes the job function every N seconds such that A <= N <= B.
+If both A and B are integers, N is a whole number; if either is a float, N can be any value in that range.
 
 
 Run a job until a certain time

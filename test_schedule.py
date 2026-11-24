@@ -257,6 +257,38 @@ class SchedulerTests(TestCase):
             assert min(minutes) >= 5
             assert max(minutes) <= 30
 
+    def test_time_range_with_float_bounds(self):
+        # Regression test for #593: a randomized interval must accept
+        # fractional bounds instead of crashing in random.randint().
+        start = datetime.datetime(2014, 6, 28, 12, 0)
+        with mock_datetime(2014, 6, 28, 12, 0):
+            mock_job = make_mock_job()
+
+            for earliest, latest, unit, unit_seconds in [
+                (0.5, 1.5, "seconds", 1),
+                (1, 2.5, "seconds", 1),
+                (1.5, 3, "minutes", 60),
+            ]:
+                intervals = set()
+                for _ in range(100):
+                    job = getattr(every(earliest).to(latest), unit).do(mock_job)
+                    intervals.add((job.next_run - start).total_seconds())
+
+                assert min(intervals) >= earliest * unit_seconds
+                assert max(intervals) <= latest * unit_seconds
+                # The drawn interval can take non-integer values
+                assert any(i != int(i / unit_seconds) * unit_seconds for i in intervals)
+
+            # Integer bounds keep producing whole-unit intervals
+            seconds = set(
+                (every(1).to(3).seconds.do(mock_job).next_run - start).total_seconds()
+                for _ in range(100)
+            )
+            assert seconds <= {1, 2, 3}
+
+            with self.assertRaises(ScheduleError):
+                every(1.5).to(0.5).seconds.do(mock_job)
+
     def test_time_range_repr(self):
         mock_job = make_mock_job()
 
