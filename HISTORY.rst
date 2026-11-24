@@ -3,6 +3,13 @@
 History
 -------
 
+Unreleased
+++++++++++
+
+- Fix jobs repeating every N seconds, minutes or hours pausing for an hour when DST ends (#649, #636).
+  These jobs now count real elapsed time across clock-changes, so e.g. ``every(4).hours`` runs
+  4 realtime hours later even when DST starts or ends in between.
+
 1.2.2 (2024-05-25)
 ++++++++++++++++++
 
