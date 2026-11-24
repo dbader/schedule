@@ -3,6 +3,12 @@
 History
 -------
 
+Unreleased
+++++++++++
+
+- Support fractional bounds in randomized intervals, e.g. ``every(0.5).to(1.5).seconds`` (#593)
+- Annotate ``every()`` and ``to()`` intervals as ``float`` (#559)
+
 1.2.2 (2024-05-25)
 ++++++++++++++++++
 
