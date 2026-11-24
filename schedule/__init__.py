@@ -49,6 +49,10 @@ from typing import Set, List, Optional, Callable, Union
 
 logger = logging.getLogger("schedule")
 
+# Units whose jobs are scheduled in real elapsed time rather than on the wall
+# clock, so they are not affected by DST clock changes (#649).
+_SUB_DAY_UNITS = ("seconds", "minutes", "hours")
+
 
 class ScheduleError(Exception):
     """Base schedule exception"""
@@ -203,7 +207,9 @@ class Scheduler:
         """
         if not self.next_run:
             return None
-        return (self.next_run - datetime.datetime.now()).total_seconds()
+        # Compare real moments rather than wall-clock readings, so the result
+        # stays correct while the clock repeats an hour at the end of DST.
+        return self.next_run.timestamp() - datetime.datetime.now().timestamp()
 
 
 class Job:
@@ -259,7 +265,10 @@ class Job:
         PeriodicJobs are sortable based on the scheduled time they
         run next.
         """
-        return self.next_run < other.next_run
+        assert self.next_run is not None and other.next_run is not None
+        # Compare real moments, so jobs in the hour repeated at the end of
+        # DST are ordered correctly (naive comparison ignores `fold`).
+        return self.next_run.timestamp() < other.next_run.timestamp()
 
     def __str__(self) -> str:
         if hasattr(self.job_func, "__name__"):
@@ -669,7 +678,14 @@ class Job:
         :return: ``True`` if the job should be run now.
         """
         assert self.next_run is not None, "must run _schedule_next_run before"
-        return datetime.datetime.now() >= self.next_run
+        now = datetime.datetime.now()
+        if self.unit in _SUB_DAY_UNITS:
+            # next_run is computed in real time for these units (see
+            # _schedule_next_run), so compare real moments. Naive wall-clock
+            # comparison ignores `fold` and breaks when the clock goes back
+            # an hour at the end of DST (#649).
+            return now.timestamp() >= self.next_run.timestamp()
+        return now >= self.next_run
 
     def run(self):
         """
@@ -716,6 +732,12 @@ class Job:
         # Do all computation in the context of the requested timezone
         now = datetime.datetime.now(self.at_time_zone)
 
+        period = datetime.timedelta(**{self.unit: interval})
+
+        if self.unit in _SUB_DAY_UNITS:
+            self.next_run = self._next_sub_day_run(now, interval, period)
+            return
+
         next_run = now
 
         if self.start_day is not None:
@@ -726,7 +748,6 @@ class Job:
         if self.at_time is not None:
             next_run = self._move_to_at_time(next_run)
 
-        period = datetime.timedelta(**{self.unit: interval})
         if interval != 1:
             next_run += period
 
@@ -746,6 +767,34 @@ class Job:
             next_run = next_run.replace(tzinfo=None)
 
         self.next_run = next_run
+
+    def _next_sub_day_run(
+        self,
+        now: datetime.datetime,
+        interval: float,
+        period: datetime.timedelta,
+    ) -> datetime.datetime:
+        """
+        Compute the next run of a seconds/minutes/hours job.
+
+        The period is added in real (UTC) time, so a job keeps its rhythm
+        when the local clock jumps at a DST change (#649). The `at` time is
+        still applied on the wall clock. The result is a naive local
+        timestamp whose `fold` tells which of two repeated wall-clock times
+        is meant.
+        """
+        next_run = self._move_to_at_time(now)
+
+        # Naive datetimes are local time; astimezone() honours their `fold`.
+        now_utc = now.astimezone(datetime.timezone.utc)
+        next_run_utc = next_run.astimezone(datetime.timezone.utc)
+
+        if interval != 1:
+            next_run_utc += period
+        while next_run_utc <= now_utc:
+            next_run_utc += period
+
+        return _utc_to_naive_local(next_run_utc)
 
     def _move_to_at_time(self, moment: datetime.datetime) -> datetime.datetime:
         """
@@ -911,6 +960,18 @@ def repeat(job, *args, **kwargs):
         return decorated_function
 
     return _schedule_decorator
+
+
+def _utc_to_naive_local(moment: datetime.datetime) -> datetime.datetime:
+    """
+    Convert an aware datetime to a naive local datetime, setting `fold=1`
+    when the local wall-clock time occurs twice and the second occurrence
+    is meant (the hour repeated at the end of DST).
+    """
+    local = moment.astimezone().replace(tzinfo=None)
+    if local.timestamp() != moment.timestamp():
+        local = local.replace(fold=1)
+    return local
 
 
 def _move_to_next_weekday(moment: datetime.datetime, weekday: str):

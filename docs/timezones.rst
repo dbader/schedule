@@ -29,9 +29,14 @@ This causes the ``next_run`` and ``last_run`` to always be in Pythons local time
 
 Daylight Saving Time
 ~~~~~~~~~~~~~~~~~~~~
-Scheduling jobs that do not specify a timezone do **not** take clock-changes into account.
-Timezone unaware jobs will use naive local times to calculate the next run.
-For example, a job that is set to run every 4 hours might execute after 3 realtime hours when DST goes into effect.
+Jobs that repeat every N seconds, minutes or hours count **real elapsed time**, also across clock-changes.
+For example, a job that is set to run every 4 hours runs 4 realtime hours later, even when DST starts or ends in between.
+Its ``next_run`` (in naive local time) therefore shifts by one hour on the wall clock.
+When DST ends and the clock repeats an hour, these jobs keep running during the repeated hour.
+The ``fold`` attribute of ``next_run`` tells which of the two repeated times is meant.
+
+Daily and weekly jobs (``.day``, ``.monday``, ...) that do not specify a timezone use naive local times
+to calculate the next run, so they stay at the same wall-clock time.
 
 But when passing a timezone to ``.at()``, DST **is** taken into account.
 The job will run at the specified time, even when the clock changes.

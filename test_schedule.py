@@ -854,6 +854,60 @@ class SchedulerTests(TestCase):
             assert next.hour == 4
             assert next.minute == 0
 
+    def test_dst_end_minute_job_runs_in_repeated_hour(self):
+        # Regression test for #649: when DST ends, the wall clock repeats
+        # 02:00..02:59 (Berlin, 29 Oct 2023). An every-minute job must keep
+        # running every real minute instead of pausing for an hour.
+        mock_job = make_mock_job()
+        with mock_datetime(2023, 10, 29, 2, 59, 30, TZ_BERLIN, fold=0):
+            job = every().minute.do(mock_job)
+            # One real minute later the wall clock shows 02:00:30 again
+            assert job.next_run == datetime.datetime(2023, 10, 29, 2, 0, 30)
+            assert job.next_run.fold == 1
+            assert schedule.idle_seconds() == 60
+            assert not job.should_run
+        with mock_datetime(2023, 10, 29, 2, 59, 45, TZ_BERLIN, fold=0):
+            # Still before the switch: must not run early
+            assert not job.should_run
+        with mock_datetime(2023, 10, 29, 2, 0, 30, TZ_BERLIN, fold=1):
+            assert job.should_run
+            job.run()
+            assert job.next_run == datetime.datetime(2023, 10, 29, 2, 1, 30)
+            assert job.next_run.fold == 1
+
+    def test_dst_end_seconds_job_runs_in_repeated_hour(self):
+        mock_job = make_mock_job()
+        with mock_datetime(2023, 10, 29, 2, 59, 55, TZ_BERLIN, fold=0):
+            job = every(10).seconds.do(mock_job)
+            assert job.next_run == datetime.datetime(2023, 10, 29, 2, 0, 5)
+            assert job.next_run.fold == 1
+        with mock_datetime(2023, 10, 29, 2, 0, 5, TZ_BERLIN, fold=1):
+            assert job.should_run
+
+    def test_dst_end_hourly_job_runs_in_repeated_hour(self):
+        mock_job = make_mock_job()
+        for job_factory in (lambda: every().hour, lambda: every().hour.at(":30")):
+            schedule.clear()
+            with mock_datetime(2023, 10, 29, 2, 30, 0, TZ_BERLIN, fold=0):
+                job = job_factory().do(mock_job)
+                assert job.next_run == datetime.datetime(2023, 10, 29, 2, 30)
+                assert job.next_run.fold == 1
+            with mock_datetime(2023, 10, 29, 2, 45, 0, TZ_BERLIN, fold=0):
+                assert not job.should_run
+            with mock_datetime(2023, 10, 29, 2, 30, 0, TZ_BERLIN, fold=1):
+                assert job.should_run
+
+    def test_dst_end_daily_job_in_repeated_hour_runs_once(self):
+        mock_job = make_mock_job()
+        with mock_datetime(2023, 10, 29, 2, 0, 0, TZ_BERLIN, fold=0):
+            job = every().day.at("02:30").do(mock_job)
+        with mock_datetime(2023, 10, 29, 2, 30, 0, TZ_BERLIN, fold=0):
+            assert job.should_run
+            job.run()
+            assert job.next_run == datetime.datetime(2023, 10, 30, 2, 30)
+        with mock_datetime(2023, 10, 29, 2, 30, 0, TZ_BERLIN, fold=1):
+            assert not job.should_run
+
     def test_tz_daily_issue_608_pre_dst(self):
         mock_job = self.make_tz_mock_job()
         with mock_datetime(2023, 9, 18, 10, 00, 0, TZ_AUCKLAND):
@@ -1241,13 +1295,16 @@ class SchedulerTests(TestCase):
 
     def test_daylight_saving_time(self):
         mock_job = make_mock_job()
+        # Interval jobs count real elapsed time, so the wall-clock time of the
+        # next run shifts by the DST change (#649).
+
         # 27 March 2022, 02:00:00 clocks were turned forward 1 hour
-        with mock_datetime(2022, 3, 27, 0, 0):
-            assert every(4).hours.do(mock_job).next_run.hour == 4
+        with mock_datetime(2022, 3, 27, 0, 0, zone=TZ_BERLIN):
+            assert every(4).hours.do(mock_job).next_run.hour == 5
 
         # Sunday, 30 October 2022, 03:00:00 clocks were turned backward 1 hour
-        with mock_datetime(2022, 10, 30, 0, 0):
-            assert every(4).hours.do(mock_job).next_run.hour == 4
+        with mock_datetime(2022, 10, 30, 0, 0, zone=TZ_BERLIN):
+            assert every(4).hours.do(mock_job).next_run.hour == 3
 
     def test_move_to_next_weekday_today(self):
         monday = datetime.datetime(2024, 5, 13, 10, 27, 54)
